@@ -32,7 +32,7 @@ const toggleIchimokuCheckbox = document.getElementById("toggleIchimoku");
 
 // ★ 足種ラジオボタン
 const timeframeRadios = document.querySelectorAll('input[name="timeframe"]');
-let currentTimeframe = "1d";   // ★ 初期値（日足）
+let currentTimeframe = "1d";   // 初期値（日足）
 
 // 初期状態ではモーダル非表示
 modal.style.display = "none";
@@ -42,18 +42,8 @@ let priceChart = null;
 let rciChart = null;
 let macdChart = null;
 
-// RCI / MACD のシリーズ
-let rciShortSeries = null;
-let rciLongSeries = null;
-
-let macdLineSeries = null;
-let macdSignalSeries = null;
-let macdHistSeries = null;
-
 let currentIndex = 0;
 let screeningResults = [];
-
-let isSyncing = false;
 
 // screening.js から結果を受け取る
 window.setScreeningResults = function(results) {
@@ -268,8 +258,27 @@ async function drawChart(ticker, name) {
   // ⑤ リサイズ処理
   setupResize(price.chart, rci.chart, macd.chart);
 
-  // ⑥ デフォルト表示期間（＝日足と同じ縮尺を維持）
+  // ⑥ デフォルト表示期間（初期位置調整）
   applyDefaultRange(price.chart, rci.chart, macd.chart, tradingData);
+
+  // ★ 直近80本だけ表示（足種に関係なく本数を揃える）
+  const total = tradingData.length;
+  const visibleCount = 80;
+
+  price.chart.timeScale().setVisibleRange({
+    from: Math.max(0, total - visibleCount),
+    to: total
+  });
+
+  rci.chart.timeScale().setVisibleRange({
+    from: Math.max(0, total - visibleCount),
+    to: total
+  });
+
+  macd.chart.timeScale().setVisibleRange({
+    from: Math.max(0, total - visibleCount),
+    to: total
+  });
 
   chartLoadingOverlay.style.display = "none";
 }
