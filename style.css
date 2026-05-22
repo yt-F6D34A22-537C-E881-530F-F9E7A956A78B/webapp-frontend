@@ -256,7 +256,35 @@ tr:hover {
   margin-left: 8px;
 }
 
-/* モーダル本体：3チャート縦並び */
+/* ------------------------------
+   ★ 足種切替（1D / 1W / 1M）
+------------------------------ */
+.timeframe-selector {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 6px;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 6px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.timeframe-selector label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+}
+
+.timeframe-selector input[type="radio"] {
+  transform: scale(1.1);
+  cursor: pointer;
+}
+
+/* ------------------------------
+   モーダル本体：3チャート縦並び
+------------------------------ */
 .modal .modal-body {
   flex: 1;
   min-height: 0;
@@ -312,7 +340,7 @@ tr:hover {
 }
 
 /* ------------------------------
-   ★ チェックボックス縦並び（追加）
+   ★ チェックボックス縦並び
 ------------------------------ */
 .settings-content {
   display: flex;
@@ -407,10 +435,16 @@ tr:hover {
     margin-left: 0;
     margin-top: 4px;
   }
+
+  /* 足種切替のスマホ最適化 */
+  .timeframe-selector {
+    gap: 6px;
+    font-size: 12px;
+  }
 }
 
 /* ------------------------------
-   ★ 追加：チャート凡例（TradingView風）
+   ★ チャート凡例（TradingView風）
 ------------------------------ */
 .chart-legend {
   position: absolute;
