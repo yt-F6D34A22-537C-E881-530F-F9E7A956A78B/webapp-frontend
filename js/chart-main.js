@@ -268,13 +268,8 @@ async function drawChart(ticker, name) {
   // ⑤ リサイズ処理
   setupResize(price.chart, rci.chart, macd.chart);
 
-  // ⑥ デフォルト表示期間
+  // ⑥ デフォルト表示期間（＝日足と同じ縮尺を維持）
   applyDefaultRange(price.chart, rci.chart, macd.chart, tradingData);
-
-  // ★ 最重要：足種切替時の縮尺リセット
-  price.chart.timeScale().fitContent();
-  rci.chart.timeScale().fitContent();
-  macd.chart.timeScale().fitContent();
 
   chartLoadingOverlay.style.display = "none";
 }
