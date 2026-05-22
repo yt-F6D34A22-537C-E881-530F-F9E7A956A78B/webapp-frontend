@@ -29,9 +29,9 @@ const nextBtn = document.getElementById("nextChartBtn");
 const settingsBtn = document.getElementById("chartSettingsBtn");
 const settingsModal = document.getElementById("chartSettingsModal");
 const toggleCandlesCheckbox = document.getElementById("toggleCandles");
-const toggleMACheckbox = document.getElementById("toggleMACheckbox");
-const toggleBBCheckbox = document.getElementById("toggleBBCheckbox");
-const toggleIchimokuCheckbox = document.getElementById("toggleIchimokuCheckbox");
+const toggleMACheckbox = document.getElementById("toggleMA");
+const toggleBBCheckbox = document.getElementById("toggleBB");
+const toggleIchimokuCheckbox = document.getElementById("toggleIchimoku");
 
 // 足種ラジオボタン
 const timeframeRadios = document.querySelectorAll('input[name="timeframe"]');
@@ -260,10 +260,10 @@ async function drawChart(ticker, name) {
   // ⑤ リサイズ処理
   setupResize(price.chart, rci.chart, macd.chart);
 
-  // ⑥ デフォルト表示期間（初期位置調整：あなたの既存ロジック）
+  // ⑥ デフォルト表示期間（あなたの既存ロジック）
   applyDefaultRange(price.chart, rci.chart, macd.chart, tradingData);
 
-  // ⑦ 直近80本だけ表示（シンプルな logicalRange 指定）
+  // ⑦ 直近80本だけ表示（論理バー番号ベース）
   const total = tradingData.length;
   const visibleCount = 80;
   const fromIndex = Math.max(0, total - visibleCount);
