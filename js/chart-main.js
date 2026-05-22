@@ -28,7 +28,11 @@ const settingsModal = document.getElementById("chartSettingsModal");
 const toggleCandlesCheckbox = document.getElementById("toggleCandles");
 const toggleMACheckbox = document.getElementById("toggleMA");
 const toggleBBCheckbox = document.getElementById("toggleBB");
-const toggleIchimokuCheckbox = document.getElementById("toggleIchimoku");   // ★ 追加
+const toggleIchimokuCheckbox = document.getElementById("toggleIchimoku");
+
+// ★ 足種ラジオボタン
+const timeframeRadios = document.querySelectorAll('input[name="timeframe"]');
+let currentTimeframe = "1d";   // ★ 初期値（日足）
 
 // 初期状態ではモーダル非表示
 modal.style.display = "none";
@@ -142,36 +146,50 @@ toggleCandlesCheckbox.addEventListener("change", (e) => {
   if (typeof applyCandleVisibility === "function") applyCandleVisibility();
 });
 
-// ▼ MA の表示/非表示
+// MA の表示/非表示
 toggleMACheckbox.addEventListener("change", (e) => {
   showMA = e.target.checked;
   if (typeof applyMAVisibility === "function") applyMAVisibility();
 });
 
-// ▼ BB の表示/非表示
+// BB の表示/非表示
 toggleBBCheckbox.addEventListener("change", (e) => {
   showBB = e.target.checked;
   if (typeof applyBBVisibility === "function") applyBBVisibility();
 });
 
-// ▼ 一目均衡表の表示/非表示（★ 追加）
+// 一目均衡表の表示/非表示
 toggleIchimokuCheckbox.addEventListener("change", (e) => {
   showIchimoku = e.target.checked;
   if (typeof applyIchimokuVisibility === "function") applyIchimokuVisibility();
+});
+
+// ★ 足種切替イベント
+timeframeRadios.forEach(radio => {
+  radio.addEventListener("change", (e) => {
+    currentTimeframe = e.target.value;
+
+    const r = screeningResults[currentIndex];
+    if (r) {
+      drawChart(r.コード, r.銘柄名);
+    }
+  });
 });
 
 // ------------------------------
 // drawChart（司令塔）
 // ------------------------------
 async function drawChart(ticker, name) {
-  const data = await fetchChartData(ticker);
+
+  // ★ 足種をバックエンドへ渡す
+  const data = await fetchChartData(ticker, currentTimeframe);
+
   if (!data) {
     alert("チャートデータが取得できませんでした。");
     chartLoadingOverlay.style.display = "none";
     return;
   }
 
-  // yfinance 由来なので、基本的に営業日のみ
   const tradingData = data.filter(d => d.volume != null);
   if (tradingData.length === 0) {
     alert("有効なチャートデータがありません。");
