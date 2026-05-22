@@ -4,9 +4,11 @@
 // candleData 形式に整形して返すモジュール
 // --------------------------------------
 
-async function fetchChartData(ticker) {
+async function fetchChartData(ticker, timeframe = "1d") {
   const API_BASE_URL = "https://yfinance-api-fe86988c-d3b4-f1c6-640d.onrender.com";
-  const url = `${API_BASE_URL}/chart?ticker=${ticker}`;
+
+  // ★ timeframe をバックエンドへ渡す
+  const url = `${API_BASE_URL}/chart?ticker=${ticker}&timeframe=${timeframe}`;
 
   try {
     const res = await fetch(url);
