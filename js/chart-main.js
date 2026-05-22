@@ -180,7 +180,7 @@ async function drawChart(ticker, name) {
     return;
   }
 
-  // ★ volume フィルタは不要（週足・月足で欠損があるため）
+  // volume フィルタは不要
   const tradingData = data;
 
   if (tradingData.length === 0) {
@@ -261,23 +261,25 @@ async function drawChart(ticker, name) {
   // ⑥ デフォルト表示期間（初期位置調整）
   applyDefaultRange(price.chart, rci.chart, macd.chart, tradingData);
 
-  // ★ 直近80本だけ表示（足種に関係なく本数を揃える）
+  // ★ 直近80本だけ表示（論理バー番号ベース）
   const total = tradingData.length;
   const visibleCount = 80;
+  const fromIndex = Math.max(0, total - visibleCount);
+  const toIndex = total - 1;
 
-  price.chart.timeScale().setVisibleRange({
-    from: Math.max(0, total - visibleCount),
-    to: total
+  price.chart.timeScale().setVisibleLogicalRange({
+    from: fromIndex,
+    to: toIndex
   });
 
-  rci.chart.timeScale().setVisibleRange({
-    from: Math.max(0, total - visibleCount),
-    to: total
+  rci.chart.timeScale().setVisibleLogicalRange({
+    from: fromIndex,
+    to: toIndex
   });
 
-  macd.chart.timeScale().setVisibleRange({
-    from: Math.max(0, total - visibleCount),
-    to: total
+  macd.chart.timeScale().setVisibleLogicalRange({
+    from: fromIndex,
+    to: toIndex
   });
 
   chartLoadingOverlay.style.display = "none";
