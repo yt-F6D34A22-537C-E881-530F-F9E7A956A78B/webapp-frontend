@@ -190,7 +190,9 @@ async function drawChart(ticker, name) {
     return;
   }
 
-  const tradingData = data.filter(d => d.volume != null);
+  // ★ volume フィルタは不要（週足・月足で欠損があるため）
+  const tradingData = data;
+
   if (tradingData.length === 0) {
     alert("有効なチャートデータがありません。");
     chartLoadingOverlay.style.display = "none";
@@ -268,6 +270,11 @@ async function drawChart(ticker, name) {
 
   // ⑥ デフォルト表示期間
   applyDefaultRange(price.chart, rci.chart, macd.chart, tradingData);
+
+  // ★ 最重要：足種切替時の縮尺リセット
+  price.chart.timeScale().fitContent();
+  rci.chart.timeScale().fitContent();
+  macd.chart.timeScale().fitContent();
 
   chartLoadingOverlay.style.display = "none";
 }
