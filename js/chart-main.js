@@ -57,9 +57,19 @@ window.setScreeningResults = function(results) {
 function closeModal() {
   modal.style.display = "none";
 
-  if (priceChart) priceChart.remove();
-  if (rciChart) rciChart.remove();
-  if (macdChart) macdChart.remove();
+  // ★ ここで一度だけ remove し、必ず null にする（再度 remove されないように）
+  if (priceChart) {
+    priceChart.remove();
+    priceChart = null;
+  }
+  if (rciChart) {
+    rciChart.remove();
+    rciChart = null;
+  }
+  if (macdChart) {
+    macdChart.remove();
+    macdChart = null;
+  }
 
   chartContainer.innerHTML = "";
   rciContainer.innerHTML = "";
@@ -191,7 +201,7 @@ async function drawChart(ticker, name) {
     return;
   }
 
-  // 既存チャート破棄
+  // 既存チャート破棄（closeModal で null にしているので二重 remove は起きない）
   if (priceChart) priceChart.remove();
   if (rciChart) rciChart.remove();
   if (macdChart) macdChart.remove();
