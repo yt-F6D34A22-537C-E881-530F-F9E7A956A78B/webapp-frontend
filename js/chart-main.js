@@ -3,6 +3,9 @@
 // モーダル制御・チャート描画の司令塔
 // --------------------------------------
 
+// ★ チャート同期用フラグ（chart-sync.js から参照される）
+let isSyncing = false;
+
 // iPhone Safari の余白対策
 function updateVh() {
   document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
@@ -26,11 +29,11 @@ const nextBtn = document.getElementById("nextChartBtn");
 const settingsBtn = document.getElementById("chartSettingsBtn");
 const settingsModal = document.getElementById("chartSettingsModal");
 const toggleCandlesCheckbox = document.getElementById("toggleCandles");
-const toggleMACheckbox = document.getElementById("toggleMA");
-const toggleBBCheckbox = document.getElementById("toggleBB");
-const toggleIchimokuCheckbox = document.getElementById("toggleIchimoku");
+const toggleMACheckbox = document.getElementById("toggleMACheckbox");
+const toggleBBCheckbox = document.getElementById("toggleBBCheckbox");
+const toggleIchimokuCheckbox = document.getElementById("toggleIchimokuCheckbox");
 
-// ★ 足種ラジオボタン
+// 足種ラジオボタン
 const timeframeRadios = document.querySelectorAll('input[name="timeframe"]');
 let currentTimeframe = "1d";   // 初期値（日足）
 
@@ -154,7 +157,7 @@ toggleIchimokuCheckbox.addEventListener("change", (e) => {
   if (typeof applyIchimokuVisibility === "function") applyIchimokuVisibility();
 });
 
-// ★ 足種切替イベント
+// 足種切替イベント
 timeframeRadios.forEach(radio => {
   radio.addEventListener("change", (e) => {
     currentTimeframe = e.target.value;
@@ -171,7 +174,7 @@ timeframeRadios.forEach(radio => {
 // ------------------------------
 async function drawChart(ticker, name) {
 
-  // ★ 足種をバックエンドへ渡す
+  // 足種をバックエンドへ渡す
   const data = await fetchChartData(ticker, currentTimeframe);
 
   if (!data) {
@@ -257,33 +260,27 @@ async function drawChart(ticker, name) {
   // ⑤ リサイズ処理
   setupResize(price.chart, rci.chart, macd.chart);
 
-  // ⑥ デフォルト表示期間（初期位置調整）
+  // ⑥ デフォルト表示期間（初期位置調整：あなたの既存ロジック）
   applyDefaultRange(price.chart, rci.chart, macd.chart, tradingData);
 
-  // ★ 直近80本だけ表示（autoscale 完了後に適用）
+  // ⑦ 直近80本だけ表示（シンプルな logicalRange 指定）
   const total = tradingData.length;
   const visibleCount = 80;
   const fromIndex = Math.max(0, total - visibleCount);
   const toIndex = total - 1;
 
-  // ★ autoscale 完了後に実行するフック
-  const applyFixedRange = () => {
-    price.chart.timeScale().setVisibleLogicalRange({
-      from: fromIndex,
-      to: toIndex
-    });
-    rci.chart.timeScale().setVisibleLogicalRange({
-      from: fromIndex,
-      to: toIndex
-    });
-    macd.chart.timeScale().setVisibleLogicalRange({
-      from: fromIndex,
-      to: toIndex
-    });
-  };
-
-  // ★ autoscale 完了を検知して 80 本固定を適用
-  price.chart.timeScale().subscribeVisibleLogicalRangeChange(applyFixedRange);
+  price.chart.timeScale().setVisibleLogicalRange({
+    from: fromIndex,
+    to: toIndex
+  });
+  rci.chart.timeScale().setVisibleLogicalRange({
+    from: fromIndex,
+    to: toIndex
+  });
+  macd.chart.timeScale().setVisibleLogicalRange({
+    from: fromIndex,
+    to: toIndex
+  });
 
   chartLoadingOverlay.style.display = "none";
 }
