@@ -260,12 +260,23 @@ async function drawChart(ticker, name) {
   // ⑥ デフォルト表示期間（初期位置調整）
   applyDefaultRange(price.chart, rci.chart, macd.chart, tradingData);
 
-  // ★ 直近80本だけ表示（描画完了後に適用）
+  // ★ 直近80本だけ表示（マウスオーバー不要で即反映）
   const total = tradingData.length;
   const visibleCount = 80;
   const fromIndex = Math.max(0, total - visibleCount);
   const toIndex = total - 1;
 
+  // ★ 内部 autoscale を完了させる
+  price.chart.timeScale().scrollToRealTime();
+  rci.chart.timeScale().scrollToRealTime();
+  macd.chart.timeScale().scrollToRealTime();
+
+  // ★ 右端に固定
+  price.chart.timeScale().applyOptions({ rightOffset: 0 });
+  rci.chart.timeScale().applyOptions({ rightOffset: 0 });
+  macd.chart.timeScale().applyOptions({ rightOffset: 0 });
+
+  // ★ 描画完了後に 80 本固定を適用
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
       price.chart.timeScale().setVisibleLogicalRange({
