@@ -25,7 +25,7 @@
 
   <script defer src="js/chart-sync.js"></script>
 
-  <!-- メイン制御（chart-main.js に名称変更済み） -->
+  <!-- メイン制御 -->
   <script defer src="js/chart-main.js"></script>
 </head>
 
@@ -53,7 +53,6 @@
         <button id="startBtn" class="btn primary">スクリーニング開始</button>
         <button id="cancelBtn" class="btn secondary" disabled>キャンセル</button>
 
-        <!-- 経過時間表示 -->
         <span id="elapsedTime" class="elapsed-time"></span>
       </div>
 
@@ -97,10 +96,20 @@
     <div class="modal-content">
       <div class="modal-header">
         <div id="chartHeaderLeft"></div>
+
         <div id="chartHeaderNav">
+
+          <!-- ★ 足種切替（追加） -->
+          <div class="timeframe-selector">
+            <label><input type="radio" name="timeframe" value="1d" checked> 日足</label>
+            <label><input type="radio" name="timeframe" value="1wk"> 週足</label>
+            <label><input type="radio" name="timeframe" value="1mo"> 月足</label>
+          </div>
+
           <button id="prevChartBtn" class="btn small">前へ</button>
           <button id="nextChartBtn" class="btn small">次へ</button>
         </div>
+
         <button id="closeChartBtn" class="btn ghost">✕</button>
       </div>
 
@@ -110,17 +119,12 @@
           <p>チャートデータ取得中…</p>
         </div>
 
-        <!-- ① 価格チャート -->
         <div id="chartContainer"></div>
-        <!-- ② RCIチャート -->
         <div id="rciContainer"></div>
-        <!-- ③ MACDチャート -->
         <div id="macdContainer"></div>
 
-        <!-- 歯車アイコン -->
         <div id="chartSettingsBtn" class="chart-settings-btn">⚙️</div>
 
-        <!-- 子モーダル（設定） -->
         <div id="chartSettingsModal" class="chart-settings-modal hidden">
           <div class="settings-content">
 
@@ -139,7 +143,6 @@
               ボリンジャーバンドを表示
             </label>
 
-            <!-- ★ 追加：一目均衡表 -->
             <label>
               <input type="checkbox" id="toggleIchimoku" checked>
               一目均衡表を表示
