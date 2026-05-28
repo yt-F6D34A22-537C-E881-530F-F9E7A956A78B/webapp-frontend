@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>出来高＆上髭スクリーニング</title>
+  <title>出来高＆上髭スクリーニーニング</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" href="assets/favicon.ico">
   <link rel="apple-touch-icon" href="assets/favicon.ico">
@@ -36,17 +36,40 @@
       <p>JPX銘柄 × Yahoo Finance 日足データ</p>
     </header>
 
+    <!-- ============================
+         条件設定
+    ============================ -->
     <section class="card controls-card">
       <h2>条件設定</h2>
+
       <div class="controls-grid">
+
+        <!-- ★ 検索モード切替 -->
+        <div class="control-group vertical">
+          <label class="mode-label">検索モード</label>
+          <label><input type="radio" name="searchMode" value="ratio" checked> 出来高 × 上髭スクリーニング</label>
+          <label><input type="radio" name="searchMode" value="date"> 値上がり率ランキング（日付指定）</label>
+        </div>
+
+        <!-- ★ 日付プルダウン -->
+        <div class="control-group">
+          <label for="dateSelect">日付</label>
+          <select id="dateSelect" disabled>
+            <option>読み込み中...</option>
+          </select>
+        </div>
+
+        <!-- ★ 従来の検索条件 -->
         <div class="control-group">
           <label for="volumeRatio">出来高倍率以上</label>
           <input id="volumeRatio" type="number" value="5" step="0.1">
         </div>
+
         <div class="control-group">
           <label for="shadowRatio">上髭実体比以上</label>
           <input id="shadowRatio" type="number" value="5" step="0.1">
         </div>
+
       </div>
 
       <div class="buttons-row">
@@ -61,6 +84,9 @@
       </div>
     </section>
 
+    <!-- ============================
+         結果テーブル
+    ============================ -->
     <section class="card table-card">
       <h2>スクリーニング結果</h2>
 
@@ -72,7 +98,7 @@
       <div class="table-wrapper">
         <table id="resultTable">
           <thead>
-            <tr>
+            <tr id="resultHeader">
               <th data-sort-key="コード">コード</th>
               <th data-sort-key="銘柄名">銘柄名</th>
               <th data-sort-key="出来高倍率">出来高倍率</th>
@@ -89,7 +115,9 @@
     </section>
   </div>
 
-  <!-- チャートモーダル -->
+  <!-- ============================
+       チャートモーダル
+  ============================ -->
   <div id="chartModal" class="modal">
     <div class="modal-backdrop"></div>
 
@@ -99,7 +127,7 @@
 
         <div id="chartHeaderNav">
 
-          <!-- ★ 足種切替（追加） -->
+          <!-- 足種切替 -->
           <div class="timeframe-selector">
             <label><input type="radio" name="timeframe" value="1d" checked> 日足</label>
             <label><input type="radio" name="timeframe" value="1wk"> 週足</label>
@@ -154,5 +182,20 @@
       </div>
     </div>
   </div>
+
+  <!-- ★ ラジオボタンで日付プルダウンの有効/無効を切り替え -->
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const radios = document.querySelectorAll('input[name="searchMode"]');
+      const dateSelect = document.getElementById("dateSelect");
+
+      radios.forEach(r => {
+        r.addEventListener("change", () => {
+          dateSelect.disabled = (r.value !== "date");
+        });
+      });
+    });
+  </script>
+
 </body>
 </html>
