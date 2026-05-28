@@ -14,6 +14,32 @@ let timerId = null;
 
 const API_BASE_URL = "https://yfinance-api-fe86988c-d3b4-f1c6-640d.onrender.com";
 
+// ===============================
+// 日付プルダウンのロード
+// ===============================
+async function loadDates() {
+  const sel = document.getElementById("dateSelect");
+  if (!sel) return;
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/dates`);
+    const dates = await res.json();
+
+    sel.innerHTML = "";
+    dates.forEach(d => {
+      const opt = document.createElement("option");
+      opt.value = d;
+      opt.textContent = d;
+      sel.appendChild(opt);
+    });
+  } catch (e) {
+    console.error("日付取得エラー:", e);
+  }
+}
+
+// ページロード時に日付をロード
+window.addEventListener("DOMContentLoaded", loadDates);
+
 startBtn.addEventListener("click", startScreening);
 cancelBtn.addEventListener("click", cancelScreening);
 
@@ -33,17 +59,18 @@ function formatElapsed(sec) {
 // 1. スクリーニング開始
 // ===============================
 async function startScreening() {
+  const mode = document.querySelector('input[name="searchMode"]:checked').value;
+
   const volumeRatio = parseFloat(document.getElementById("volumeRatio").value) || 5;
   const shadowRatio = parseFloat(document.getElementById("shadowRatio").value) || 5;
+  const targetDate = document.getElementById("dateSelect")?.value;
 
   startBtn.disabled = true;
   cancelBtn.disabled = false;
 
-  // 経過時間リセット
   elapsedSeconds = 0;
   elapsedTimeEl.textContent = formatElapsed(0);
 
-  // タイマー開始
   timerId = setInterval(() => {
     elapsedSeconds++;
     elapsedTimeEl.textContent = formatElapsed(elapsedSeconds);
@@ -55,8 +82,16 @@ async function startScreening() {
 
   try {
     const url = new URL("/screening", API_BASE_URL);
-    url.searchParams.set("volume_ratio", volumeRatio);
-    url.searchParams.set("shadow_ratio", shadowRatio);
+
+    // ★ モード別にパラメータを設定
+    if (mode === "ratio") {
+      url.searchParams.set("mode", "ratio");
+      url.searchParams.set("volume_ratio", volumeRatio);
+      url.searchParams.set("shadow_ratio", shadowRatio);
+    } else {
+      url.searchParams.set("mode", "date_ranking");
+      url.searchParams.set("target_date", targetDate);
+    }
 
     const res = await fetch(url.toString(), {
       signal: abortController.signal,
@@ -67,13 +102,12 @@ async function startScreening() {
     const results = await res.json();
     currentResults = results;
 
-    // タイマー停止（表示は残す）
     clearInterval(timerId);
     timerId = null;
 
     progressText.textContent = `完了：${results.length} 件ヒット`;
 
-    showResults(currentResults);
+    showResults(currentResults, mode);
 
     if (window.setScreeningResults) {
       window.setScreeningResults(results);
@@ -116,22 +150,36 @@ function cancelScreening() {
 }
 
 // ===============================
-// 3. 結果表示
+// 3. 結果表示（モード別）
 // ===============================
-function showResults(results) {
+function showResults(results, mode) {
   tbody.innerHTML = "";
 
   results.forEach((r, index) => {
     const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${r.コード}</td>
-      <td>${r.銘柄名}</td>
-      <td>${r.出来高倍率}</td>
-      <td>${r.上髭実体比}</td>
-      <td>${Number(r.出来高).toLocaleString()}</td>
-      <td>${r.上髭}</td>
-      <td>${r.実体}</td>
-    `;
+
+    if (mode === "ratio") {
+      // 従来の表示
+      tr.innerHTML = `
+        <td>${r.コード}</td>
+        <td>${r.銘柄名}</td>
+        <td>${r.出来高倍率}</td>
+        <td>${r.上髭実体比}</td>
+        <td>${Number(r.出来高).toLocaleString()}</td>
+        <td>${r.上髭}</td>
+        <td>${r.実体}</td>
+      `;
+    } else {
+      // 値上がり率ランキング表示
+      tr.innerHTML = `
+        <td>${r.コード}</td>
+        <td>${r.銘柄名}</td>
+        <td>${r.値上がり率}%</td>
+        <td>${r.当日終値}</td>
+        <td>${r.前日終値}</td>
+        <td>${r.日付}</td>
+      `;
+    }
 
     tr.addEventListener("click", () => {
       openChartModal(r.コード, r.銘柄名, index);
@@ -142,7 +190,7 @@ function showResults(results) {
 }
 
 // ===============================
-// 4. 列ヘッダクリックでソート
+// 4. 列ヘッダクリックでソート（従来通り）
 // ===============================
 tableHeaders.forEach(th => {
   const key = th.dataset.sortKey;
@@ -170,6 +218,6 @@ tableHeaders.forEach(th => {
 
     sortState[key] = order === "asc" ? "desc" : "asc";
 
-    showResults(currentResults);
+    showResults(currentResults, document.querySelector('input[name="searchMode"]:checked').value);
   });
 });
