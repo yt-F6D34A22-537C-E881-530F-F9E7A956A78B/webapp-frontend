@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>出来高＆上髭スクリーニーニング</title>
+  <title>出来高＆上髭スクリーニング</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" href="assets/favicon.ico">
   <link rel="apple-touch-icon" href="assets/favicon.ico">
@@ -44,30 +44,38 @@
 
       <div class="controls-grid">
 
-        <!-- ★ 検索モード切替 -->
-        <div class="control-group vertical">
-          <label class="mode-label">検索モード</label>
-          <label><input type="radio" name="searchMode" value="ratio" checked> 出来高 × 上髭スクリーニング</label>
-          <label><input type="radio" name="searchMode" value="date"> 値上がり率ランキング（日付指定）</label>
+        <!-- ★ モード A：出来高 × 上髭 -->
+        <div class="mode-block">
+          <label class="mode-title">
+            <input type="radio" name="searchMode" value="ratio" checked>
+            出来高 × 上髭スクリーニング
+          </label>
+
+          <div class="mode-conditions" id="ratioConditions">
+            <label>出来高倍率以上
+              <input id="volumeRatio" type="number" value="5" step="0.1">
+            </label>
+
+            <label>上髭実体比以上
+              <input id="shadowRatio" type="number" value="5" step="0.1">
+            </label>
+          </div>
         </div>
 
-        <!-- ★ 日付プルダウン -->
-        <div class="control-group">
-          <label for="dateSelect">日付</label>
-          <select id="dateSelect" disabled>
-            <option>読み込み中...</option>
-          </select>
-        </div>
+        <!-- ★ モード B：値上がり率ランキング -->
+        <div class="mode-block">
+          <label class="mode-title">
+            <input type="radio" name="searchMode" value="date">
+            値上がり率ランキング（日付指定）
+          </label>
 
-        <!-- ★ 従来の検索条件 -->
-        <div class="control-group">
-          <label for="volumeRatio">出来高倍率以上</label>
-          <input id="volumeRatio" type="number" value="5" step="0.1">
-        </div>
-
-        <div class="control-group">
-          <label for="shadowRatio">上髭実体比以上</label>
-          <input id="shadowRatio" type="number" value="5" step="0.1">
+          <div class="mode-conditions" id="dateConditions">
+            <label>日付
+              <select id="dateSelect" disabled>
+                <option>読み込み中...</option>
+              </select>
+            </label>
+          </div>
         </div>
 
       </div>
@@ -183,17 +191,27 @@
     </div>
   </div>
 
-  <!-- ★ ラジオボタンで日付プルダウンの有効/無効を切り替え -->
+  <!-- ★ ラジオボタンで検索条件の活性/非活性を切り替え -->
   <script>
     document.addEventListener("DOMContentLoaded", () => {
       const radios = document.querySelectorAll('input[name="searchMode"]');
-      const dateSelect = document.getElementById("dateSelect");
+      const ratioInputs = document.querySelectorAll("#ratioConditions input");
+      const dateInputs = document.querySelectorAll("#dateConditions select");
 
-      radios.forEach(r => {
-        r.addEventListener("change", () => {
-          dateSelect.disabled = (r.value !== "date");
-        });
-      });
+      function updateMode() {
+        const mode = document.querySelector('input[name="searchMode"]:checked').value;
+
+        if (mode === "ratio") {
+          ratioInputs.forEach(i => i.disabled = false);
+          dateInputs.forEach(i => i.disabled = true);
+        } else {
+          ratioInputs.forEach(i => i.disabled = true);
+          dateInputs.forEach(i => i.disabled = false);
+        }
+      }
+
+      radios.forEach(r => r.addEventListener("change", updateMode));
+      updateMode();
     });
   </script>
 
