@@ -14,9 +14,9 @@ let timerId = null;
 
 const API_BASE_URL = "https://yfinance-api-fe86988c-d3b4-f1c6-640d.onrender.com";
 
-// ===============================
-// 日付プルダウンのロード
-// ===============================
+/* ===============================
+   日付プルダウンのロード
+=============================== */
 async function loadDates() {
   const sel = document.getElementById("dateSelect");
   if (!sel) return;
@@ -37,33 +37,60 @@ async function loadDates() {
   }
 }
 
-// ページロード時に日付をロード
 window.addEventListener("DOMContentLoaded", loadDates);
 
 startBtn.addEventListener("click", startScreening);
 cancelBtn.addEventListener("click", cancelScreening);
 
-// ===============================
-// 時間フォーマット
-// ===============================
+/* ===============================
+   時間フォーマット
+=============================== */
 function formatElapsed(sec) {
-  if (sec < 60) {
-    return `スクリーニング時間：${sec}秒`;
-  }
+  if (sec < 60) return `スクリーニング時間：${sec}秒`;
   const m = Math.floor(sec / 60);
   const s = sec % 60;
   return `スクリーニング時間：${m}分${s}秒`;
 }
 
-// ===============================
-// 1. スクリーニング開始
-// ===============================
+/* ===============================
+   テーブルヘッダ切り替え
+=============================== */
+function updateTableHeader(mode) {
+  const header = document.getElementById("resultHeader");
+
+  if (mode === "ratio") {
+    header.innerHTML = `
+      <th data-sort-key="コード">コード</th>
+      <th data-sort-key="銘柄名">銘柄名</th>
+      <th data-sort-key="出来高倍率">出来高倍率</th>
+      <th data-sort-key="上髭実体比">上髭実体比</th>
+      <th data-sort-key="出来高">出来高</th>
+      <th data-sort-key="上髭">上髭</th>
+      <th data-sort-key="実体">実体</th>
+    `;
+  } else {
+    header.innerHTML = `
+      <th data-sort-key="コード">コード</th>
+      <th data-sort-key="銘柄名">銘柄名</th>
+      <th data-sort-key="値上がり率">値上がり率</th>
+      <th data-sort-key="当日終値">当日終値</th>
+      <th data-sort-key="前日終値">前日終値</th>
+      <th data-sort-key="日付">日付</th>
+    `;
+  }
+}
+
+/* ===============================
+   スクリーニング開始
+=============================== */
 async function startScreening() {
   const mode = document.querySelector('input[name="searchMode"]:checked').value;
 
-  const volumeRatio = parseFloat(document.getElementById("volumeRatio").value) || 5;
-  const shadowRatio = parseFloat(document.getElementById("shadowRatio").value) || 5;
+  const volumeRatio = parseFloat(document.getElementById("volumeRatio")?.value) || 5;
+  const shadowRatio = parseFloat(document.getElementById("shadowRatio")?.value) || 5;
   const targetDate = document.getElementById("dateSelect")?.value;
+
+  updateTableHeader(mode);
 
   startBtn.disabled = true;
   cancelBtn.disabled = false;
@@ -83,7 +110,6 @@ async function startScreening() {
   try {
     const url = new URL("/screening", API_BASE_URL);
 
-    // ★ モード別にパラメータを設定
     if (mode === "ratio") {
       url.searchParams.set("mode", "ratio");
       url.searchParams.set("volume_ratio", volumeRatio);
@@ -133,9 +159,9 @@ async function startScreening() {
   }
 }
 
-// ===============================
-// 2. キャンセル
-// ===============================
+/* ===============================
+   キャンセル
+=============================== */
 function cancelScreening() {
   if (abortController) {
     abortController.abort();
@@ -149,9 +175,9 @@ function cancelScreening() {
   }
 }
 
-// ===============================
-// 3. 結果表示（モード別）
-// ===============================
+/* ===============================
+   結果表示（モード別）
+=============================== */
 function showResults(results, mode) {
   tbody.innerHTML = "";
 
@@ -159,7 +185,6 @@ function showResults(results, mode) {
     const tr = document.createElement("tr");
 
     if (mode === "ratio") {
-      // 従来の表示
       tr.innerHTML = `
         <td>${r.コード}</td>
         <td>${r.銘柄名}</td>
@@ -170,7 +195,6 @@ function showResults(results, mode) {
         <td>${r.実体}</td>
       `;
     } else {
-      // 値上がり率ランキング表示
       tr.innerHTML = `
         <td>${r.コード}</td>
         <td>${r.銘柄名}</td>
@@ -189,9 +213,9 @@ function showResults(results, mode) {
   });
 }
 
-// ===============================
-// 4. 列ヘッダクリックでソート（従来通り）
-// ===============================
+/* ===============================
+   列ヘッダクリックでソート
+=============================== */
 tableHeaders.forEach(th => {
   const key = th.dataset.sortKey;
   if (!key) return;
@@ -218,6 +242,7 @@ tableHeaders.forEach(th => {
 
     sortState[key] = order === "asc" ? "desc" : "asc";
 
-    showResults(currentResults, document.querySelector('input[name="searchMode"]:checked').value);
+    const mode = document.querySelector('input[name="searchMode"]:checked').value;
+    showResults(currentResults, mode);
   });
 });
