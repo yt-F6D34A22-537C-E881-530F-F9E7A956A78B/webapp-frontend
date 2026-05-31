@@ -202,7 +202,7 @@ function showResults(results, mode) {
           <td>${r.前日終値}</td>
         `;
 
-    /* ★ 行クリックイベント（必須） */
+    // 行クリック → モーダル表示
     tr.addEventListener("click", () => {
       openChartModal(r.コード, r.銘柄名, index);
     });
@@ -210,8 +210,10 @@ function showResults(results, mode) {
     tbody.appendChild(tr);
   });
 
-  /* ★★★ チャート側が参照する配列を更新（必須） ★★★ */
-  window.chartList = results;
+  // ★ chart-main.js に結果を渡す（ここが今回の核心）
+  if (typeof window.setScreeningResults === "function") {
+    window.setScreeningResults(results);
+  }
 }
 
 /* ソート */
