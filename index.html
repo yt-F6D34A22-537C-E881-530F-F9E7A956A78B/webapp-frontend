@@ -101,25 +101,27 @@
         <p>サーバーへリクエスト中…</p>
       </div>
 
-      <!-- ★ 2 層構造：外側が overflow-x、内側が sticky 対応 -->
+      <!-- ★★★ 3 層構造（sticky 完全対応） ★★★ -->
       <div class="table-scroll-outer">
-        <div class="table-scroll-inner">
+        <div class="table-scroll-middle">
+          <div class="table-scroll-inner">
 
-          <table id="resultTable">
-            <thead>
-              <tr id="resultHeader">
-                <th data-sort-key="コード">コード</th>
-                <th data-sort-key="銘柄名">銘柄名</th>
-                <th data-sort-key="出来高倍率">出来高倍率</th>
-                <th data-sort-key="上髭実体比">上髭実体比</th>
-                <th data-sort-key="出来高">出来高</th>
-                <th data-sort-key="上髭">上髭</th>
-                <th data-sort-key="実体">実体</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
+            <table id="resultTable">
+              <thead>
+                <tr id="resultHeader">
+                  <th data-sort-key="コード">コード</th>
+                  <th data-sort-key="銘柄名">銘柄名</th>
+                  <th data-sort-key="出来高倍率">出来高倍率</th>
+                  <th data-sort-key="上髭実体比">上髭実体比</th>
+                  <th data-sort-key="出来高">出来高</th>
+                  <th data-sort-key="上髭">上髭</th>
+                  <th data-sort-key="実体">実体</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
 
+          </div>
         </div>
       </div>
 
@@ -129,7 +131,7 @@
 
   <!-- ============================
        チャートモーダル
-  ============================ -->
+    ============================ -->
   <div id="chartModal" class="modal">
     <div class="modal-backdrop"></div>
 
