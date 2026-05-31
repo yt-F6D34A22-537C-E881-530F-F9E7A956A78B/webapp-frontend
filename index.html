@@ -18,11 +18,9 @@
   <!-- チャート関連（依存順に読み込む） -->
   <script defer src="js/chart-indicators.js"></script>
   <script defer src="js/chart-data.js"></script>
-
   <script defer src="js/chart-price.js"></script>
   <script defer src="js/chart-rci.js"></script>
   <script defer src="js/chart-macd.js"></script>
-
   <script defer src="js/chart-sync.js"></script>
 
   <!-- メイン制御 -->
@@ -103,23 +101,29 @@
         <p>サーバーへリクエスト中…</p>
       </div>
 
-      <div class="table-wrapper">
-        <table id="resultTable">
-          <thead>
-            <tr id="resultHeader">
-              <th data-sort-key="コード">コード</th>
-              <th data-sort-key="銘柄名">銘柄名</th>
-              <th data-sort-key="出来高倍率">出来高倍率</th>
-              <th data-sort-key="上髭実体比">上髭実体比</th>
-              <th data-sort-key="出来高">出来高</th>
-              <th data-sort-key="上髭">上髭</th>
-              <th data-sort-key="実体">実体</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-        <p class="hint">行をタップ／クリックするとチャートを表示します。</p>
+      <!-- ★ 2 層構造：外側が overflow-x、内側が sticky 対応 -->
+      <div class="table-scroll-outer">
+        <div class="table-scroll-inner">
+
+          <table id="resultTable">
+            <thead>
+              <tr id="resultHeader">
+                <th data-sort-key="コード">コード</th>
+                <th data-sort-key="銘柄名">銘柄名</th>
+                <th data-sort-key="出来高倍率">出来高倍率</th>
+                <th data-sort-key="上髭実体比">上髭実体比</th>
+                <th data-sort-key="出来高">出来高</th>
+                <th data-sort-key="上髭">上髭</th>
+                <th data-sort-key="実体">実体</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+
+        </div>
       </div>
+
+      <p class="hint">行をタップ／クリックするとチャートを表示します。</p>
     </section>
   </div>
 
