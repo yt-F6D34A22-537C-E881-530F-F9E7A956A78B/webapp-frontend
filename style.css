@@ -152,47 +152,75 @@ button:disabled {
 }
 
 /* ------------------------------
-   テーブル（3 層構造）
+   テーブル（固定ヘッダ＋本体）
 ------------------------------ */
 .table-card {
   position: relative;
 }
 
-/* ★ 外側：横スクロール担当 */
+/* ★ 固定ヘッダ専用コンテナ */
+.table-header-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: #f3f4f6;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* 固定ヘッダ用テーブル */
+.table-header-sticky table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.table-header-sticky th {
+  padding: 10px;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 14px;
+  font-weight: 600;
+  background: #f3f4f6;
+}
+
+/* ★ 本体テーブル（横スクロール） */
 .table-scroll-outer {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
 }
 
-/* ★ 中間：sticky が効くための透明レイヤー */
+/* 3 層構造は維持する場合は inner だけ使用してもよいが、
+   固定ヘッダ方式では最低限で十分 */
 .table-scroll-middle {
   overflow: visible;
 }
 
-/* ★ 内側：テーブル本体 */
 .table-scroll-inner {
   overflow: visible;
   min-width: max-content;
 }
 
-/* ------------------------------
-   sticky ヘッダ
------------------------------- */
-#resultTable thead th {
-  position: sticky;
-  top: 0;
-  background: #f3f4f6;
-  z-index: 20;
-  transition: box-shadow 0.25s ease, background-color 0.25s ease;
+/* 本体テーブル */
+#resultTable {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
 }
 
-#resultTable thead.sticky th {
-  background: #eef0f3;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
-  z-index: 20;
+#resultTable th,
+#resultTable td {
+  padding: 10px;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 14px;
 }
 
-/* 列幅調整 */
+/* hover 行 */
+#resultTable tr:hover {
+  background: #f0f9ff;
+  cursor: pointer;
+}
+
+/* 列幅調整（固定ヘッダと本体を揃える） */
+.table-header-sticky th:nth-child(1),
 #resultTable th:nth-child(1),
 #resultTable td:nth-child(1) {
   width: 35px;
@@ -200,6 +228,7 @@ button:disabled {
   text-align: right;
 }
 
+.table-header-sticky th:nth-child(2),
 #resultTable th:nth-child(2),
 #resultTable td:nth-child(2) {
   min-width: 260px;
@@ -208,27 +237,12 @@ button:disabled {
   line-height: 1.4;
 }
 
+.table-header-sticky th:not(:nth-child(1)):not(:nth-child(2)),
 #resultTable th:not(:nth-child(1)):not(:nth-child(2)),
 #resultTable td:not(:nth-child(1)):not(:nth-child(2)) {
   width: 90px;
   text-align: right;
   white-space: nowrap;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-th, td {
-  padding: 10px;
-  border-bottom: 1px solid #e5e7eb;
-  font-size: 14px;
-}
-
-tr:hover {
-  background: #f0f9ff;
-  cursor: pointer;
 }
 
 /* ------------------------------
