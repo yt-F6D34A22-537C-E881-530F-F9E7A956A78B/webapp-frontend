@@ -7,19 +7,28 @@
   <link rel="stylesheet" href="style.css">
 
   <script defer src="screening.js"></script>
+  <script defer src="chart-modal.js"></script>
 </head>
 
 <body>
   <div class="app-container">
+
+    <!-- =========================
+         ヘッダー
+    ========================== -->
     <header class="app-header">
       <h1>出来高＆上髭スクリーニング</h1>
     </header>
 
-    <!-- 条件設定 -->
+    <!-- =========================
+         条件設定カード
+    ========================== -->
     <section class="card controls-card">
       <h2>条件設定</h2>
 
       <div class="controls-grid">
+
+        <!-- 出来高 × 上髭 -->
         <div class="mode-block">
           <label class="mode-title">
             <input type="radio" name="searchMode" value="ratio" checked>
@@ -37,6 +46,7 @@
           </div>
         </div>
 
+        <!-- 日付指定ランキング -->
         <div class="mode-block">
           <label class="mode-title">
             <input type="radio" name="searchMode" value="date">
@@ -51,6 +61,7 @@
             </label>
           </div>
         </div>
+
       </div>
 
       <div class="buttons-row">
@@ -64,10 +75,13 @@
       </div>
     </section>
 
-    <!-- 結果テーブル -->
+    <!-- =========================
+         結果テーブル
+    ========================== -->
     <section class="card table-card">
       <h2>スクリーニング結果</h2>
 
+      <!-- ローディング -->
       <div id="loadingOverlay" class="loading-overlay hidden">
         <div class="spinner"></div>
         <p>サーバーへリクエスト中…</p>
@@ -80,7 +94,7 @@
         </table>
       </div>
 
-      <!-- ★ データ本体（横スクロール） -->
+      <!-- ★ 本体テーブル（横スクロール） -->
       <div class="table-scroll-outer">
         <table id="resultTable">
           <thead id="resultHeaderBody" aria-hidden="true"></thead>
@@ -90,6 +104,37 @@
 
       <p class="hint">行をクリックするとチャートを表示します。</p>
     </section>
+
+    <!-- =========================
+         チャートモーダル
+    ========================== -->
+    <div id="chartModal" class="modal">
+      <div class="modal-backdrop"></div>
+
+      <div class="modal-content">
+
+        <div class="modal-header">
+          <div id="chartHeaderLeft"></div>
+          <div id="chartHeaderNav"></div>
+          <button id="closeChartBtn" class="btn ghost">✕</button>
+        </div>
+
+        <div class="modal-body">
+
+          <div id="chartContainer"></div>
+
+          <div id="rciContainer"></div>
+          <div id="macdContainer"></div>
+
+          <div id="chartLoadingOverlay">
+            <div class="spinner"></div>
+            <p>読み込み中…</p>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
   </div>
 </body>
 </html>
