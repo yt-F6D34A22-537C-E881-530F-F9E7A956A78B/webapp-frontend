@@ -155,15 +155,22 @@ button:disabled {
 }
 
 /* ------------------------------
-   テーブル
+   テーブル（2 層構造対応）
 ------------------------------ */
 .table-card {
   position: relative;
 }
 
-.table-wrapper {
+/* ★ 外側：横スクロール担当（overflow-x のみ） */
+.table-scroll-outer {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+}
+
+/* ★ 内側：sticky が確実に効く領域（overflow: visible） */
+.table-scroll-inner {
+  overflow: visible;
+  min-width: max-content;
 }
 
 /* ------------------------------
