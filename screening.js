@@ -1,5 +1,5 @@
 /* ============================================================
-   要素取得（DOM アクセスを最小化）
+   要素取得
 ============================================================ */
 const startBtn = document.getElementById("startBtn");
 const cancelBtn = document.getElementById("cancelBtn");
@@ -18,7 +18,42 @@ let timerId = null;
 const API_BASE_URL = "https://yfinance-api-fe86988c-d3b4-f1c6-640d.onrender.com";
 
 /* ============================================================
-   日付プルダウンのロード
+   DOM 完全構築後に初期化（最重要）
+============================================================ */
+window.onload = () => {
+  initSearchMode();
+  loadDates();
+};
+
+/* ============================================================
+   検索モード切替（安定版）
+============================================================ */
+function initSearchMode() {
+  const radios = document.querySelectorAll('input[name="searchMode"]');
+  const ratioInputs = document.querySelectorAll("#ratioConditions input");
+  const dateInputs = document.querySelectorAll("#dateConditions select");
+
+  function updateMode() {
+    const selected = document.querySelector('input[name="searchMode"]:checked');
+    if (!selected) return;
+
+    const mode = selected.value;
+
+    if (mode === "ratio") {
+      ratioInputs.forEach(i => i.disabled = false);
+      dateInputs.forEach(i => i.disabled = true);
+    } else {
+      ratioInputs.forEach(i => i.disabled = true);
+      dateInputs.forEach(i => i.disabled = false);
+    }
+  }
+
+  radios.forEach(r => r.addEventListener("change", updateMode));
+  updateMode();
+}
+
+/* ============================================================
+   日付プルダウンのロード（安定版）
 ============================================================ */
 async function loadDates() {
   if (!dateSelect) return;
@@ -52,8 +87,6 @@ async function loadDates() {
     console.error("日付取得エラー:", e);
   }
 }
-
-window.addEventListener("DOMContentLoaded", loadDates);
 
 /* ============================================================
    sticky ヘッダ（3 層構造対応）
@@ -101,17 +134,24 @@ function updateTableHeader(mode, targetDateLabel = "") {
 }
 
 /* ============================================================
-   スクリーニング開始
+   スクリーニング開始（完全安定版）
 ============================================================ */
 async function startScreening() {
   const mode = document.querySelector('input[name="searchMode"]:checked').value;
 
   const volumeRatio = parseFloat(document.getElementById("volumeRatio")?.value) || 5;
   const shadowRatio = parseFloat(document.getElementById("shadowRatio")?.value) || 5;
-  const targetDate = dateSelect?.value;
+  const targetDate = dateSelect?.value || null;
 
+  /* ★ targetDate が null の場合は即終了（最適化版の致命的バグ修正） */
+  if (mode === "date" && !targetDate) {
+    alert("日付が選択されていません。");
+    return;
+  }
+
+  /* ★ targetDateLabel の安全生成 */
   let targetDateLabel = "";
-  if (mode === "date") {
+  if (mode === "date" && targetDate) {
     const y = targetDate.substring(0, 4);
     const m = targetDate.substring(4, 6);
     const d = targetDate.substring(6, 8);
@@ -121,6 +161,7 @@ async function startScreening() {
 
   updateTableHeader(mode, targetDateLabel);
 
+  /* UI 更新 */
   startBtn.disabled = true;
   cancelBtn.disabled = false;
 
@@ -265,3 +306,9 @@ document.addEventListener("click", e => {
   const mode = document.querySelector('input[name="searchMode"]:checked').value;
   showResults(currentResults, mode);
 });
+
+/* ============================================================
+   イベント登録
+============================================================ */
+startBtn.addEventListener("click", startScreening);
+cancelBtn.addEventListener("click", cancelScreening);
