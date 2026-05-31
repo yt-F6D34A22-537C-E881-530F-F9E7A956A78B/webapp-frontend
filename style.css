@@ -166,7 +166,9 @@ button:disabled {
   -webkit-overflow-scrolling: touch;
 }
 
-/* ★ テーブルヘッダ固定（画面上部） */
+/* ------------------------------
+   ★ ヘッダ固定（画面上部）
+------------------------------ */
 #resultTable thead th {
   position: sticky;
   top: 0;
@@ -175,10 +177,10 @@ button:disabled {
   transition: box-shadow 0.25s ease, background-color 0.25s ease;
 }
 
-/* ★ アニメーション用クラス（JS で付け外し） */
+/* ★ sticky 状態のアニメーション（JS が .sticky を付与） */
 #resultTable thead.sticky th {
-  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
   background: #eef0f3;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
 }
 
 /* コード列（1列目） */
