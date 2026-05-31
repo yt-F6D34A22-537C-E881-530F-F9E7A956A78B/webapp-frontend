@@ -3,7 +3,6 @@ const cancelBtn = document.getElementById("cancelBtn");
 const progressText = document.getElementById("progressText");
 const elapsedTimeEl = document.getElementById("elapsedTime");
 const tbody = document.querySelector("#resultTable tbody");
-const tableHeaders = document.querySelectorAll("#resultTable thead th");
 
 let abortController = null;
 let currentResults = [];
@@ -67,7 +66,7 @@ function formatElapsed(sec) {
 /* ===============================
    テーブルヘッダ切り替え
 =============================== */
-function updateTableHeader(mode) {
+function updateTableHeader(mode, targetDateLabel = "") {
   const header = document.getElementById("resultHeader");
 
   if (mode === "ratio") {
@@ -85,9 +84,8 @@ function updateTableHeader(mode) {
       <th data-sort-key="コード">コード</th>
       <th data-sort-key="銘柄名">銘柄名</th>
       <th data-sort-key="値上がり率">値上がり率</th>
-      <th data-sort-key="当日終値">当日終値</th>
+      <th data-sort-key="当日終値">${targetDateLabel}終値</th>
       <th data-sort-key="前日終値">前日終値</th>
-      <th data-sort-key="日付">日付</th>
     `;
   }
 }
@@ -102,7 +100,19 @@ async function startScreening() {
   const shadowRatio = parseFloat(document.getElementById("shadowRatio")?.value) || 5;
   const targetDate = document.getElementById("dateSelect")?.value;
 
-  updateTableHeader(mode);
+  // ★ 日付ラベル生成（YYYY/MM/DD（曜日））
+  let targetDateLabel = "";
+  if (mode === "date") {
+    const y = targetDate.substring(0, 4);
+    const m = targetDate.substring(4, 6);
+    const d = targetDate.substring(6, 8);
+    const dateObj = new Date(`${y}-${m}-${d}`);
+    const weekdays = ["日", "月", "火", "水", "木", "金", "土"];
+    const w = weekdays[dateObj.getDay()];
+    targetDateLabel = `${y}/${m}/${d}（${w}）`;
+  }
+
+  updateTableHeader(mode, targetDateLabel);
 
   startBtn.disabled = true;
   cancelBtn.disabled = false;
@@ -213,7 +223,6 @@ function showResults(results, mode) {
         <td>${r.値上がり率}%</td>
         <td>${r.当日終値}</td>
         <td>${r.前日終値}</td>
-        <td>${r.日付}</td>
       `;
     }
 
@@ -228,33 +237,29 @@ function showResults(results, mode) {
 /* ===============================
    列ヘッダクリックでソート
 =============================== */
-tableHeaders.forEach(th => {
+document.addEventListener("click", e => {
+  const th = e.target.closest("th[data-sort-key]");
+  if (!th) return;
+
   const key = th.dataset.sortKey;
   if (!key) return;
 
-  sortState[key] = "asc";
+  const order = sortState[key] === "asc" ? "desc" : "asc";
+  sortState[key] = order;
 
-  th.style.cursor = "pointer";
+  currentResults.sort((a, b) => {
+    const valA = a[key];
+    const valB = b[key];
 
-  th.addEventListener("click", () => {
-    const order = sortState[key];
+    if (!isNaN(valA) && !isNaN(valB)) {
+      return order === "asc" ? valA - valB : valB - valA;
+    }
 
-    currentResults.sort((a, b) => {
-      const valA = a[key];
-      const valB = b[key];
-
-      if (!isNaN(valA) && !isNaN(valB)) {
-        return order === "asc" ? valA - valB : valB - valA;
-      }
-
-      return order === "asc"
-        ? String(valA).localeCompare(String(valB))
-        : String(valB).localeCompare(String(valA));
-    });
-
-    sortState[key] = order === "asc" ? "desc" : "asc";
-
-    const mode = document.querySelector('input[name="searchMode"]:checked').value;
-    showResults(currentResults, mode);
+    return order === "asc"
+      ? String(valA).localeCompare(String(valB))
+      : String(valB).localeCompare(String(valA));
   });
+
+  const mode = document.querySelector('input[name="searchMode"]:checked').value;
+  showResults(currentResults, mode);
 });
