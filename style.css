@@ -35,7 +35,7 @@ body {
 }
 
 /* ------------------------------
-   条件設定（横並び・モダン）
+   条件設定（横並び）
 ------------------------------ */
 .controls-grid {
   display: flex;
@@ -44,9 +44,6 @@ body {
   padding-left: 16px;
 }
 
-/* ------------------------------
-   ★ 検索モードブロック
------------------------------- */
 .mode-block {
   display: flex;
   flex-direction: column;
@@ -145,7 +142,7 @@ button:disabled {
 }
 
 /* ------------------------------
-   ★ 経過時間表示
+   経過時間
 ------------------------------ */
 .elapsed-time {
   font-size: 14px;
@@ -155,7 +152,7 @@ button:disabled {
 }
 
 /* ------------------------------
-   テーブル（2 層構造対応）
+   テーブル（3 層構造）
 ------------------------------ */
 .table-card {
   position: relative;
@@ -167,14 +164,19 @@ button:disabled {
   -webkit-overflow-scrolling: touch;
 }
 
-/* ★ 内側：sticky が確実に効く領域 */
+/* ★ 中間：sticky が効くための透明レイヤー */
+.table-scroll-middle {
+  overflow: visible;
+}
+
+/* ★ 内側：テーブル本体 */
 .table-scroll-inner {
   overflow: visible;
   min-width: max-content;
 }
 
 /* ------------------------------
-   ★ ヘッダ固定（画面上部）
+   sticky ヘッダ
 ------------------------------ */
 #resultTable thead th {
   position: sticky;
@@ -184,14 +186,13 @@ button:disabled {
   transition: box-shadow 0.25s ease, background-color 0.25s ease;
 }
 
-/* ★ sticky 状態のアニメーション */
 #resultTable thead.sticky th {
   background: #eef0f3;
   box-shadow: 0 2px 6px rgba(0,0,0,0.25);
   z-index: 20;
 }
 
-/* コード列（1列目） */
+/* 列幅調整 */
 #resultTable th:nth-child(1),
 #resultTable td:nth-child(1) {
   width: 35px;
@@ -199,7 +200,6 @@ button:disabled {
   text-align: right;
 }
 
-/* 銘柄名列（2列目） */
 #resultTable th:nth-child(2),
 #resultTable td:nth-child(2) {
   min-width: 260px;
@@ -208,7 +208,6 @@ button:disabled {
   line-height: 1.4;
 }
 
-/* 数値列（3列目以降） */
 #resultTable th:not(:nth-child(1)):not(:nth-child(2)),
 #resultTable td:not(:nth-child(1)):not(:nth-child(2)) {
   width: 90px;
@@ -233,7 +232,7 @@ tr:hover {
 }
 
 /* ------------------------------
-   ★ ローディングオーバーレイ（最前面）
+   ローディングオーバーレイ（最前面）
 ------------------------------ */
 .loading-overlay {
   position: absolute;
@@ -243,7 +242,7 @@ tr:hover {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  z-index: 9999; /* ← ヘッダより前面に */
+  z-index: 9999;
   color: white;
   font-size: 1.2rem;
   border-radius: inherit;
@@ -254,7 +253,7 @@ tr:hover {
 }
 
 /* ------------------------------
-   モーダル（チャート）
+   モーダル
 ------------------------------ */
 .modal {
   position: fixed;
@@ -314,7 +313,7 @@ tr:hover {
 }
 
 /* ------------------------------
-   ★ 足種切替（1D / 1W / 1M）
+   足種切替
 ------------------------------ */
 .timeframe-selector {
   display: flex;
@@ -340,7 +339,7 @@ tr:hover {
 }
 
 /* ------------------------------
-   モーダル本体：3チャート縦並び
+   モーダル本体
 ------------------------------ */
 .modal .modal-body {
   flex: 1;
@@ -364,7 +363,7 @@ tr:hover {
 }
 
 /* ------------------------------
-   ★ チャート設定（歯車アイコン＆子モーダル）
+   チャート設定
 ------------------------------ */
 .chart-settings-btn {
   position: absolute;
@@ -473,7 +472,7 @@ tr:hover {
 }
 
 /* ------------------------------
-   ★ チャート凡例（TradingView風）
+   チャート凡例
 ------------------------------ */
 .chart-legend {
   position: absolute;
