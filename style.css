@@ -152,7 +152,7 @@ button:disabled {
 }
 
 /* ------------------------------
-   テーブル（固定ヘッダ＋本体）
+   テーブル（固定ヘッダ方式）
 ------------------------------ */
 .table-card {
   position: relative;
@@ -188,22 +188,16 @@ button:disabled {
   -webkit-overflow-scrolling: touch;
 }
 
-/* 3 層構造は維持する場合は inner だけ使用してもよいが、
-   固定ヘッダ方式では最低限で十分 */
-.table-scroll-middle {
-  overflow: visible;
-}
-
-.table-scroll-inner {
-  overflow: visible;
-  min-width: max-content;
-}
-
 /* 本体テーブル */
 #resultTable {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
+}
+
+/* 本体側 thead は完全非表示（ヘッダが2つ出る問題の解決） */
+#resultHeaderBody {
+  display: none;
 }
 
 #resultTable th,
@@ -213,13 +207,12 @@ button:disabled {
   font-size: 14px;
 }
 
-/* hover 行 */
 #resultTable tr:hover {
   background: #f0f9ff;
   cursor: pointer;
 }
 
-/* 列幅調整（固定ヘッダと本体を揃える） */
+/* 列幅調整（固定ヘッダと本体を完全同期） */
 .table-header-sticky th:nth-child(1),
 #resultTable th:nth-child(1),
 #resultTable td:nth-child(1) {
