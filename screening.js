@@ -1,6 +1,3 @@
-/* ============================================================
-   要素取得
-============================================================ */
 const startBtn = document.getElementById("startBtn");
 const cancelBtn = document.getElementById("cancelBtn");
 const progressText = document.getElementById("progressText");
@@ -17,27 +14,20 @@ let timerId = null;
 
 const API_BASE_URL = "https://yfinance-api-fe86988c-d3b4-f1c6-640d.onrender.com";
 
-/* ============================================================
-   DOM 完全構築後に初期化（最重要）
-============================================================ */
+/* DOM 完全構築後 */
 window.onload = () => {
   initSearchMode();
   loadDates();
 };
 
-/* ============================================================
-   検索モード切替（安定版）
-============================================================ */
+/* モード切替 */
 function initSearchMode() {
   const radios = document.querySelectorAll('input[name="searchMode"]');
   const ratioInputs = document.querySelectorAll("#ratioConditions input");
   const dateInputs = document.querySelectorAll("#dateConditions select");
 
   function updateMode() {
-    const selected = document.querySelector('input[name="searchMode"]:checked');
-    if (!selected) return;
-
-    const mode = selected.value;
+    const mode = document.querySelector('input[name="searchMode"]:checked').value;
 
     if (mode === "ratio") {
       ratioInputs.forEach(i => i.disabled = false);
@@ -52,125 +42,97 @@ function initSearchMode() {
   updateMode();
 }
 
-/* ============================================================
-   日付プルダウンのロード（安定版）
-============================================================ */
+/* 日付ロード */
 async function loadDates() {
-  if (!dateSelect) return;
-
   try {
     const res = await fetch(`${API_BASE_URL}/dates`);
     const dates = await res.json();
 
-    const weekdays = ["日", "月", "火", "水", "木", "金", "土"];
     dateSelect.innerHTML = "";
-
-    const fragment = document.createDocumentFragment();
+    const weekdays = ["日","月","火","水","木","金","土"];
 
     dates.forEach(d => {
-      const y = d.substring(0, 4);
-      const m = d.substring(4, 6);
-      const day = d.substring(6, 8);
-
-      const dateObj = new Date(`${y}-${m}-${day}`);
-      const w = weekdays[dateObj.getDay()];
-      const label = `${y}/${m}/${day}（${w}）`;
+      const y = d.substring(0,4);
+      const m = d.substring(4,6);
+      const day = d.substring(6,8);
+      const w = weekdays[new Date(`${y}-${m}-${day}`).getDay()];
 
       const opt = document.createElement("option");
       opt.value = d;
-      opt.textContent = label;
-      fragment.appendChild(opt);
+      opt.textContent = `${y}/${m}/${day}（${w}）`;
+      dateSelect.appendChild(opt);
     });
-
-    dateSelect.appendChild(fragment);
   } catch (e) {
     console.error("日付取得エラー:", e);
   }
 }
 
-/* ============================================================
-   sticky ヘッダ（3 層構造対応）
-============================================================ */
-document.addEventListener("scroll", () => {
-  const thead = document.querySelector("#resultTable thead");
-  if (!thead) return;
+/* ヘッダ更新（固定ヘッダ＋本体ヘッダ） */
+function updateTableHeader(mode, label = "") {
+  const sticky = document.getElementById("resultHeaderSticky");
+  const body = document.getElementById("resultHeaderBody");
 
-  const rect = thead.getBoundingClientRect();
-  thead.classList.toggle("sticky", rect.top <= 0);
-});
+  const ratio = `
+    <tr>
+      <th data-sort-key="コード">コード</th>
+      <th data-sort-key="銘柄名">銘柄名</th>
+      <th data-sort-key="出来高倍率">出来高倍率</th>
+      <th data-sort-key="上髭実体比">上髭実体比</th>
+      <th data-sort-key="出来高">出来高</th>
+      <th data-sort-key="上髭">上髭</th>
+      <th data-sort-key="実体">実体</th>
+    </tr>
+  `;
 
-/* ============================================================
-   時間フォーマット
-============================================================ */
-function formatElapsed(sec) {
-  if (sec < 60) return `スクリーニング時間：${sec}秒`;
-  return `スクリーニング時間：${Math.floor(sec / 60)}分${sec % 60}秒`;
+  const date = `
+    <tr>
+      <th data-sort-key="コード">コード</th>
+      <th data-sort-key="銘柄名">銘柄名</th>
+      <th data-sort-key="値上がり率">値上がり率</th>
+      <th data-sort-key="当日終値">${label}終値</th>
+      <th data-sort-key="前日終値">前日終値</th>
+    </tr>
+  `;
+
+  const html = mode === "ratio" ? ratio : date;
+
+  sticky.innerHTML = html;
+  body.innerHTML = html;
 }
 
-/* ============================================================
-   テーブルヘッダ切り替え
-============================================================ */
-function updateTableHeader(mode, targetDateLabel = "") {
-  const header = document.getElementById("resultHeader");
-
-  header.innerHTML =
-    mode === "ratio"
-      ? `
-        <th data-sort-key="コード">コード</th>
-        <th data-sort-key="銘柄名">銘柄名</th>
-        <th data-sort-key="出来高倍率">出来高倍率</th>
-        <th data-sort-key="上髭実体比">上髭実体比</th>
-        <th data-sort-key="出来高">出来高</th>
-        <th data-sort-key="上髭">上髭</th>
-        <th data-sort-key="実体">実体</th>
-      `
-      : `
-        <th data-sort-key="コード">コード</th>
-        <th data-sort-key="銘柄名">銘柄名</th>
-        <th data-sort-key="値上がり率">値上がり率</th>
-        <th data-sort-key="当日終値">${targetDateLabel}終値</th>
-        <th data-sort-key="前日終値">前日終値</th>
-      `;
-}
-
-/* ============================================================
-   スクリーニング開始（完全安定版）
-============================================================ */
+/* スクリーニング開始 */
 async function startScreening() {
   const mode = document.querySelector('input[name="searchMode"]:checked').value;
 
-  const volumeRatio = parseFloat(document.getElementById("volumeRatio")?.value) || 5;
-  const shadowRatio = parseFloat(document.getElementById("shadowRatio")?.value) || 5;
-  const targetDate = dateSelect?.value || null;
+  const volumeRatio = parseFloat(document.getElementById("volumeRatio").value);
+  const shadowRatio = parseFloat(document.getElementById("shadowRatio").value);
+  const targetDate = dateSelect.value;
 
-  /* ★ targetDate が null の場合は即終了（最適化版の致命的バグ修正） */
   if (mode === "date" && !targetDate) {
     alert("日付が選択されていません。");
     return;
   }
 
-  /* ★ targetDateLabel の安全生成 */
-  let targetDateLabel = "";
-  if (mode === "date" && targetDate) {
-    const y = targetDate.substring(0, 4);
-    const m = targetDate.substring(4, 6);
-    const d = targetDate.substring(6, 8);
-    const w = ["日", "月", "火", "水", "木", "金", "土"][new Date(`${y}-${m}-${d}`).getDay()];
-    targetDateLabel = `${y}/${m}/${d}（${w}）`;
+  let label = "";
+  if (mode === "date") {
+    const y = targetDate.substring(0,4);
+    const m = targetDate.substring(4,6);
+    const d = targetDate.substring(6,8);
+    const w = ["日","月","火","水","木","金","土"][new Date(`${y}-${m}-${d}`).getDay()];
+    label = `${y}/${m}/${d}（${w}）`;
   }
 
-  updateTableHeader(mode, targetDateLabel);
+  updateTableHeader(mode, label);
 
-  /* UI 更新 */
   startBtn.disabled = true;
   cancelBtn.disabled = false;
 
   elapsedSeconds = 0;
-  elapsedTimeEl.textContent = formatElapsed(0);
+  elapsedTimeEl.textContent = "スクリーニング時間：0秒";
 
   timerId = setInterval(() => {
     elapsedSeconds++;
-    elapsedTimeEl.textContent = formatElapsed(elapsedSeconds);
+    elapsedTimeEl.textContent = `スクリーニング時間：${elapsedSeconds}秒`;
   }, 1000);
 
   abortController = new AbortController();
@@ -189,64 +151,34 @@ async function startScreening() {
     }
 
     const res = await fetch(url.toString(), { signal: abortController.signal });
-    if (!res.ok) throw new Error("サーバーエラー");
+    const data = await res.json();
 
-    currentResults = await res.json();
+    currentResults = data;
+    showResults(data, mode);
 
-    clearInterval(timerId);
-    timerId = null;
-
-    progressText.textContent = `完了：${currentResults.length} 件ヒット`;
-
-    showResults(currentResults, mode);
-
-    if (window.setScreeningResults) {
-      window.setScreeningResults(currentResults);
-    }
-
-    alert(`スクリーニング完了：${currentResults.length} 件`);
+    alert(`スクリーニング完了：${data.length} 件`);
   } catch (e) {
-    clearInterval(timerId);
-    timerId = null;
-
-    if (abortController.signal.aborted) {
-      progressText.textContent = "キャンセルされました。";
-    } else {
-      console.error(e);
-      progressText.textContent = "エラーが発生しました。";
-      alert("スクリーニング中にエラーが発生しました。");
+    if (!abortController.signal.aborted) {
+      alert("エラーが発生しました");
     }
   } finally {
+    clearInterval(timerId);
+    loadingOverlay.classList.add("hidden");
     startBtn.disabled = false;
     cancelBtn.disabled = true;
-    cancelBtn.textContent = "キャンセル";
-    loadingOverlay.classList.add("hidden");
   }
 }
 
-/* ============================================================
-   キャンセル
-============================================================ */
+/* キャンセル */
 function cancelScreening() {
-  if (!abortController) return;
-
-  abortController.abort();
+  if (abortController) abortController.abort();
   cancelBtn.disabled = true;
   cancelBtn.textContent = "キャンセル中…";
-
-  clearInterval(timerId);
-  timerId = null;
-
-  progressText.textContent += "（キャンセル要求済み）";
 }
 
-/* ============================================================
-   結果表示
-============================================================ */
+/* 結果表示 */
 function showResults(results, mode) {
   tbody.innerHTML = "";
-
-  const fragment = document.createDocumentFragment();
 
   results.forEach((r, index) => {
     const tr = document.createElement("tr");
@@ -258,7 +190,7 @@ function showResults(results, mode) {
           <td>${r.銘柄名}</td>
           <td>${r.出来高倍率}</td>
           <td>${r.上髭実体比}</td>
-          <td>${Number(r.出来高).toLocaleString()}</td>
+          <td>${r.出来高.toLocaleString()}</td>
           <td>${r.上髭}</td>
           <td>${r.実体}</td>
         `
@@ -270,21 +202,13 @@ function showResults(results, mode) {
           <td>${r.前日終値}</td>
         `;
 
-    tr.addEventListener("click", () => {
-      openChartModal(r.コード, r.銘柄名, index);
-    });
-
-    fragment.appendChild(tr);
+    tbody.appendChild(tr);
   });
-
-  tbody.appendChild(fragment);
 }
 
-/* ============================================================
-   ソート
-============================================================ */
+/* ソート */
 document.addEventListener("click", e => {
-  const th = e.target.closest("th[data-sort-key]");
+  const th = e.target.closest(".table-header-sticky th[data-sort-key]");
   if (!th) return;
 
   const key = th.dataset.sortKey;
@@ -294,21 +218,17 @@ document.addEventListener("click", e => {
   currentResults.sort((a, b) => {
     const A = a[key];
     const B = b[key];
-
-    if (!isNaN(A) && !isNaN(B)) {
-      return order === "asc" ? A - B : B - A;
-    }
-    return order === "asc"
-      ? String(A).localeCompare(String(B))
-      : String(B).localeCompare(String(A));
+    return !isNaN(A) && !isNaN(B)
+      ? (order === "asc" ? A - B : B - A)
+      : (order === "asc"
+          ? String(A).localeCompare(String(B))
+          : String(B).localeCompare(String(A)));
   });
 
   const mode = document.querySelector('input[name="searchMode"]:checked').value;
   showResults(currentResults, mode);
 });
 
-/* ============================================================
-   イベント登録
-============================================================ */
+/* イベント登録 */
 startBtn.addEventListener("click", startScreening);
 cancelBtn.addEventListener("click", cancelScreening);
