@@ -51,7 +51,7 @@ async function loadDates() {
 window.addEventListener("DOMContentLoaded", loadDates);
 
 /* ===============================
-   スクロール時：ヘッダ固定アニメーション
+   スクロール時：sticky アニメーション
 =============================== */
 document.addEventListener("scroll", () => {
   const thead = document.querySelector("#resultTable thead");
