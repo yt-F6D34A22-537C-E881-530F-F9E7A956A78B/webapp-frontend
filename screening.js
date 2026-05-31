@@ -50,6 +50,21 @@ async function loadDates() {
 
 window.addEventListener("DOMContentLoaded", loadDates);
 
+/* ===============================
+   スクロール時：ヘッダ固定アニメーション
+=============================== */
+document.addEventListener("scroll", () => {
+  const thead = document.querySelector("#resultTable thead");
+  if (!thead) return;
+
+  const rect = thead.getBoundingClientRect();
+  if (rect.top <= 0) {
+    thead.classList.add("sticky");
+  } else {
+    thead.classList.remove("sticky");
+  }
+});
+
 startBtn.addEventListener("click", startScreening);
 cancelBtn.addEventListener("click", cancelScreening);
 
