@@ -26,10 +26,22 @@ async function loadDates() {
     const dates = await res.json();
 
     sel.innerHTML = "";
+
+    const weekdays = ["日", "月", "火", "水", "木", "金", "土"];
+
     dates.forEach(d => {
+      const y = d.substring(0, 4);
+      const m = d.substring(4, 6);
+      const day = d.substring(6, 8);
+
+      const dateObj = new Date(`${y}-${m}-${day}`);
+      const w = weekdays[dateObj.getDay()];
+
+      const label = `${y}/${m}/${day}（${w}）`;
+
       const opt = document.createElement("option");
       opt.value = d;
-      opt.textContent = d;
+      opt.textContent = label;
       sel.appendChild(opt);
     });
   } catch (e) {
