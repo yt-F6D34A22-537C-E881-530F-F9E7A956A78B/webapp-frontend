@@ -4,45 +4,22 @@
   <meta charset="UTF-8">
   <title>出来高＆上髭スクリーニング</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="icon" href="assets/favicon.ico">
-  <link rel="apple-touch-icon" href="assets/favicon.ico">
   <link rel="stylesheet" href="style.css">
 
-  <!-- ライブラリ -->
-  <script src="libs/xlsx.full.min.js"></script>
-  <script src="libs/lightweight-charts.standalone.production.js"></script>
-
-  <!-- スクリーニング処理 -->
   <script defer src="screening.js"></script>
-
-  <!-- チャート関連（依存順に読み込む） -->
-  <script defer src="js/chart-indicators.js"></script>
-  <script defer src="js/chart-data.js"></script>
-  <script defer src="js/chart-price.js"></script>
-  <script defer src="js/chart-rci.js"></script>
-  <script defer src="js/chart-macd.js"></script>
-  <script defer src="js/chart-sync.js"></script>
-
-  <!-- メイン制御 -->
-  <script defer src="js/chart-main.js"></script>
 </head>
 
 <body>
   <div class="app-container">
     <header class="app-header">
       <h1>出来高＆上髭スクリーニング</h1>
-      <p>JPX銘柄 × Yahoo Finance 日足データ</p>
     </header>
 
-    <!-- ============================
-         条件設定
-    ============================ -->
+    <!-- 条件設定 -->
     <section class="card controls-card">
       <h2>条件設定</h2>
 
       <div class="controls-grid">
-
-        <!-- ★ モード A：出来高 × 上髭 -->
         <div class="mode-block">
           <label class="mode-title">
             <input type="radio" name="searchMode" value="ratio" checked>
@@ -60,7 +37,6 @@
           </div>
         </div>
 
-        <!-- ★ モード B：値上がり率ランキング -->
         <div class="mode-block">
           <label class="mode-title">
             <input type="radio" name="searchMode" value="date">
@@ -75,13 +51,11 @@
             </label>
           </div>
         </div>
-
       </div>
 
       <div class="buttons-row">
         <button id="startBtn" class="btn primary">スクリーニング開始</button>
         <button id="cancelBtn" class="btn secondary" disabled>キャンセル</button>
-
         <span id="elapsedTime" class="elapsed-time"></span>
       </div>
 
@@ -90,9 +64,7 @@
       </div>
     </section>
 
-    <!-- ============================
-         結果テーブル
-    ============================ -->
+    <!-- 結果テーブル -->
     <section class="card table-card">
       <h2>スクリーニング結果</h2>
 
@@ -101,125 +73,23 @@
         <p>サーバーへリクエスト中…</p>
       </div>
 
-      <!-- ★★★ 3 層構造（sticky 完全対応） ★★★ -->
-      <div class="table-scroll-outer">
-        <div class="table-scroll-middle">
-          <div class="table-scroll-inner">
-
-            <table id="resultTable">
-              <thead>
-                <tr id="resultHeader">
-                  <th data-sort-key="コード">コード</th>
-                  <th data-sort-key="銘柄名">銘柄名</th>
-                  <th data-sort-key="出来高倍率">出来高倍率</th>
-                  <th data-sort-key="上髭実体比">上髭実体比</th>
-                  <th data-sort-key="出来高">出来高</th>
-                  <th data-sort-key="上髭">上髭</th>
-                  <th data-sort-key="実体">実体</th>
-                </tr>
-              </thead>
-              <tbody></tbody>
-            </table>
-
-          </div>
-        </div>
+      <!-- ★ 固定ヘッダ専用テーブル -->
+      <div class="table-header-sticky">
+        <table>
+          <thead id="resultHeaderSticky"></thead>
+        </table>
       </div>
 
-      <p class="hint">行をタップ／クリックするとチャートを表示します。</p>
+      <!-- ★ データ本体（横スクロール） -->
+      <div class="table-scroll-outer">
+        <table id="resultTable">
+          <thead id="resultHeaderBody" aria-hidden="true"></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <p class="hint">行をクリックするとチャートを表示します。</p>
     </section>
   </div>
-
-  <!-- ============================
-       チャートモーダル
-    ============================ -->
-  <div id="chartModal" class="modal">
-    <div class="modal-backdrop"></div>
-
-    <div class="modal-content">
-      <div class="modal-header">
-        <div id="chartHeaderLeft"></div>
-
-        <div id="chartHeaderNav">
-
-          <!-- 足種切替 -->
-          <div class="timeframe-selector">
-            <label><input type="radio" name="timeframe" value="1d" checked> 日足</label>
-            <label><input type="radio" name="timeframe" value="1wk"> 週足</label>
-            <label><input type="radio" name="timeframe" value="1mo"> 月足</label>
-          </div>
-
-          <button id="prevChartBtn" class="btn small">前へ</button>
-          <button id="nextChartBtn" class="btn small">次へ</button>
-        </div>
-
-        <button id="closeChartBtn" class="btn ghost">✕</button>
-      </div>
-
-      <div class="modal-body">
-        <div id="chartLoadingOverlay">
-          <div class="spinner"></div>
-          <p>チャートデータ取得中…</p>
-        </div>
-
-        <div id="chartContainer"></div>
-        <div id="rciContainer"></div>
-        <div id="macdContainer"></div>
-
-        <div id="chartSettingsBtn" class="chart-settings-btn">⚙️</div>
-
-        <div id="chartSettingsModal" class="chart-settings-modal hidden">
-          <div class="settings-content">
-
-            <label>
-              <input type="checkbox" id="toggleCandles" checked>
-              ローソク足を表示
-            </label>
-
-            <label>
-              <input type="checkbox" id="toggleMA" checked>
-              移動平均線（MA）を表示
-            </label>
-
-            <label>
-              <input type="checkbox" id="toggleBB" checked>
-              ボリンジャーバンドを表示
-            </label>
-
-            <label>
-              <input type="checkbox" id="toggleIchimoku" checked>
-              一目均衡表を表示
-            </label>
-
-          </div>
-        </div>
-
-      </div>
-    </div>
-  </div>
-
-  <!-- ★ ラジオボタンで検索条件の活性/非活性を切り替え -->
-  <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      const radios = document.querySelectorAll('input[name="searchMode"]');
-      const ratioInputs = document.querySelectorAll("#ratioConditions input");
-      const dateInputs = document.querySelectorAll("#dateConditions select");
-
-      function updateMode() {
-        const mode = document.querySelector('input[name="searchMode"]:checked').value;
-
-        if (mode === "ratio") {
-          ratioInputs.forEach(i => i.disabled = false);
-          dateInputs.forEach(i => i.disabled = true);
-        } else {
-          ratioInputs.forEach(i => i.disabled = true);
-          dateInputs.forEach(i => i.disabled = false);
-        }
-      }
-
-      radios.forEach(r => r.addEventListener("change", updateMode));
-      updateMode();
-    });
-  </script>
-
 </body>
 </html>
