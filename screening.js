@@ -202,6 +202,11 @@ function showResults(results, mode) {
           <td>${r.前日終値}</td>
         `;
 
+    /* ★★★ 行クリックイベント（必須） ★★★ */
+    tr.addEventListener("click", () => {
+      openChartModal(r.コード, r.銘柄名, index);
+    });
+
     tbody.appendChild(tr);
   });
 }
