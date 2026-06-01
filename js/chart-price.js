@@ -247,10 +247,10 @@ function createPriceChart(priceChart, candleData) {
     color: 'rgba(128,128,128,0.6)',
   });
 
-  // ★ 出来高の高さを調整（現在の設定：top 0.9）
+  // ★ 出来高の高さを調整
   priceChart.priceScale('volume').applyOptions({
     scaleMargins: {
-      top: 0.9,
+      top: 0.8,
       bottom: 0,
     }
   });
