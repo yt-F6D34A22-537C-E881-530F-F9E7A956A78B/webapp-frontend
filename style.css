@@ -85,7 +85,7 @@ body {
   font-size: 14px;
   border: 1px solid #d1d5db;
   border-radius: 6px;
-  background: #f9fafb;
+  background: #fff;
 }
 
 .mode-conditions input:disabled,
