@@ -236,7 +236,7 @@ function createPriceChart(priceChart, candleData) {
   candleSeries.setData(candleData);
 
   candleSeries.priceScale().applyOptions({
-    scaleMargins: { top: 0.05, bottom: 0.10 },
+    scaleMargins: { top: 0.05, bottom: 0.05 },
   });
 
   applyCandleVisibility();
