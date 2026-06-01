@@ -244,9 +244,17 @@ function createPriceChart(priceChart, candleData) {
   volumeSeries = priceChart.addSeries(LightweightCharts.HistogramSeries, {
     priceFormat: { type: 'volume' },
     priceScaleId: 'volume',
-    scaleMargins: { top: 0.3, bottom: 0 },
     color: 'rgba(128,128,128,0.6)',
   });
+
+  // ★ 出来高スケールの高さを現在の 2/3 に縮小（ここが今回の修正）
+  priceChart.priceScale('volume').applyOptions({
+    scaleMargins: {
+      top: 0.9,
+      bottom: 0,
+    }
+  });
+
   volumeSeries.setData(
     candleData.map(c => ({ time: c.time, value: c.volume }))
   );
@@ -411,41 +419,4 @@ function createPriceChart(priceChart, candleData) {
       <hr>
       <div>転換線: ${tenkanMap.get(param.time)?.toFixed(2) ?? "-"}</div>
       <div>基準線: ${kijunMap.get(param.time)?.toFixed(2) ?? "-"}</div>
-      <div>先行スパン1: ${span1Map.get(param.time)?.toFixed(2) ?? "-"}</div>
-      <div>先行スパン2: ${span2Map.get(param.time)?.toFixed(2) ?? "-"}</div>
-      <div>遅行スパン: ${chikouMap.get(param.time)?.toFixed(2) ?? "-"}</div>
-    `;
-  });
-
-  // --------------------------------------
-  // 凡例
-  // --------------------------------------
-  const legend = document.createElement("div");
-  legend.className = "chart-legend";
-  legend.innerHTML = `
-    <div><strong>【価格チャート】</strong></div>
-    <div><span style="color:red;">■</span> 陽線</div>
-    <div><span style="color:blue;">■</span> 陰線</div>
-    <div><span style="color:#ff1493;">■</span> MA(5)</div>
-    <div><span style="color:#00aa00;">■</span> MA(25)</div>
-    <div><span style="color:#0000ff;">■</span> MA(50)</div>
-    <div><span style="color:#aa00aa;">■</span> MA(75)</div>
-    <div><span style="color:#ffaa00;">■</span> MA(100)</div>
-    <div><span style="color:#ffa500;">■</span> ボリンジャーバンド</div>
-    <div><span style="color:#ff0000;">■</span> 転換線</div>
-    <div><span style="color:#0000ff;">■</span> 基準線</div>
-    <div><span style="color:#00aa00;">■</span> 先行スパン1</div>
-    <div><span style="color:#aa00aa;">■</span> 先行スパン2</div>
-    <div><span style="color:#888888;">■</span> 遅行スパン</div>
-  `;
-  chartContainer.appendChild(legend);
-
-  // --------------------------------------
-  // ▼ 追加：MA / BB / 一目均衡表 の初期反映
-  // --------------------------------------
-  applyMAVisibility();
-  applyBBVisibility();
-  applyIchimokuVisibility();   // ★ 追加
-
-  return { chart: priceChart };
-}
+      <div>先行スパン1: ${span1Map.get(param.time)?.to
