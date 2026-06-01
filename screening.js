@@ -156,7 +156,12 @@ async function startScreening() {
     currentResults = data;
     showResults(data, mode);
 
-    alert(`スクリーニング完了：${data.length} 件`);
+    /* ★ alert を廃止し、件数ラベルを更新 */
+    const countLabel = document.getElementById("resultCount");
+    if (countLabel) {
+      countLabel.textContent = `検索結果：${data.length} 件`;
+    }
+
   } catch (e) {
     if (!abortController.signal.aborted) {
       alert("エラーが発生しました");
@@ -202,7 +207,6 @@ function showResults(results, mode) {
           <td>${r.前日終値}</td>
         `;
 
-    // 行クリック → モーダル表示
     tr.addEventListener("click", () => {
       openChartModal(r.コード, r.銘柄名, index);
     });
@@ -210,7 +214,6 @@ function showResults(results, mode) {
     tbody.appendChild(tr);
   });
 
-  // ★ chart-main.js に結果を渡す（ここが今回の核心）
   if (typeof window.setScreeningResults === "function") {
     window.setScreeningResults(results);
   }
