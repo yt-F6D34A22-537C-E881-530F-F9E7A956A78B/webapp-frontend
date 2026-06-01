@@ -238,6 +238,14 @@ button:disabled {
   white-space: nowrap;
 }
 
+/* スクリーニング結果件数（小さめの文字） */
+.result-count {
+  font-size: 12px;
+  color: #666;
+  margin-left: 10px;
+  vertical-align: middle;
+}
+
 /* ------------------------------
    ローディングオーバーレイ（最前面）
 ------------------------------ */
