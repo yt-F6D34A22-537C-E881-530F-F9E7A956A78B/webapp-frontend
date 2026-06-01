@@ -182,7 +182,7 @@ button:disabled {
   background: #f3f4f6;
 }
 
-/* ★ 本体テーブル（横スクロール） */
+/* 本体テーブル（横スクロール） */
 .table-scroll-outer {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
@@ -238,9 +238,9 @@ button:disabled {
   white-space: nowrap;
 }
 
-/* スクリーニング結果件数（小さめの文字） */
+/* スクリーニング結果件数 */
 .result-count {
-  font-size: 12px;
+  font-size: 0.9rem;
   color: #666;
   margin-left: 10px;
   vertical-align: middle;
