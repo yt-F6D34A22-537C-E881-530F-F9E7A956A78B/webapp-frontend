@@ -247,7 +247,6 @@ function createPriceChart(priceChart, candleData) {
     color: 'rgba(128,128,128,0.6)',
   });
 
-  // ★ 出来高スケールの高さを現在の 2/3 に縮小（ここが今回の修正）
   priceChart.priceScale('volume').applyOptions({
     scaleMargins: {
       top: 0.9,
