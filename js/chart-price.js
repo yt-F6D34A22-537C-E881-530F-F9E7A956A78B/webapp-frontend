@@ -244,7 +244,7 @@ function createPriceChart(priceChart, candleData) {
   volumeSeries = priceChart.addSeries(LightweightCharts.HistogramSeries, {
     priceFormat: { type: 'volume' },
     priceScaleId: 'volume',
-    scaleMargins: { top: 0.8, bottom: 0 },
+    scaleMargins: { top: 0.9, bottom: 0 },
     color: 'rgba(128,128,128,0.6)',
   });
   volumeSeries.setData(
