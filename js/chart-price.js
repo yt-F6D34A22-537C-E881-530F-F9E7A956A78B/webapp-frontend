@@ -12,7 +12,7 @@ let bbMidSeries, bbUpperSeries, bbLowerSeries;
 let tenkanSeries, kijunSeries, span1Series, span2Series, chikouSeries;
 let spanAArea, spanBArea;
 
-// ▼ 追加：MA / BB / 一目均衡表 の表示状態
+// ▼ 表示状態フラグ
 let showCandles = true;
 let showMA = true;
 let showBB = true;
@@ -202,13 +202,14 @@ function createPriceChart(priceChart, candleData) {
     }
   }
 
-  // 雲（AreaSeries）→ y軸ラベル非表示のため priceScaleId: '' を追加
+  // 雲（AreaSeries）※スケールはローソク足と同じ、ラベルだけ消す
   spanAArea = priceChart.addSeries(LightweightCharts.AreaSeries, {
     topColor: bullColor,
     bottomColor: bgRGBA,
     lineColor: "rgba(0,0,0,0)",
     lineWidth: 0,
-    priceScaleId: '',   // ★ 追加
+    lastValueVisible: false,
+    priceLineVisible: false,
   });
   spanAArea.setData(spanAColored);
 
@@ -217,13 +218,12 @@ function createPriceChart(priceChart, candleData) {
     bottomColor: bgRGBA,
     lineColor: "rgba(0,0,0,0)",
     lineWidth: 0,
-    priceScaleId: '',   // ★ 追加
+    lastValueVisible: false,
+    priceLineVisible: false,
   });
   spanBArea.setData(spanBColored);
 
-  // --------------------------------------
   // ローソク足（最新値だけ y軸に表示）
-  // --------------------------------------
   candleSeries = priceChart.addSeries(LightweightCharts.CandlestickSeries, {
     upColor: 'red',
     downColor: 'blue',
@@ -231,7 +231,7 @@ function createPriceChart(priceChart, candleData) {
     borderDownColor: 'blue',
     wickUpColor: 'red',
     wickDownColor: 'blue',
-    priceScaleId: 'right',   // ★ 追加：最新値だけ表示
+    // lastValueVisible: true（デフォルトのまま）
   });
   candleSeries.setData(candleData);
 
@@ -241,9 +241,7 @@ function createPriceChart(priceChart, candleData) {
 
   applyCandleVisibility();
 
-  // --------------------------------------
-  // 出来高（volume）
-  // --------------------------------------
+  // 出来高
   volumeSeries = priceChart.addSeries(LightweightCharts.HistogramSeries, {
     priceFormat: { type: 'volume' },
     priceScaleId: 'volume',
@@ -265,7 +263,8 @@ function createPriceChart(priceChart, candleData) {
     const s = priceChart.addSeries(LightweightCharts.LineSeries, {
       color,
       lineWidth: 1,
-      priceScaleId: '',   // ★ y軸ラベル非表示
+      lastValueVisible: false,   // ★ y軸ラベル非表示
+      priceLineVisible: false,   // ★ 価格ライン非表示
     });
     s.setData(data.filter(p => p.value !== null));
     return s;
@@ -294,21 +293,24 @@ function createPriceChart(priceChart, candleData) {
   bbMidSeries = priceChart.addSeries(LightweightCharts.LineSeries, {
     color: '#ffa500',
     lineWidth: 1,
-    priceScaleId: '',   // ★ y軸ラベル非表示
+    lastValueVisible: false,
+    priceLineVisible: false,
   });
   bbMidSeries.setData(bb.mid.filter(p => p.value !== null));
 
   bbUpperSeries = priceChart.addSeries(LightweightCharts.LineSeries, {
     color: '#ffa500',
     lineWidth: 1,
-    priceScaleId: '',   // ★ y軸ラベル非表示
+    lastValueVisible: false,
+    priceLineVisible: false,
   });
   bbUpperSeries.setData(bb.upper.filter(p => p.value !== null));
 
   bbLowerSeries = priceChart.addSeries(LightweightCharts.LineSeries, {
     color: '#ffa500',
     lineWidth: 1,
-    priceScaleId: '',   // ★ y軸ラベル非表示
+    lastValueVisible: false,
+    priceLineVisible: false,
   });
   bbLowerSeries.setData(bb.lower.filter(p => p.value !== null));
 
@@ -316,54 +318,55 @@ function createPriceChart(priceChart, candleData) {
   const bbUpperMap = makeValueMap(bb.upper);
   const bbLowerMap = makeValueMap(bb.lower);
 
-  // ▼ 一目均衡表の線（すべて y軸ラベル非表示）
+  // 一目均衡表の線（スケールは同じ、ラベルだけ消す）
   tenkanSeries = priceChart.addSeries(LightweightCharts.LineSeries, {
     color: "#ff0000",
     lineWidth: 1,
-    priceScaleId: '',   // ★
+    lastValueVisible: false,
+    priceLineVisible: false,
   });
   tenkanSeries.setData(ichimoku.tenkanLine);
 
   kijunSeries = priceChart.addSeries(LightweightCharts.LineSeries, {
     color: "#0000ff",
     lineWidth: 1,
-    priceScaleId: '',   // ★
+    lastValueVisible: false,
+    priceLineVisible: false,
   });
   kijunSeries.setData(ichimoku.kijunLine);
 
   span1Series = priceChart.addSeries(LightweightCharts.LineSeries, {
     color: "#00aa00",
     lineWidth: 1,
-    priceScaleId: '',   // ★
+    lastValueVisible: false,
+    priceLineVisible: false,
   });
   span1Series.setData(ichimoku.span1);
 
   span2Series = priceChart.addSeries(LightweightCharts.LineSeries, {
     color: "#aa00aa",
     lineWidth: 1,
-    priceScaleId: '',   // ★
+    lastValueVisible: false,
+    priceLineVisible: false,
   });
   span2Series.setData(ichimoku.span2);
 
   chikouSeries = priceChart.addSeries(LightweightCharts.LineSeries, {
     color: "#888888",
     lineWidth: 1,
-    priceScaleId: '',   // ★
+    lastValueVisible: false,
+    priceLineVisible: false,
   });
   chikouSeries.setData(ichimoku.chikou);
 
-  // --------------------------------------
-  // ▼ 一目均衡表の値をツールチップで使うための Map を作成
-  // --------------------------------------
+  // 一目用 Map
   const tenkanMap = makeValueMap(ichimoku.tenkanLine);
   const kijunMap  = makeValueMap(ichimoku.kijunLine);
   const span1Map  = makeValueMap(ichimoku.span1);
   const span2Map  = makeValueMap(ichimoku.span2);
   const chikouMap = makeValueMap(ichimoku.chikou);
 
-  // --------------------------------------
-  // ツールチップ（従来通り）
-  // --------------------------------------
+  // ツールチップ
   const tooltip = document.createElement("div");
   tooltip.style.position = "absolute";
   tooltip.style.display = "none";
@@ -436,9 +439,7 @@ function createPriceChart(priceChart, candleData) {
     `;
   });
 
-  // --------------------------------------
   // 凡例
-  // --------------------------------------
   const legend = document.createElement("div");
   legend.className = "chart-legend";
   legend.innerHTML = `
@@ -459,9 +460,7 @@ function createPriceChart(priceChart, candleData) {
   `;
   chartContainer.appendChild(legend);
 
-  // --------------------------------------
   // 初期反映
-  // --------------------------------------
   applyMAVisibility();
   applyBBVisibility();
   applyIchimokuVisibility();
