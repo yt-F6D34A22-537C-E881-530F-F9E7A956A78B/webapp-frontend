@@ -262,7 +262,7 @@ function createPriceChart(priceChart, candleData) {
   function addMA(color, data) {
     const s = priceChart.addSeries(LightweightCharts.LineSeries, {
       color,
-      lineWidth: 1,
+      lineWidth: 2,
       lastValueVisible: false,   // ★ y軸ラベル非表示
       priceLineVisible: false,   // ★ 価格ライン非表示
     });
