@@ -46,11 +46,19 @@ function initSearchMode() {
 /* 日付ロード */
 async function loadDates() {
   try {
+    // ★ 読み込み中表示（ランキング用）
+    dateSelect.innerHTML = "";
+    dateSelect.appendChild(new Option("読み込み中...", ""));
+
+    // ★ 読み込み中表示（ratio 用）
+    ratioDateSelect.innerHTML = "";
+    ratioDateSelect.appendChild(new Option("読み込み中...", ""));
+
     const res = await fetch(`${API_BASE_URL}/dates`);
     const dates = await res.json(); // 降順（新しい→古い）
 
     // -----------------------------
-    // ランキング用（従来どおり全日付）
+    // ランキング用（全日付）
     // -----------------------------
     dateSelect.innerHTML = "";
     dates.forEach(d => {
@@ -60,7 +68,7 @@ async function loadDates() {
     // -----------------------------
     // ratio 用（最古日を除外）
     // -----------------------------
-    ratioDateSelect.innerHTML = "";  // ★ 「選択してください」も「最新日」も入れない
+    ratioDateSelect.innerHTML = "";
 
     if (dates.length >= 2) {
       const ratioDates = dates.slice(0, dates.length - 1); // ★ 最古日を除外
