@@ -3,7 +3,8 @@ const cancelBtn = document.getElementById("cancelBtn");
 const progressText = document.getElementById("progressText");
 const elapsedTimeEl = document.getElementById("elapsedTime");
 const tbody = document.querySelector("#resultTable tbody");
-const dateSelect = document.getElementById("dateSelect");
+const dateSelect = document.getElementById("dateSelect");           // ランキング用
+const ratioDateSelect = document.getElementById("ratioDateSelect"); // ★ ratio 用
 const loadingOverlay = document.getElementById("loadingOverlay");
 
 let abortController = null;
@@ -23,7 +24,7 @@ window.onload = () => {
 /* モード切替 */
 function initSearchMode() {
   const radios = document.querySelectorAll('input[name="searchMode"]');
-  const ratioInputs = document.querySelectorAll("#ratioConditions input");
+  const ratioInputs = document.querySelectorAll("#ratioConditions input, #ratioConditions select");
   const dateInputs = document.querySelectorAll("#dateConditions select");
 
   function updateMode() {
@@ -46,25 +47,41 @@ function initSearchMode() {
 async function loadDates() {
   try {
     const res = await fetch(`${API_BASE_URL}/dates`);
-    const dates = await res.json();
+    const dates = await res.json(); // 降順（新しい→古い）
 
+    // -----------------------------
+    // ランキング用（従来どおり全日付）
+    // -----------------------------
     dateSelect.innerHTML = "";
-    const weekdays = ["日","月","火","水","木","金","土"];
-
     dates.forEach(d => {
-      const y = d.substring(0,4);
-      const m = d.substring(4,6);
-      const day = d.substring(6,8);
-      const w = weekdays[new Date(`${y}-${m}-${day}`).getDay()];
-
-      const opt = document.createElement("option");
-      opt.value = d;
-      opt.textContent = `${y}/${m}/${day}（${w}）`;
-      dateSelect.appendChild(opt);
+      dateSelect.appendChild(makeOption(d));
     });
+
+    // -----------------------------
+    // ratio 用（最古日を除外）
+    // -----------------------------
+    ratioDateSelect.innerHTML = "";
+    ratioDateSelect.appendChild(new Option("最新日", ""));
+
+    if (dates.length >= 2) {
+      const ratioDates = dates.slice(0, dates.length - 1); // ★ 最古日を除外
+      ratioDates.forEach(d => {
+        ratioDateSelect.appendChild(makeOption(d));
+      });
+    }
+
   } catch (e) {
     console.error("日付取得エラー:", e);
   }
+}
+
+/* 日付 option 生成 */
+function makeOption(d) {
+  const y = d.substring(0,4);
+  const m = d.substring(4,6);
+  const day = d.substring(6,8);
+  const w = ["日","月","火","水","木","金","土"][new Date(`${y}-${m}-${day}`).getDay()];
+  return new Option(`${y}/${m}/${day}（${w}）`, d);
 }
 
 /* ヘッダ更新（固定ヘッダ＋本体ヘッダ） */
@@ -106,20 +123,22 @@ async function startScreening() {
 
   const volumeRatio = parseFloat(document.getElementById("volumeRatio").value);
   const shadowRatio = parseFloat(document.getElementById("shadowRatio").value);
-  const targetDate = dateSelect.value;
+  const targetDateRanking = dateSelect.value;
+  const targetDateRatio = ratioDateSelect.value;
 
-  if (mode === "date" && !targetDate) {
+  if (mode === "date" && !targetDateRanking) {
     alert("日付が選択されていません。");
     return;
   }
 
   let label = "";
   if (mode === "date") {
-    const y = targetDate.substring(0,4);
-    const m = targetDate.substring(4,6);
-    const d = targetDate.substring(6,8);
-    const w = ["日","月","火","水","木","金","土"][new Date(`${y}-${m}-${d}`).getDay()];
-    label = `${y}/${m}/${d}（${w}）`;
+    const d = targetDateRanking;
+    const y = d.substring(0,4);
+    const m = d.substring(4,6);
+    const day = d.substring(6,8);
+    const w = ["日","月","火","水","木","金","土"][new Date(`${y}-${m}-${day}`).getDay()];
+    label = `${y}/${m}/${day}（${w}）`;
   }
 
   updateTableHeader(mode, label);
@@ -145,9 +164,15 @@ async function startScreening() {
       url.searchParams.set("mode", "ratio");
       url.searchParams.set("volume_ratio", volumeRatio);
       url.searchParams.set("shadow_ratio", shadowRatio);
+
+      // ★ ratio モードの日付指定
+      if (targetDateRatio) {
+        url.searchParams.set("target_date", targetDateRatio);
+      }
+
     } else {
       url.searchParams.set("mode", "date_ranking");
-      url.searchParams.set("target_date", targetDate);
+      url.searchParams.set("target_date", targetDateRanking);
     }
 
     const res = await fetch(url.toString(), { signal: abortController.signal });
@@ -156,7 +181,7 @@ async function startScreening() {
     currentResults = data;
     showResults(data, mode);
 
-    /* ★ alert を廃止し、件数ラベルを更新 */
+    // ★ alert を廃止し、件数ラベルを更新
     const countLabel = document.getElementById("resultCount");
     if (countLabel) {
       countLabel.textContent = `検索結果：${data.length} 件`;
