@@ -61,7 +61,7 @@ async function loadDates() {
     // ratio 用（最古日を除外）
     // -----------------------------
     ratioDateSelect.innerHTML = "";
-    ratioDateSelect.appendChild(new Option("最新日", ""));
+    ratioDateSelect.appendChild(new Option("選択してください", ""));
 
     if (dates.length >= 2) {
       const ratioDates = dates.slice(0, dates.length - 1); // ★ 最古日を除外
@@ -126,6 +126,12 @@ async function startScreening() {
   const targetDateRanking = dateSelect.value;
   const targetDateRatio = ratioDateSelect.value;
 
+  // ★ ratio モードでも日付必須
+  if (mode === "ratio" && !targetDateRatio) {
+    alert("日付を選択してください。");
+    return;
+  }
+
   if (mode === "date" && !targetDateRanking) {
     alert("日付が選択されていません。");
     return;
@@ -165,10 +171,8 @@ async function startScreening() {
       url.searchParams.set("volume_ratio", volumeRatio);
       url.searchParams.set("shadow_ratio", shadowRatio);
 
-      // ★ ratio モードの日付指定
-      if (targetDateRatio) {
-        url.searchParams.set("target_date", targetDateRatio);
-      }
+      // ★ ratio モードの日付指定（必須）
+      url.searchParams.set("target_date", targetDateRatio);
 
     } else {
       url.searchParams.set("mode", "date_ranking");
@@ -181,7 +185,7 @@ async function startScreening() {
     currentResults = data;
     showResults(data, mode);
 
-    // ★ alert を廃止し、件数ラベルを更新
+    // ★ 件数ラベルを更新
     const countLabel = document.getElementById("resultCount");
     if (countLabel) {
       countLabel.textContent = `検索結果：${data.length} 件`;
