@@ -68,6 +68,13 @@
             <label>上髭実体比以上
               <input id="shadowRatio" type="number" value="5" step="0.1">
             </label>
+
+            <!-- ★ ratio モード専用：日付選択 -->
+            <label>日付（任意）
+              <select id="ratioDateSelect">
+                <option value="">最新日</option>
+              </select>
+            </label>
           </div>
         </div>
 
@@ -190,7 +197,7 @@
     <script>
       document.addEventListener("DOMContentLoaded", () => {
         const radios = document.querySelectorAll('input[name="searchMode"]');
-        const ratioInputs = document.querySelectorAll("#ratioConditions input");
+        const ratioInputs = document.querySelectorAll("#ratioConditions input, #ratioConditions select");
         const dateInputs = document.querySelectorAll("#dateConditions select");
 
         function updateMode() {
