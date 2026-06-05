@@ -60,8 +60,7 @@ async function loadDates() {
     // -----------------------------
     // ratio 用（最古日を除外）
     // -----------------------------
-    ratioDateSelect.innerHTML = "";
-    ratioDateSelect.appendChild(new Option("選択してください", ""));
+    ratioDateSelect.innerHTML = "";  // ★ 「選択してください」も「最新日」も入れない
 
     if (dates.length >= 2) {
       const ratioDates = dates.slice(0, dates.length - 1); // ★ 最古日を除外
