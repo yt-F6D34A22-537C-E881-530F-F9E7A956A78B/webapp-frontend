@@ -3,8 +3,11 @@ const cancelBtn = document.getElementById("cancelBtn");
 const progressText = document.getElementById("progressText");
 const elapsedTimeEl = document.getElementById("elapsedTime");
 const tbody = document.querySelector("#resultTable tbody");
-const dateSelect = document.getElementById("dateSelect");           // ランキング用
-const ratioDateSelect = document.getElementById("ratioDateSelect"); // ★ ratio 用
+
+const dateSelect = document.getElementById("dateSelect");           // date_ranking 用
+const ratioDateSelect = document.getElementById("ratioDateSelect"); // ratio 用
+const heuristicsDateSelect = document.getElementById("heuristicsDateSelect"); // heuristics 用
+
 const loadingOverlay = document.getElementById("loadingOverlay");
 
 let abortController = null;
@@ -19,62 +22,53 @@ const API_BASE_URL = "https://yfinance-api-fe86988c-d3b4-f1c6-640d.onrender.com"
 window.onload = () => {
   initSearchMode();
   loadDates();
+  loadHeuristicsDates();
 };
 
-/* モード切替 */
+/* ============================
+   モード切替
+============================ */
 function initSearchMode() {
   const radios = document.querySelectorAll('input[name="searchMode"]');
   const ratioInputs = document.querySelectorAll("#ratioConditions input, #ratioConditions select");
   const dateInputs = document.querySelectorAll("#dateConditions select");
+  const heuristicsInputs = document.querySelectorAll("#heuristicsConditions select");
 
   function updateMode() {
     const mode = document.querySelector('input[name="searchMode"]:checked').value;
 
-    if (mode === "ratio") {
-      ratioInputs.forEach(i => i.disabled = false);
-      dateInputs.forEach(i => i.disabled = true);
-    } else {
-      ratioInputs.forEach(i => i.disabled = true);
-      dateInputs.forEach(i => i.disabled = false);
-    }
+    ratioInputs.forEach(i => i.disabled = (mode !== "ratio"));
+    dateInputs.forEach(i => i.disabled = (mode !== "date"));
+    heuristicsInputs.forEach(i => i.disabled = (mode !== "heuristics"));
   }
 
   radios.forEach(r => r.addEventListener("change", updateMode));
   updateMode();
 }
 
-/* 日付ロード */
+/* ============================
+   /dates のロード
+============================ */
 async function loadDates() {
   try {
-    // ★ 読み込み中表示（ランキング用）
     dateSelect.innerHTML = "";
     dateSelect.appendChild(new Option("読み込み中...", ""));
 
-    // ★ 読み込み中表示（ratio 用）
     ratioDateSelect.innerHTML = "";
     ratioDateSelect.appendChild(new Option("読み込み中...", ""));
 
     const res = await fetch(`${API_BASE_URL}/dates`);
-    const dates = await res.json(); // 降順（新しい→古い）
+    const dates = await res.json();
 
-    // -----------------------------
-    // ランキング用（全日付）
-    // -----------------------------
+    // date_ranking 用
     dateSelect.innerHTML = "";
-    dates.forEach(d => {
-      dateSelect.appendChild(makeOption(d));
-    });
+    dates.forEach(d => dateSelect.appendChild(makeOption(d)));
 
-    // -----------------------------
-    // ratio 用（最古日を除外）
-    // -----------------------------
+    // ratio 用（最古日除外）
     ratioDateSelect.innerHTML = "";
-
     if (dates.length >= 2) {
-      const ratioDates = dates.slice(0, dates.length - 1); // ★ 最古日を除外
-      ratioDates.forEach(d => {
-        ratioDateSelect.appendChild(makeOption(d));
-      });
+      const ratioDates = dates.slice(0, dates.length - 1); // 最古日を除外
+      ratioDates.forEach(d => ratioDateSelect.appendChild(makeOption(d)));
     }
 
   } catch (e) {
@@ -82,7 +76,55 @@ async function loadDates() {
   }
 }
 
-/* 日付 option 生成 */
+/* ============================
+   heuristics 日付ロード
+============================ */
+async function loadHeuristicsDates() {
+  const select = heuristicsDateSelect;
+  if (!select) return;
+
+  try {
+    const apiRoot = "https://api.github.com/repos/yt-F6D34A22-537C-E881-530F-F9E7A956A78B/batches/contents/data/heuristics";
+
+    const resp = await fetch(apiRoot);
+    const folders = await resp.json();
+
+    const ymFolders = folders
+      .filter(f => /^\d{6}$/.test(f.name))
+      .map(f => f.name)
+      .sort();
+
+    let allDates = [];
+
+    for (const ym of ymFolders) {
+      const resp2 = await fetch(`${apiRoot}/${ym}`);
+      const files = await resp2.json();
+
+      const dates = files
+        .filter(f => /^heuristics_\d{8}\.json$/.test(f.name))
+        .map(f => f.name.match(/\d{8}/)[0]);
+
+      allDates.push(...dates);
+    }
+
+    allDates.sort().reverse();
+
+    select.innerHTML = `<option value="">最新を使用</option>`;
+    allDates.forEach(d => {
+      const opt = document.createElement("option");
+      opt.value = d;
+      opt.textContent = d;
+      select.appendChild(opt);
+    });
+
+  } catch (e) {
+    console.error("Failed to load heuristics dates", e);
+  }
+}
+
+/* ============================
+   日付 option 生成
+============================ */
 function makeOption(d) {
   const y = d.substring(0,4);
   const m = d.substring(4,6);
@@ -91,7 +133,9 @@ function makeOption(d) {
   return new Option(`${y}/${m}/${day}（${w}）`, d);
 }
 
-/* ヘッダ更新（固定ヘッダ＋本体ヘッダ） */
+/* ============================
+   テーブルヘッダ更新
+============================ */
 function updateTableHeader(mode, label = "") {
   const sticky = document.getElementById("resultHeaderSticky");
   const body = document.getElementById("resultHeaderBody");
@@ -118,13 +162,26 @@ function updateTableHeader(mode, label = "") {
     </tr>
   `;
 
-  const html = mode === "ratio" ? ratio : date;
+  const heuristics = `
+    <tr>
+      <th data-sort-key="コード">コード</th>
+      <th data-sort-key="銘柄名">銘柄名</th>
+      <th>TECH_* 判定</th>
+    </tr>
+  `;
+
+  const html =
+    mode === "ratio" ? ratio :
+    mode === "date" ? date :
+    heuristics;
 
   sticky.innerHTML = html;
   body.innerHTML = html;
 }
 
-/* スクリーニング開始 */
+/* ============================
+   スクリーニング開始
+============================ */
 async function startScreening() {
   const mode = document.querySelector('input[name="searchMode"]:checked').value;
 
@@ -132,8 +189,8 @@ async function startScreening() {
   const shadowRatio = parseFloat(document.getElementById("shadowRatio").value);
   const targetDateRanking = dateSelect.value;
   const targetDateRatio = ratioDateSelect.value;
+  const targetDateHeuristics = heuristicsDateSelect.value;
 
-  // ★ ratio モードでも日付必須
   if (mode === "ratio" && !targetDateRatio) {
     alert("日付を選択してください。");
     return;
@@ -177,13 +234,17 @@ async function startScreening() {
       url.searchParams.set("mode", "ratio");
       url.searchParams.set("volume_ratio", volumeRatio);
       url.searchParams.set("shadow_ratio", shadowRatio);
-
-      // ★ ratio モードの日付指定（必須）
       url.searchParams.set("target_date", targetDateRatio);
 
-    } else {
+    } else if (mode === "date") {
       url.searchParams.set("mode", "date_ranking");
       url.searchParams.set("target_date", targetDateRanking);
+
+    } else if (mode === "heuristics") {
+      url.searchParams.set("mode", "heuristics");
+      if (targetDateHeuristics) {
+        url.searchParams.set("target_date", targetDateHeuristics);
+      }
     }
 
     const res = await fetch(url.toString(), { signal: abortController.signal });
@@ -192,7 +253,6 @@ async function startScreening() {
     currentResults = data;
     showResults(data, mode);
 
-    // ★ 件数ラベルを更新
     const countLabel = document.getElementById("resultCount");
     if (countLabel) {
       countLabel.textContent = `検索結果：${data.length} 件`;
@@ -210,38 +270,49 @@ async function startScreening() {
   }
 }
 
-/* キャンセル */
+/* ============================
+   キャンセル
+============================ */
 function cancelScreening() {
   if (abortController) abortController.abort();
   cancelBtn.disabled = true;
   cancelBtn.textContent = "キャンセル中…";
 }
 
-/* 結果表示 */
+/* ============================
+   結果表示
+============================ */
 function showResults(results, mode) {
   tbody.innerHTML = "";
 
   results.forEach((r, index) => {
     const tr = document.createElement("tr");
 
-    tr.innerHTML =
-      mode === "ratio"
-        ? `
-          <td>${r.コード}</td>
-          <td>${r.銘柄名}</td>
-          <td>${r.出来高倍率}</td>
-          <td>${r.上髭実体比}</td>
-          <td>${r.出来高.toLocaleString()}</td>
-          <td>${r.上髭}</td>
-          <td>${r.実体}</td>
-        `
-        : `
-          <td>${r.コード}</td>
-          <td>${r.銘柄名}</td>
-          <td>${r.値上がり率}%</td>
-          <td>${r.当日終値}</td>
-          <td>${r.前日終値}</td>
-        `;
+    if (mode === "ratio") {
+      tr.innerHTML = `
+        <td>${r.コード}</td>
+        <td>${r.銘柄名}</td>
+        <td>${r.出来高倍率}</td>
+        <td>${r.上髭実体比}</td>
+        <td>${r.出来高.toLocaleString()}</td>
+        <td>${r.上髭}</td>
+        <td>${r.実体}</td>
+      `;
+    } else if (mode === "date") {
+      tr.innerHTML = `
+        <td>${r.コード}</td>
+        <td>${r.銘柄名}</td>
+        <td>${r.値上がり率}%</td>
+        <td>${r.当日終値}</td>
+        <td>${r.前日終値}</td>
+      `;
+    } else if (mode === "heuristics") {
+      tr.innerHTML = `
+        <td>${r.コード}</td>
+        <td>${r.銘柄名}</td>
+        <td><pre>${JSON.stringify(r, null, 2)}</pre></td>
+      `;
+    }
 
     tr.addEventListener("click", () => {
       openChartModal(r.コード, r.銘柄名, index);
@@ -255,7 +326,9 @@ function showResults(results, mode) {
   }
 }
 
-/* ソート */
+/* ============================
+   ソート
+============================ */
 document.addEventListener("click", e => {
   const th = e.target.closest(".table-header-sticky th[data-sort-key]");
   if (!th) return;
@@ -278,6 +351,8 @@ document.addEventListener("click", e => {
   showResults(currentResults, mode);
 });
 
-/* イベント登録 */
+/* ============================
+   イベント登録
+============================ */
 startBtn.addEventListener("click", startScreening);
 cancelBtn.addEventListener("click", cancelScreening);
