@@ -69,7 +69,6 @@
               <input id="shadowRatio" type="number" value="2" step="0.5">
             </label>
 
-            <!-- ★ ratio モード専用：日付選択 -->
             <label>日付
               <select id="ratioDateSelect"></select>
             </label>
@@ -92,6 +91,22 @@
           </div>
         </div>
 
+        <!-- モード C：heuristics -->
+        <div class="mode-block">
+          <label class="mode-title">
+            <input type="radio" name="searchMode" value="heuristics">
+            heuristics（経験則判定）
+          </label>
+
+          <div class="mode-conditions" id="heuristicsConditions">
+            <label>日付（任意）
+              <select id="heuristicsDateSelect" disabled>
+                <option value="">最新を使用</option>
+              </select>
+            </label>
+          </div>
+        </div>
+
       </div>
 
       <div class="buttons-row">
@@ -106,26 +121,25 @@
     </section>
 
     <!-- ============================
-         結果テーブル（固定ヘッダ方式）
+         結果テーブル
     ============================ -->
     <section class="card table-card">
       <h2>スクリーニング結果</h2>
       <span id="resultCount" class="result-count">検索結果：0 件</span>
 
-      <!-- ローディング -->
       <div id="loadingOverlay" class="loading-overlay hidden">
         <div class="spinner"></div>
         <p>サーバーへリクエスト中…</p>
       </div>
 
-      <!-- ★ 固定ヘッダ専用テーブル -->
+      <!-- 固定ヘッダ専用テーブル -->
       <div class="table-header-sticky">
         <table>
           <thead id="resultHeaderSticky"></thead>
         </table>
       </div>
 
-      <!-- ★ 本体テーブル（横スクロール） -->
+      <!-- 本体テーブル（横スクロール） -->
       <div class="table-scroll-outer">
         <table id="resultTable">
           <thead id="resultHeaderBody" aria-hidden="true"></thead>
@@ -197,22 +211,69 @@
         const radios = document.querySelectorAll('input[name="searchMode"]');
         const ratioInputs = document.querySelectorAll("#ratioConditions input, #ratioConditions select");
         const dateInputs = document.querySelectorAll("#dateConditions select");
+        const heuristicsInputs = document.querySelectorAll("#heuristicsConditions select");
 
         function updateMode() {
           const mode = document.querySelector('input[name="searchMode"]:checked').value;
 
-          if (mode === "ratio") {
-            ratioInputs.forEach(i => i.disabled = false);
-            dateInputs.forEach(i => i.disabled = true);
-          } else {
-            ratioInputs.forEach(i => i.disabled = true);
-            dateInputs.forEach(i => i.disabled = false);
-          }
+          ratioInputs.forEach(i => i.disabled = (mode !== "ratio"));
+          dateInputs.forEach(i => i.disabled = (mode !== "date"));
+          heuristicsInputs.forEach(i => i.disabled = (mode !== "heuristics"));
         }
 
         radios.forEach(r => r.addEventListener("change", updateMode));
         updateMode();
       });
+    </script>
+
+    <!-- ============================
+         heuristics 日付ロード
+    ============================ -->
+    <script>
+      async function loadHeuristicsDates() {
+        const select = document.getElementById("heuristicsDateSelect");
+        if (!select) return;
+
+        try {
+          const apiRoot = "https://api.github.com/repos/yt-F6D34A22-537C-E881-530F-F9E7A956A78B/batches/contents/data/heuristics";
+
+          const resp = await fetch(apiRoot);
+          const folders = await resp.json();
+
+          const ymFolders = folders
+            .filter(f => /^\d{6}$/.test(f.name))
+            .map(f => f.name)
+            .sort();
+
+          let allDates = [];
+
+          for (const ym of ymFolders) {
+            const resp2 = await fetch(`${apiRoot}/${ym}`);
+            const files = await resp2.json();
+
+            const dates = files
+              .filter(f => /^heuristics_\d{8}\.json$/.test(f.name))
+              .map(f => f.name.match(/\d{8}/)[0]);
+
+            allDates.push(...dates);
+          }
+
+          allDates.sort().reverse();
+
+          select.innerHTML = `<option value="">最新を使用</option>`;
+          allDates.forEach(d => {
+            const opt = document.createElement("option");
+            opt.value = d;
+            opt.textContent = d;
+            select.appendChild(opt);
+          });
+
+        } catch (e) {
+          console.error("Failed to load heuristics dates", e);
+        }
+      }
+
+      document.addEventListener("DOMContentLoaded", loadHeuristicsDates);
     </script>
 
   </div>
