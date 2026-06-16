@@ -165,11 +165,14 @@ button:disabled {
   z-index: 50;
   background: #f3f4f6;
   border-bottom: 1px solid #e5e7eb;
+
+  /* 横スクロール同期 */
+  overflow-x: auto;
 }
 
 /* 固定ヘッダ用テーブル */
 .table-header-sticky table {
-  width: max-content;
+  width: max-content; /* 本体と幅を合わせる */
   border-collapse: separate;
   border-spacing: 0;
 }
@@ -191,7 +194,7 @@ button:disabled {
 
 /* 本体テーブル */
 #resultTable {
-  width: max-content;
+  width: max-content; /* 固定ヘッダと一致 */
   border-collapse: separate;
   border-spacing: 0;
 }
