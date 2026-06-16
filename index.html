@@ -97,11 +97,11 @@
             <input type="radio" name="searchMode" value="heuristics">
             heuristics（経験則判定）
           </label>
-
+        
           <div class="mode-conditions" id="heuristicsConditions">
             <label>日付
               <select id="heuristicsDateSelect" disabled>
-                <option value="">最新を使用</option>
+                <option>読み込み中...</option>
               </select>
             </label>
           </div>
@@ -224,56 +224,6 @@
         radios.forEach(r => r.addEventListener("change", updateMode));
         updateMode();
       });
-    </script>
-
-    <!-- ============================
-         heuristics 日付ロード
-    ============================ -->
-    <script>
-      async function loadHeuristicsDates() {
-        const select = document.getElementById("heuristicsDateSelect");
-        if (!select) return;
-
-        try {
-          const apiRoot = "https://api.github.com/repos/yt-F6D34A22-537C-E881-530F-F9E7A956A78B/batches/contents/data/heuristics";
-
-          const resp = await fetch(apiRoot);
-          const folders = await resp.json();
-
-          const ymFolders = folders
-            .filter(f => /^\d{6}$/.test(f.name))
-            .map(f => f.name)
-            .sort();
-
-          let allDates = [];
-
-          for (const ym of ymFolders) {
-            const resp2 = await fetch(`${apiRoot}/${ym}`);
-            const files = await resp2.json();
-
-            const dates = files
-              .filter(f => /^heuristics_\d{8}\.json$/.test(f.name))
-              .map(f => f.name.match(/\d{8}/)[0]);
-
-            allDates.push(...dates);
-          }
-
-          allDates.sort().reverse();
-
-          select.innerHTML = `<option value="">最新を使用</option>`;
-          allDates.forEach(d => {
-            const opt = document.createElement("option");
-            opt.value = d;
-            opt.textContent = d;
-            select.appendChild(opt);
-          });
-
-        } catch (e) {
-          console.error("Failed to load heuristics dates", e);
-        }
-      }
-
-      document.addEventListener("DOMContentLoaded", loadHeuristicsDates);
     </script>
 
   </div>
