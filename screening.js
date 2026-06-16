@@ -87,6 +87,12 @@ async function loadHeuristicsDates() {
     const res = await fetch(`${API_BASE_URL}/heuristics_dates`);
     const dates = await res.json();
 
+    if (!Array.isArray(dates)) {
+      console.error("heuristics_dates API error:", dates);
+      select.innerHTML = `<option value="">取得失敗</option>`;
+      return;
+    }
+	  
     select.innerHTML = `<option value="">最新を使用</option>`;
     dates.forEach(d => {
       const opt = document.createElement("option");
