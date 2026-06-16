@@ -210,9 +210,10 @@ button:disabled {
 
 /* 本体側 thead は完全非表示 */
 #resultHeaderBody {
-  display: block !important;   /* UA stylesheet の table-header-group を無効化 */
   visibility: hidden;   /* 幅計算には参加 */
-  height: 0;            /* 高さゼロにする */
+  height: 0 !important; /* 高さゼロにする */
+  line-height: 0 !important;
+  font-size: 0 !important;
   overflow: hidden;     /* 内容を隠す */
   padding: 0 !important;
   margin: 0 !important;
