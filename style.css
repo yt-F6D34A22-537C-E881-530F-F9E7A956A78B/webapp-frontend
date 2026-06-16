@@ -201,6 +201,20 @@ button:disabled {
   position: relative;
 }
 
+/* データ部の横スクロール領域 */
+.table-scroll-body {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+
+  /* スクロールバー非表示 */
+  scrollbar-width: none; /* Firefox */
+}
+
+.table-scroll-body::-webkit-scrollbar {
+  display: none; /* Chrome / Safari */
+}
+
 /* 本体テーブル */
 #resultTable {
   width: max-content; /* 固定ヘッダと一致 */
