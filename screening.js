@@ -374,6 +374,9 @@ function showResults(results, mode) {
   if (typeof window.setScreeningResults === "function") {
     window.setScreeningResults(results);
   }
+
+  // テーブル描画後に列幅同期
+  afterTableRendered();
 }
 
 /* ============================
@@ -402,13 +405,27 @@ document.addEventListener("click", e => {
 });
 
 /* ============================
-   イベント登録
+   固定ヘッダと本体テーブルの列幅同期
 ============================ */
-startBtn.addEventListener("click", startScreening);
-cancelBtn.addEventListener("click", cancelScreening);
+function syncColumnWidths() {
+  const headerTable = document.querySelector(".table-header-sticky table");
+  const bodyTable = document.querySelector("#resultTable");
+
+  if (!headerTable || !bodyTable) return;
+
+  const headerCells = headerTable.querySelectorAll("th");
+  const bodyCells = bodyTable.querySelector("tr")?.children;
+
+  if (!bodyCells || headerCells.length !== bodyCells.length) return;
+
+  for (let i = 0; i < bodyCells.length; i++) {
+    const width = bodyCells[i].getBoundingClientRect().width;
+    headerCells[i].style.width = `${width}px`;
+  }
+}
 
 /* ============================
-   固定ヘッダと本体テーブルの横スクロール同期
+   固定ヘッダと本体の横スクロール同期
 ============================ */
 const stickyHeader = document.querySelector(".table-header-sticky");
 const scrollOuter = document.querySelector(".table-scroll-outer");
@@ -424,3 +441,16 @@ if (stickyHeader && scrollOuter) {
     stickyHeader.scrollLeft = scrollOuter.scrollLeft;
   });
 }
+
+/* ============================
+   テーブル描画後に列幅同期を実行
+============================ */
+function afterTableRendered() {
+  setTimeout(syncColumnWidths, 50);
+}
+
+/* ============================
+   イベント登録
+============================ */
+startBtn.addEventListener("click", startScreening);
+cancelBtn.addEventListener("click", cancelScreening);
