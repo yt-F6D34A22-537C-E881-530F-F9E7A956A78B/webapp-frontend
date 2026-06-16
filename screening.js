@@ -93,7 +93,7 @@ async function loadDates() {
     const data = await res.json();
 
     if (!data.status || data.status !== "ok") {
-      console.error("dates API error:", data);
+      console.error("dates API error:", { httpStatus: res.status, body: data });
       dateSelect.innerHTML = `<option value="">取得失敗</option>`;
       ratioDateSelect.innerHTML = `<option value="">取得失敗</option>`;
       return;
@@ -130,8 +130,11 @@ async function loadHeuristicsDates() {
     const res = await fetch(`${API_BASE_URL}/heuristics_dates`);
     const data = await res.json();
 
-    if (!data.status || data.status !== "ok") {
-      console.error("heuristics_dates API error:", data);
+    if (!data || data.status !== "ok") {
+      console.error("heuristics_dates API error:", {
+        httpStatus: res.status,
+        body: data
+      });
       select.innerHTML = `<option value="">取得失敗</option>`;
       return;
     }
@@ -142,9 +145,7 @@ async function loadHeuristicsDates() {
     select.innerHTML = "";
     select.appendChild(new Option("最新を使用", latest));
 
-    dates.slice(1).forEach(d => {
-      select.appendChild(makeOption(d));
-    });
+    dates.slice(1).forEach(d => select.appendChild(makeOption(d)));
 
   } catch (e) {
     console.error("heuristics 日付取得エラー:", e);
@@ -284,7 +285,10 @@ async function startScreening() {
     const data = await res.json();
 
     if (!data.status || data.status !== "ok") {
-      console.error("screening API error:", data);
+      console.error("screening API error:", {
+        httpStatus: res.status,
+        body: data
+      });
       alert("スクリーニング中にエラーが発生しました（詳細はコンソールを確認）");
       return;
     }
