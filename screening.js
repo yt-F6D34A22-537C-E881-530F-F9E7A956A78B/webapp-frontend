@@ -232,7 +232,7 @@ async function startScreening() {
   }
 
   if (mode === "heuristics" && !targetDateHeuristics) {
-    alert("日付を選択してください（最新を使用可）");
+    alert("日付を選択してください。");
     return;
   }
 
