@@ -77,40 +77,18 @@ async function loadDates() {
 }
 
 /* ============================
-   heuristics 日付ロード
+   /heuristics_dates のロード
 ============================ */
 async function loadHeuristicsDates() {
   const select = heuristicsDateSelect;
   if (!select) return;
 
   try {
-    const apiRoot = "https://api.github.com/repos/yt-F6D34A22-537C-E881-530F-F9E7A956A78B/batches/contents/data/heuristics";
-
-    const resp = await fetch(apiRoot);
-    const folders = await resp.json();
-
-    const ymFolders = folders
-      .filter(f => /^\d{6}$/.test(f.name))
-      .map(f => f.name)
-      .sort();
-
-    let allDates = [];
-
-    for (const ym of ymFolders) {
-      const resp2 = await fetch(`${apiRoot}/${ym}`);
-      const files = await resp2.json();
-
-      const dates = files
-        .filter(f => /^heuristics_\d{8}\.json$/.test(f.name))
-        .map(f => f.name.match(/\d{8}/)[0]);
-
-      allDates.push(...dates);
-    }
-
-    allDates.sort().reverse();
+    const res = await fetch(`${API_BASE_URL}/heuristics_dates`);
+    const dates = await res.json();
 
     select.innerHTML = `<option value="">最新を使用</option>`;
-    allDates.forEach(d => {
+    dates.forEach(d => {
       const opt = document.createElement("option");
       opt.value = d;
       opt.textContent = d;
@@ -118,7 +96,7 @@ async function loadHeuristicsDates() {
     });
 
   } catch (e) {
-    console.error("Failed to load heuristics dates", e);
+    console.error("heuristics 日付取得エラー:", e);
   }
 }
 
@@ -250,13 +228,21 @@ async function startScreening() {
     const res = await fetch(url.toString(), { signal: abortController.signal });
     const data = await res.json();
 
-    currentResults = data;
-    showResults(data, mode);
+    let results;
+
+    if (mode === "heuristics") {
+      results = data.data;
+    } else {
+      results = data;
+    }
+
+    currentResults = results;
+    showResults(results, mode);
 
     const countLabel = document.getElementById("resultCount");
     if (countLabel) {
-      countLabel.textContent = `検索結果：${data.length} 件`;
-    }
+	  countLabel.textContent = `検索結果：${results.length} 件`;
+	}
 
   } catch (e) {
     if (!abortController.signal.aborted) {
