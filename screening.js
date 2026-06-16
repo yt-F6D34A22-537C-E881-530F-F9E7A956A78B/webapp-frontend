@@ -406,3 +406,21 @@ document.addEventListener("click", e => {
 ============================ */
 startBtn.addEventListener("click", startScreening);
 cancelBtn.addEventListener("click", cancelScreening);
+
+/* ============================
+   固定ヘッダと本体テーブルの横スクロール同期
+============================ */
+const stickyHeader = document.querySelector(".table-header-sticky");
+const scrollOuter = document.querySelector(".table-scroll-outer");
+
+if (stickyHeader && scrollOuter) {
+  // 固定ヘッダ → 本体へ同期
+  stickyHeader.addEventListener("scroll", () => {
+    scrollOuter.scrollLeft = stickyHeader.scrollLeft;
+  });
+
+  // 本体 → 固定ヘッダへ同期（念のため）
+  scrollOuter.addEventListener("scroll", () => {
+    stickyHeader.scrollLeft = scrollOuter.scrollLeft;
+  });
+}
