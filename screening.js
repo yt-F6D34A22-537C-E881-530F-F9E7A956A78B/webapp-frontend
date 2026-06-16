@@ -100,8 +100,11 @@ async function loadHeuristicsDates() {
     select.innerHTML = "";
     select.appendChild(new Option("最新を使用", latest));
 
-    // その他の日付
-    dates.forEach(d => {
+    // 最新日そのものは追加しない
+    const rest = dates.slice(1);
+
+    // その他の日付を追加
+    rest.forEach(d => {
       select.appendChild(makeOption(d));
     });
 
