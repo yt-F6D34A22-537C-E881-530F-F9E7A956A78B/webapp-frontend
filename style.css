@@ -220,6 +220,14 @@ button:disabled {
   border: none !important;
 }
 
+#resultHeaderBody th {
+  padding: 0 !important;
+  height: 0 !important;
+  line-height: 0 !important;
+  font-size: 0 !important;
+  border: none !important;
+}
+
 #resultTable th,
 #resultTable td {
   padding: 10px;
