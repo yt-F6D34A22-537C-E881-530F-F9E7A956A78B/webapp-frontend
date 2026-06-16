@@ -92,13 +92,17 @@ async function loadHeuristicsDates() {
       select.innerHTML = `<option value="">取得失敗</option>`;
       return;
     }
-	  
-    select.innerHTML = `<option value="">最新を使用</option>`;
+
+    // 最新日
+    const latest = dates[0];
+
+    // 「最新を使用」→ value に最新日をセット
+    select.innerHTML = "";
+    select.appendChild(new Option("最新を使用", latest));
+
+    // その他の日付
     dates.forEach(d => {
-      const opt = document.createElement("option");
-      opt.value = d;
-      opt.textContent = d;
-      select.appendChild(opt);
+      select.appendChild(makeOption(d));
     });
 
   } catch (e) {
@@ -185,6 +189,11 @@ async function startScreening() {
     return;
   }
 
+  if (mode === "heuristics" && !targetDateHeuristics) {
+    alert("日付を選択してください（最新を使用可）");
+    return;
+  }
+
   let label = "";
   if (mode === "date") {
     const d = targetDateRanking;
@@ -226,9 +235,7 @@ async function startScreening() {
 
     } else if (mode === "heuristics") {
       url.searchParams.set("mode", "heuristics");
-      if (targetDateHeuristics) {
-        url.searchParams.set("target_date", targetDateHeuristics);
-      }
+      url.searchParams.set("target_date", targetDateHeuristics);
     }
 
     const res = await fetch(url.toString(), { signal: abortController.signal });
@@ -247,8 +254,8 @@ async function startScreening() {
 
     const countLabel = document.getElementById("resultCount");
     if (countLabel) {
-	  countLabel.textContent = `検索結果：${results.length} 件`;
-	}
+      countLabel.textContent = `検索結果：${results.length} 件`;
+    }
 
   } catch (e) {
     if (!abortController.signal.aborted) {
