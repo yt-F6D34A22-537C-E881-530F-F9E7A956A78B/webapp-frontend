@@ -188,8 +188,8 @@ button:disabled {
 
 /* 本体テーブル（横スクロール） */
 .table-scroll-outer {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
+  overflow-x: hidden;
+  position: relative;
 }
 
 /* 本体テーブル */
