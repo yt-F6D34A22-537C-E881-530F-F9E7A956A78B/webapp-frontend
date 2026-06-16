@@ -186,6 +186,15 @@ button:disabled {
   white-space: nowrap;
 }
 
+/* 固定ヘッダ table の tbody（空行）も同じ構造にする */
+.table-header-sticky td {
+  padding: 10px;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 14px;
+  white-space: nowrap;
+  text-align: center;
+}
+
 /* 本体テーブル（横スクロール） */
 .table-scroll-outer {
   overflow-x: hidden;
@@ -201,7 +210,7 @@ button:disabled {
 
 /* 本体側 thead は完全非表示 */
 #resultHeaderBody {
-  display: none;
+  visibility: hidden;
 }
 
 #resultTable th,
