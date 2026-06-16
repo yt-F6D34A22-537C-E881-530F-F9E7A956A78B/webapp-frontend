@@ -4,8 +4,8 @@ const progressText = document.getElementById("progressText");
 const elapsedTimeEl = document.getElementById("elapsedTime");
 const tbody = document.querySelector("#resultTable tbody");
 
-const dateSelect = document.getElementById("dateSelect");           // date_ranking 用
-const ratioDateSelect = document.getElementById("ratioDateSelect"); // ratio 用
+const dateSelect = document.getElementById("dateSelect");                     // date_ranking 用
+const ratioDateSelect = document.getElementById("ratioDateSelect");           // ratio 用
 const heuristicsDateSelect = document.getElementById("heuristicsDateSelect"); // heuristics 用
 
 const loadingOverlay = document.getElementById("loadingOverlay");
@@ -18,7 +18,39 @@ let timerId = null;
 
 const API_BASE_URL = "https://yfinance-api-fe86988c-d3b4-f1c6-640d.onrender.com";
 
-/* DOM 完全構築後 */
+/* ============================
+   TECH_* 日本語ラベル
+============================ */
+const TECH_LABELS = {
+  "TECH_MA_SLOPE_UP_DAILY": "移動平均線の傾き（↗）日足",
+  "TECH_MA_SLOPE_DOWN_DAILY": "移動平均線の傾き（↘）日足",
+  "TECH_MA_SLOPE_UP_WEEKLY": "移動平均線の傾き（↗）週足",
+  "TECH_MA_SLOPE_DOWN_WEEKLY": "移動平均線の傾き（↘）週足",
+  "TECH_MA_SLOPE_UP_MONTHLY": "移動平均線の傾き（↗）月足",
+  "TECH_MA_SLOPE_DOWN_MONTHLY": "移動平均線の傾き（↘）月足",
+
+  "TECH_MA_PO_DAILY": "移動平均線の位置（日足）",
+  "TECH_MA_PO_WEEKLY": "移動平均線の位置（週足）",
+  "TECH_MA_PO_MONTHLY": "移動平均線の位置（月足）",
+
+  "TECH_MA_RPO_DAILY": "移動平均線の乖離（日足）",
+  "TECH_MA_RPO_WEEKLY": "移動平均線の乖離（週足）",
+  "TECH_MA_RPO_MONTHLY": "移動平均線の乖離（月足）",
+
+  "TECH_MA_PRE_PO": "直前の位置判定",
+  "TECH_MA_PRE_RPO": "直前の乖離判定",
+
+  "TECH_MA_CONGESTION_UP": "移動平均線の収束（上）",
+  "TECH_MA_CONGESTION_DOWN": "移動平均線の収束（下）"
+};
+
+function boolMark(v) {
+  return v === true ? "○" : v === false ? "×" : "";
+}
+
+/* ============================
+   DOM 完全構築後
+============================ */
 window.onload = () => {
   initSearchMode();
   loadDates();
@@ -58,7 +90,16 @@ async function loadDates() {
     ratioDateSelect.appendChild(new Option("読み込み中...", ""));
 
     const res = await fetch(`${API_BASE_URL}/dates`);
-    const dates = await res.json();
+    const data = await res.json();
+
+    if (!data.status || data.status !== "ok") {
+      console.error("dates API error:", data);
+      dateSelect.innerHTML = `<option value="">取得失敗</option>`;
+      ratioDateSelect.innerHTML = `<option value="">取得失敗</option>`;
+      return;
+    }
+
+    const dates = data.dates;
 
     // date_ranking 用
     dateSelect.innerHTML = "";
@@ -83,33 +124,31 @@ async function loadHeuristicsDates() {
   const select = heuristicsDateSelect;
   if (!select) return;
 
+  select.innerHTML = `<option>読み込み中...</option>`;
+
   try {
     const res = await fetch(`${API_BASE_URL}/heuristics_dates`);
-    const dates = await res.json();
+    const data = await res.json();
 
-    if (!Array.isArray(dates)) {
-      console.error("heuristics_dates API error:", dates);
+    if (!data.status || data.status !== "ok") {
+      console.error("heuristics_dates API error:", data);
       select.innerHTML = `<option value="">取得失敗</option>`;
       return;
     }
 
-    // 最新日
+    const dates = data.dates;
     const latest = dates[0];
 
-    // 「最新を使用」→ value に最新日をセット
     select.innerHTML = "";
     select.appendChild(new Option("最新を使用", latest));
 
-    // 最新日そのものは追加しない
-    const rest = dates.slice(1);
-
-    // その他の日付を追加
-    rest.forEach(d => {
+    dates.slice(1).forEach(d => {
       select.appendChild(makeOption(d));
     });
 
   } catch (e) {
     console.error("heuristics 日付取得エラー:", e);
+    select.innerHTML = `<option value="">取得失敗</option>`;
   }
 }
 
@@ -157,7 +196,7 @@ function updateTableHeader(mode, label = "") {
     <tr>
       <th data-sort-key="コード">コード</th>
       <th data-sort-key="銘柄名">銘柄名</th>
-      <th>TECH_* 判定</th>
+      ${Object.values(TECH_LABELS).map(label => `<th>${label}</th>`).join("")}
     </tr>
   `;
 
@@ -244,14 +283,13 @@ async function startScreening() {
     const res = await fetch(url.toString(), { signal: abortController.signal });
     const data = await res.json();
 
-    let results;
-
-    if (mode === "heuristics") {
-      results = data.data;
-    } else {
-      results = data;
+    if (!data.status || data.status !== "ok") {
+      console.error("screening API error:", data);
+      alert("スクリーニング中にエラーが発生しました（詳細はコンソールを確認）");
+      return;
     }
 
+    const results = data.data;
     currentResults = results;
     showResults(results, mode);
 
@@ -262,7 +300,8 @@ async function startScreening() {
 
   } catch (e) {
     if (!abortController.signal.aborted) {
-      alert("エラーが発生しました");
+      console.error("screening fetch error:", e);
+      alert("エラーが発生しました（詳細はコンソールを確認）");
     }
   } finally {
     clearInterval(timerId);
@@ -309,11 +348,16 @@ function showResults(results, mode) {
         <td>${r.前日終値}</td>
       `;
     } else if (mode === "heuristics") {
-      tr.innerHTML = `
+      let html = `
         <td>${r.コード}</td>
         <td>${r.銘柄名}</td>
-        <td><pre>${JSON.stringify(r, null, 2)}</pre></td>
       `;
+
+      for (const key in TECH_LABELS) {
+        html += `<td>${boolMark(r[key])}</td>`;
+      }
+
+      tr.innerHTML = html;
     }
 
     tr.addEventListener("click", () => {
