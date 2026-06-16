@@ -413,18 +413,37 @@ function syncColumnWidths() {
 
   if (!headerTable || !bodyTable) return;
 
-  const headerCells = headerTable.querySelectorAll("th");
-  const firstRow = bodyTable.querySelector("tr");
+  const headerTheadCells = headerTable.querySelectorAll("thead th");
+  const headerTbodyCells = headerTable.querySelectorAll("tbody td");
+  const bodyTheadCells = bodyTable.querySelectorAll("thead th");
+  const firstRow = bodyTable.querySelector("tbody tr");
+
   if (!firstRow) return;
 
   const bodyCells = firstRow.children;
-  if (headerCells.length !== bodyCells.length) return;
 
-  for (let i = 0; i < bodyCells.length; i++) {
-    const width = bodyCells[i].getBoundingClientRect().width;
+  const len = bodyCells.length;
+  if (
+    headerTheadCells.length !== len ||
+    bodyTheadCells.length !== len
+  ) return;
 
-    headerCells[i].style.width = `${width}px`;
-    bodyCells[i].style.width = `${width}px`;
+  for (let i = 0; i < len; i++) {
+    const width = bodyCells[i].getBoundingClientRect().width + "px";
+
+    // 固定ヘッダ thead
+    headerTheadCells[i].style.width = width;
+
+    // 固定ヘッダ tbody（空行）
+    if (headerTbodyCells[i]) {
+      headerTbodyCells[i].style.width = width;
+    }
+
+    // 本体 thead（visibility:hidden）
+    bodyTheadCells[i].style.width = width;
+
+    // 本体 tbody
+    bodyCells[i].style.width = width;
   }
 }
 
