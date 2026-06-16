@@ -210,7 +210,12 @@ button:disabled {
 
 /* 本体側 thead は完全非表示 */
 #resultHeaderBody {
-  visibility: hidden;
+  visibility: hidden;   /* 幅計算には参加 */
+  height: 0;            /* 高さゼロにする */
+  overflow: hidden;     /* 内容を隠す */
+  padding: 0;
+  margin: 0;
+  border: none;
 }
 
 #resultTable th,
