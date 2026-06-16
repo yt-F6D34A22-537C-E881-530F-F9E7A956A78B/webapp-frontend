@@ -148,6 +148,7 @@
       </div>
 
       <p class="hint">行をタップ／クリックするとチャートを表示します。</p>
+      <p class="hint">heuristics モードでは ○＝一致、×＝不一致 を表示します。</p>
     </section>
 
     <!-- ============================
@@ -202,29 +203,6 @@
         </div>
       </div>
     </div>
-
-    <!-- ============================
-         モード切替（初期化）
-    ============================ -->
-    <script>
-      document.addEventListener("DOMContentLoaded", () => {
-        const radios = document.querySelectorAll('input[name="searchMode"]');
-        const ratioInputs = document.querySelectorAll("#ratioConditions input, #ratioConditions select");
-        const dateInputs = document.querySelectorAll("#dateConditions select");
-        const heuristicsInputs = document.querySelectorAll("#heuristicsConditions select");
-
-        function updateMode() {
-          const mode = document.querySelector('input[name="searchMode"]:checked').value;
-
-          ratioInputs.forEach(i => i.disabled = (mode !== "ratio"));
-          dateInputs.forEach(i => i.disabled = (mode !== "date"));
-          heuristicsInputs.forEach(i => i.disabled = (mode !== "heuristics"));
-        }
-
-        radios.forEach(r => r.addEventListener("change", updateMode));
-        updateMode();
-      });
-    </script>
 
   </div>
 </body>
