@@ -414,13 +414,18 @@ function syncColumnWidths() {
   if (!headerTable || !bodyTable) return;
 
   const headerCells = headerTable.querySelectorAll("th");
-  const bodyCells = bodyTable.querySelector("tr")?.children;
+  const firstRow = bodyTable.querySelector("tr");
+  if (!firstRow) return;
 
-  if (!bodyCells || headerCells.length !== bodyCells.length) return;
+  const bodyCells = firstRow.children;
+  if (headerCells.length !== bodyCells.length) return;
 
   for (let i = 0; i < bodyCells.length; i++) {
-    const width = bodyCells[i].getBoundingClientRect().width;
-    headerCells[i].style.width = `${width}px`;
+    const bodyWidth = bodyCells[i].getBoundingClientRect().width;
+
+    // ヘッダ・ボディ両方に同じ幅を適用
+    headerCells[i].style.width = `${bodyWidth}px`;
+    bodyCells[i].style.width = `${bodyWidth}px`;
   }
 }
 
