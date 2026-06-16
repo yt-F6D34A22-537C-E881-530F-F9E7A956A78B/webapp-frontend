@@ -218,28 +218,6 @@ button:disabled {
   cursor: pointer;
 }
 
-/* 列幅調整（コード・銘柄名以外は可変） */
-.table-header-sticky th:nth-child(1),
-#resultTable td:nth-child(1) {
-  width: 60px;
-  text-align: right;
-}
-
-.table-header-sticky th:nth-child(2),
-#resultTable td:nth-child(2) {
-  min-width: 200px;
-  text-align: left;
-  white-space: normal;
-  word-break: break-word;
-}
-
-/* TECH_* 列 */
-.table-header-sticky th:nth-child(n+3),
-#resultTable td:nth-child(n+3) {
-  min-width: 120px;
-  text-align: center;
-}
-
 /* ------------------------------
    ○ / × の視認性向上
 ------------------------------ */
