@@ -421,11 +421,10 @@ function syncColumnWidths() {
   if (headerCells.length !== bodyCells.length) return;
 
   for (let i = 0; i < bodyCells.length; i++) {
-    const bodyWidth = bodyCells[i].getBoundingClientRect().width;
+    const width = bodyCells[i].getBoundingClientRect().width;
 
-    // ヘッダ・ボディ両方に同じ幅を適用
-    headerCells[i].style.width = `${bodyWidth}px`;
-    bodyCells[i].style.width = `${bodyWidth}px`;
+    headerCells[i].style.width = `${width}px`;
+    bodyCells[i].style.width = `${width}px`;
   }
 }
 
@@ -451,7 +450,7 @@ if (stickyHeader && scrollOuter) {
    テーブル描画後に列幅同期を実行
 ============================ */
 function afterTableRendered() {
-  setTimeout(syncColumnWidths, 50);
+  setTimeout(syncColumnWidths, 0);
 }
 
 /* ============================
