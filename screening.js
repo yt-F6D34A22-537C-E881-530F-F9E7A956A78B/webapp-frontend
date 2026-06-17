@@ -357,7 +357,7 @@ function showResults(results, mode) {
         <td>${r.当日終値}</td>
         <td>${r.前日終値}</td>
       `;
-    } else if (mode === "heuristics") 
+    } else if (mode === "heuristics") {
       let html = `
         <td>${r.コード}</td>
         <td>${r.銘柄名}</td>
