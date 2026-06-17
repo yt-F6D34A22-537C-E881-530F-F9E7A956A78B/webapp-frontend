@@ -265,6 +265,11 @@ button:disabled {
   cursor: pointer;
 }
 
+.tr-error {
+  background: #e5e7eb !important; /* gray-200 */
+  color: #555;
+}
+
 /* ------------------------------
    ○ / × の視認性向上
 ------------------------------ */
