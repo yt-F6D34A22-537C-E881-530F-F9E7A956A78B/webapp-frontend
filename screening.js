@@ -541,8 +541,57 @@ function afterTableRendered() {
   setTimeout(syncColumnWidths, 0);
 }
 
+/* ============================================================
+   ★ 固定列の left を自動調整（隙間ゼロ・今後列が増えても対応）
+============================================================ */
+function syncFixedColumns() {
+  const table = document.getElementById("resultTable");
+  if (!table) return;
+
+  const rows = table.querySelectorAll("tbody tr");
+  if (rows.length === 0) return;
+
+  const firstRow = rows[0];
+  const fixedCols = firstRow.querySelectorAll(".fixed-col");
+
+  let left = 0;
+
+  fixedCols.forEach(col => {
+    const colIndex = Array.from(firstRow.children).indexOf(col);
+
+    // tbody 側
+    document.querySelectorAll(`#resultTable td:nth-child(${colIndex + 1})`)
+      .forEach(td => td.style.left = `${left}px`);
+
+    // thead 側
+    document.querySelectorAll(`.table-header-sticky th:nth-child(${colIndex + 1})`)
+      .forEach(th => th.style.left = `${left}px`);
+
+    left += col.offsetWidth;
+  });
+}
+
 /* ============================
    イベント登録
 ============================ */
 startBtn.addEventListener("click", startScreening);
 cancelBtn.addEventListener("click", cancelScreening);
+
+/* ============================
+   ★ リサイズ時にも固定列を再計算
+============================ */
+window.addEventListener("resize", () => {
+  syncColumnWidths();
+  syncFixedColumns();
+});
+
+/* ============================
+   ★ showResults → afterTableRendered の後に追加
+============================ */
+(function patchShowResults() {
+  const original = showResults;
+  showResults = function(results, mode) {
+    original(results, mode);
+    syncFixedColumns();   // ← 固定列の left を同期
+  };
+})();
