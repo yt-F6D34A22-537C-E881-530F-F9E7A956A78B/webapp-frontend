@@ -446,6 +446,8 @@ function showResults(results, mode) {
 
   // テーブル描画後に列幅同期
   afterTableRendered();
+  // 描画直後に固定列の left を再計算
+  syncFixedColumns();
 }
 
 /* ============================
