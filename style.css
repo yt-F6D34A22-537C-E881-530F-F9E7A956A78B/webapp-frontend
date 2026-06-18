@@ -271,6 +271,11 @@ button:disabled {
   color: #555;
 }
 
+/* heuristics の error 行の固定列も背景色を合わせる */
+tr.tr-error .fixed-col {
+  background-color: #e5e7eb !important; /* gray-200 */
+}
+
 /* ------------------------------
    左固定カラム（コード・銘柄名）
 ------------------------------ */
