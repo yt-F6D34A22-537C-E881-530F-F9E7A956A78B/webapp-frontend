@@ -261,7 +261,8 @@ button:disabled {
   text-align: center;
 }
 
-#resultTable tr:hover {
+#resultTable tr:hover,
+#resultTable tr:hover .fixed-col {
   background: #f0f9ff;
   cursor: pointer;
 }
