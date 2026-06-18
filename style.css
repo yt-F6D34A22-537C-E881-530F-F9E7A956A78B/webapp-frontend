@@ -282,10 +282,17 @@ button:disabled {
 
 .fixed-col.col-2 {
   left: 80px; /* 初期値。JS が後で自動調整 */
+  background: white;
   z-index: 40;
 }
 
-/* 固定ヘッダ側の左固定カラム */
+/* 透け防止（hover の侵入は許可） */
+#resultTable td.fixed-col,
+#resultTable td.fixed-col.col-2 {
+  background: white;
+}
+
+/* 固定ヘッダ側 */
 .table-header-sticky th.fixed-col {
   z-index: 60;
 }
