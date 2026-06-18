@@ -228,8 +228,8 @@ function updateTableHeader(mode, label = "") {
 
   const ratio = `
     <tr>
-      <th data-sort-key="コード" class="fixed-col">コード</th>
-      <th data-sort-key="銘柄名" class="fixed-col col-2">銘柄名</th>
+      <th class="fixed-col" data-sort-key="コード">コード</th>
+      <th class="fixed-col col-2" data-sort-key="銘柄名">銘柄名</th>
       <th data-sort-key="出来高倍率">出来高倍率</th>
       <th data-sort-key="上髭実体比">上髭実体比</th>
       <th data-sort-key="出来高">出来高</th>
@@ -240,8 +240,8 @@ function updateTableHeader(mode, label = "") {
 
   const date = `
     <tr>
-      <th data-sort-key="コード" class="fixed-col">コード</th>
-      <th data-sort-key="銘柄名" class="fixed-col col-2">銘柄名</th>
+      <th class="fixed-col" data-sort-key="コード">コード</th>
+      <th class="fixed-col col-2" data-sort-key="銘柄名">銘柄名</th>
       <th data-sort-key="値上がり率">値上がり率</th>
       <th data-sort-key="当日終値">${label}終値</th>
       <th data-sort-key="前日終値">前日終値</th>
@@ -250,9 +250,11 @@ function updateTableHeader(mode, label = "") {
 
   const heuristics = `
     <tr>
-      <th data-sort-key="コード" class="fixed-col">コード</th>
-      <th data-sort-key="銘柄名" class="fixed-col col-2">銘柄名</th>
-      ${Object.values(TECH_LABELS).map(label => `<th>${label}</th>`).join("")}
+      <th class="fixed-col" data-sort-key="コード">コード</th>
+      <th class="fixed-col col-2" data-sort-key="銘柄名">銘柄名</th>
+      ${Object.keys(TECH_LABELS)
+        .map(key => `<th data-sort-key="${key}">${TECH_LABELS[key]}</th>`)
+        .join("")}
     </tr>
   `;
 
@@ -396,30 +398,31 @@ function showResults(results, mode) {
 
     if (mode === "ratio") {
       tr.innerHTML = `
-        <td>${r.コード}</td>
-        <td>${r.銘柄名}</td>
+        <td class="fixed-col">${r.コード}</td>
+        <td class="fixed-col col-2">${r.銘柄名}</td>
         <td>${r.出来高倍率}</td>
         <td>${r.上髭実体比}</td>
         <td>${r.出来高.toLocaleString()}</td>
         <td>${r.上髭}</td>
         <td>${r.実体}</td>
       `;
+
     } else if (mode === "date") {
       tr.innerHTML = `
-        <td>${r.コード}</td>
-        <td>${r.銘柄名}</td>
+        <td class="fixed-col">${r.コード}</td>
+        <td class="fixed-col col-2">${r.銘柄名}</td>
         <td>${r.値上がり率}%</td>
         <td>${r.当日終値}</td>
         <td>${r.前日終値}</td>
       `;
+
     } else if (mode === "heuristics") {
       let html = `
-        <td>${r.コード}</td>
-        <td>${r.銘柄名}</td>
+        <td class="fixed-col">${r.コード}</td>
+        <td class="fixed-col col-2">${r.銘柄名}</td>
       `;
-    
+
       for (const key in TECH_LABELS) {
-        // Rule9（オブジェクト型）は direction + count を 1 列で表示
         if (key === "TECH_RULE9_DAILY" || key === "TECH_RULE9_WEEKLY") {
           html += `<td>${formatRule9(r[key])}</td>`;
         } else {
