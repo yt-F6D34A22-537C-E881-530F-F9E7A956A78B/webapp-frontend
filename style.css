@@ -277,13 +277,13 @@ button:disabled {
   position: sticky;
   left: 0;
   background: white;
-  z-index: 40; /* 通常セルより上、固定ヘッダより下 */
+  z-index: 45; /* ← 透け防止のため調整 */
 }
 
 .fixed-col.col-2 {
   left: 80px; /* 初期値。JS が後で自動調整 */
   background: white;
-  z-index: 40;
+  z-index: 45;
 }
 
 /* 透け防止（hover の侵入は許可） */
@@ -294,11 +294,14 @@ button:disabled {
 
 /* 固定ヘッダ側 */
 .table-header-sticky th.fixed-col {
+  background: #f3f4f6;
   z-index: 60;
 }
 
 .table-header-sticky th.col-2 {
   left: 80px;
+  background: #f3f4f6;
+  z-index: 60;
 }
 
 /* ------------------------------
