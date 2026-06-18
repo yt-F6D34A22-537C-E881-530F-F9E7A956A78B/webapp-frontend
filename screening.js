@@ -98,10 +98,8 @@ function boolMark(v) {
 
 function formatRule9(obj) {
   if (!obj || !obj.direction) return "";
-
   const arrow = obj.direction === "up" ? "↗" :
                 obj.direction === "down" ? "↘" : "";
-
   return `${arrow}（${obj.count} 本目）`;
 }
 
@@ -230,8 +228,8 @@ function updateTableHeader(mode, label = "") {
 
   const ratio = `
     <tr>
-      <th data-sort-key="コード">コード</th>
-      <th data-sort-key="銘柄名">銘柄名</th>
+      <th data-sort-key="コード" class="fixed-col">コード</th>
+      <th data-sort-key="銘柄名" class="fixed-col col-2">銘柄名</th>
       <th data-sort-key="出来高倍率">出来高倍率</th>
       <th data-sort-key="上髭実体比">上髭実体比</th>
       <th data-sort-key="出来高">出来高</th>
@@ -242,8 +240,8 @@ function updateTableHeader(mode, label = "") {
 
   const date = `
     <tr>
-      <th data-sort-key="コード">コード</th>
-      <th data-sort-key="銘柄名">銘柄名</th>
+      <th data-sort-key="コード" class="fixed-col">コード</th>
+      <th data-sort-key="銘柄名" class="fixed-col col-2">銘柄名</th>
       <th data-sort-key="値上がり率">値上がり率</th>
       <th data-sort-key="当日終値">${label}終値</th>
       <th data-sort-key="前日終値">前日終値</th>
@@ -252,8 +250,8 @@ function updateTableHeader(mode, label = "") {
 
   const heuristics = `
     <tr>
-      <th data-sort-key="コード">コード</th>
-      <th data-sort-key="銘柄名">銘柄名</th>
+      <th data-sort-key="コード" class="fixed-col">コード</th>
+      <th data-sort-key="銘柄名" class="fixed-col col-2">銘柄名</th>
       ${Object.values(TECH_LABELS).map(label => `<th>${label}</th>`).join("")}
     </tr>
   `;
