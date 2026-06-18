@@ -281,7 +281,7 @@ button:disabled {
 }
 
 .fixed-col.col-2 {
-  left: 80px; /* 初期値。JS 側で列幅に合わせて上書き予定ならここは暫定値 */
+  left: 80px; /* 初期値。JS が後で自動調整 */
   z-index: 40;
 }
 
