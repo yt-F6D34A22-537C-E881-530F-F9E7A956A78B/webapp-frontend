@@ -195,7 +195,9 @@ button:disabled {
   text-align: center;
 }
 
-/* 本体テーブル（横スクロール） */
+/* ------------------------------
+   本体テーブル
+------------------------------ */
 .table-scroll-outer {
   overflow-x: auto;          /* ← 横スクロール可能にする */
   overflow-y: hidden;
@@ -210,7 +212,6 @@ button:disabled {
   display: none;             /* Chrome / Safari */
 }
 
-/* データ部の横スクロール領域 */
 .table-scroll-body {
   overflow-x: auto;
   overflow-y: hidden;
@@ -280,16 +281,11 @@ button:disabled {
   z-index: 45; /* ← 透け防止のため調整 */
 }
 
+/* 2列目以降の固定列は JS が left を設定するため 0 にしておく */
 .fixed-col.col-2 {
-  left: 80px; /* 初期値。JS が後で自動調整 */
+  left: 0;
   background: white;
   z-index: 45;
-}
-
-/* 透け防止（hover の侵入は許可） */
-#resultTable td.fixed-col,
-#resultTable td.fixed-col.col-2 {
-  background: white;
 }
 
 /* 固定ヘッダ側 */
@@ -299,7 +295,7 @@ button:disabled {
 }
 
 .table-header-sticky th.col-2 {
-  left: 80px;
+  left: 0;
   background: #f3f4f6;
   z-index: 60;
 }
