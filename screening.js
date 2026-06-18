@@ -444,10 +444,8 @@ function showResults(results, mode) {
     window.setScreeningResults(results);
   }
 
-  // テーブル描画後に列幅同期
+  // テーブル描画後に列幅＋固定列を同期（2段階遅延）
   afterTableRendered();
-  // 描画直後に固定列の left を再計算
-  syncFixedColumns();
 }
 
 /* ============================
@@ -530,17 +528,23 @@ if (stickyHeader && scrollOuter) {
     scrollOuter.scrollLeft = stickyHeader.scrollLeft;
   });
 
-  // 本体 → 固定ヘッダへ同期（念のため）
+  // 本体 → 固定ヘッダへ同期
   scrollOuter.addEventListener("scroll", () => {
     stickyHeader.scrollLeft = scrollOuter.scrollLeft;
   });
 }
 
 /* ============================
-   テーブル描画後に列幅同期を実行
+   テーブル描画後に列幅＋固定列を同期
+   ★ 2段階遅延で「初回表示から隙間ゼロ」を保証
 ============================ */
 function afterTableRendered() {
-  setTimeout(syncColumnWidths, 0);
+  setTimeout(() => {
+    syncColumnWidths();   // ① 列幅を確定
+    setTimeout(() => {
+      syncFixedColumns(); // ② 列幅確定後に固定列の left を再計算
+    }, 0);
+  }, 0);
 }
 
 /* ============================================================
@@ -580,7 +584,7 @@ startBtn.addEventListener("click", startScreening);
 cancelBtn.addEventListener("click", cancelScreening);
 
 /* ============================
-   ★ リサイズ時にも固定列を再計算
+   リサイズ時にも固定列を再計算
 ============================ */
 window.addEventListener("resize", () => {
   syncColumnWidths();
@@ -588,12 +592,12 @@ window.addEventListener("resize", () => {
 });
 
 /* ============================
-   ★ showResults → afterTableRendered の後に追加
+   showResults をパッチして固定列同期を保証
 ============================ */
 (function patchShowResults() {
   const original = showResults;
   showResults = function(results, mode) {
     original(results, mode);
-    syncFixedColumns();   // ← 固定列の left を同期
+    // afterTableRendered() 内で 2段階遅延同期するため、ここでは呼ばない
   };
 })();
