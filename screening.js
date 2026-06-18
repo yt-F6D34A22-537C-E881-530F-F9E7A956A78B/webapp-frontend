@@ -22,30 +22,87 @@ const API_BASE_URL = "https://yfinance-api-fe86988c-d3b4-f1c6-640d.onrender.com"
    TECH_* 日本語ラベル
 ============================ */
 const TECH_LABELS = {
-  "TECH_MA_SLOPE_UP_DAILY": "移動平均線の傾き（↗）日足",
-  "TECH_MA_SLOPE_DOWN_DAILY": "移動平均線の傾き（↘）日足",
-  "TECH_MA_SLOPE_UP_WEEKLY": "移動平均線の傾き（↗）週足",
-  "TECH_MA_SLOPE_DOWN_WEEKLY": "移動平均線の傾き（↘）週足",
-  "TECH_MA_SLOPE_UP_MONTHLY": "移動平均線の傾き（↗）月足",
-  "TECH_MA_SLOPE_DOWN_MONTHLY": "移動平均線の傾き（↘）月足",
+  "TECH_MA_SLOPE_UP_DAILY": "移動平均線の傾き↗（日足）",
+  "TECH_MA_SLOPE_DOWN_DAILY": "移動平均線の傾き↘（日足）",
+  "TECH_MA_SLOPE_UP_WEEKLY": "移動平均線の傾き↗（週足）",
+  "TECH_MA_SLOPE_DOWN_WEEKLY": "移動平均線の傾き↘（週足）",
+  "TECH_MA_SLOPE_UP_MONTHLY": "移動平均線の傾き↗（月足）",
+  "TECH_MA_SLOPE_DOWN_MONTHLY": "移動平均線の傾き↘（月足）",
 
   "TECH_MA_PO_DAILY": "移動平均線の位置（日足）",
-  "TECH_MA_PO_WEEKLY": "移動平均線の位置（週足）",
-  "TECH_MA_PO_MONTHLY": "移動平均線の位置（月足）",
-
   "TECH_MA_RPO_DAILY": "移動平均線の乖離（日足）",
+  "TECH_MA_PO_WEEKLY": "移動平均線の位置（週足）",
   "TECH_MA_RPO_WEEKLY": "移動平均線の乖離（週足）",
+  "TECH_MA_PO_MONTHLY": "移動平均線の位置（月足）",
   "TECH_MA_RPO_MONTHLY": "移動平均線の乖離（月足）",
 
   "TECH_MA_PRE_PO": "直前の位置判定",
   "TECH_MA_PRE_RPO": "直前の乖離判定",
 
   "TECH_MA_CONGESTION_UP": "移動平均線の収束（上）",
-  "TECH_MA_CONGESTION_DOWN": "移動平均線の収束（下）"
+  "TECH_MA_CONGESTION_DOWN": "移動平均線の収束（下）",
+
+  "TECH_MA_SPREAD_UP": "移動平均線の拡散（上）",
+  "TECH_MA_SPREAD_DOWN": "移動平均線の拡散（下）",
+
+  "TECH_MA100_TREND_UP": "100MAトレンド（上）",
+  "TECH_MA100_TREND_DOWN": "100MAトレンド（下）",
+
+  "TECH_KAHANSHIN": "下半身",
+  "TECH_GYAKU_KAHANSHIN": "逆下半身",
+
+  "TECH_5MA_HIGH_UPDATE": "5MA高値更新",
+  "TECH_5MA_LOW_UPDATE": "5MA安値更新",
+
+  "TECH_SAKATA_TRIPLE_TOP": "三尊天井",
+  "TECH_SAKATA_TRIPLE_BOTTOM": "逆三尊",
+  "TECH_SAKATA_SANKU_UP": "三空（上）",
+  "TECH_SAKATA_SANKU_DOWN": "三空（下）",
+  "TECH_SAKATA_SANPEI_UP": "三兵（上）",
+  "TECH_SAKATA_SANPEI_DOWN": "三兵（下）",
+  "TECH_SAKATA_SANPO_UP": "三法（上）",
+  "TECH_SAKATA_SANPO_DOWN": "三法（下）",
+
+  "TECH_HEAD_AND_SHOULDERS": "ヘッド＆ショルダー",
+  "TECH_DOUBLE_BOTTOM": "ダブルボトム",
+
+  "TECH_NICHI_DAI": "日大（上）",
+  "TECH_GYAKU_NICHI_DAI": "逆日大（下）",
+
+  "TECH_MONOWAKARE_UP": "物別れ（上）",
+  "TECH_MONOWAKARE_DOWN": "物別れ（下）",
+  "TECH_MONOWAKARE_CROSS_UP": "物別れクロス（上）",
+  "TECH_MONOWAKARE_CROSS_DOWN": "物別れクロス（下）",
+
+  "TECH_RULE9_DAILY": "Rule9（日足）",
+  "TECH_RULE9_WEEKLY": "Rule9（週足）",
+
+  "TECH_RULE9_DAILY_UP_9": "Rule9（日足）上向き9本",
+  "TECH_RULE9_DAILY_UP_17": "Rule9（日足）上向き17本",
+  "TECH_RULE9_DAILY_UP_23": "Rule9（日足）上向き23本",
+  "TECH_RULE9_DAILY_DOWN_9": "Rule9（日足）下向き9本",
+  "TECH_RULE9_DAILY_DOWN_17": "Rule9（日足）下向き17本",
+  "TECH_RULE9_DAILY_DOWN_23": "Rule9（日足）下向き23本",
+
+  "TECH_RULE9_WEEKLY_UP_9": "Rule9（週足）上向き9本",
+  "TECH_RULE9_WEEKLY_UP_17": "Rule9（週足）上向き17本",
+  "TECH_RULE9_WEEKLY_UP_23": "Rule9（週足）上向き23本",
+  "TECH_RULE9_WEEKLY_DOWN_9": "Rule9（週足）下向き9本",
+  "TECH_RULE9_WEEKLY_DOWN_17": "Rule9（週足）下向き17本",
+  "TECH_RULE9_WEEKLY_DOWN_23": "Rule9（週足）下向き23本"
 };
 
 function boolMark(v) {
   return v === true ? "○" : v === false ? "×" : "";
+}
+
+function formatRule9(obj) {
+  if (!obj || !obj.direction) return "";
+
+  const arrow = obj.direction === "up" ? "↗" :
+                obj.direction === "down" ? "↘" : "";
+
+  return `${arrow}（${obj.count} 本目）`;
 }
 
 /* ============================
@@ -362,11 +419,16 @@ function showResults(results, mode) {
         <td>${r.コード}</td>
         <td>${r.銘柄名}</td>
       `;
-
+    
       for (const key in TECH_LABELS) {
-        html += `<td>${boolMark(r[key])}</td>`;
+        // Rule9（オブジェクト型）は direction + count を 1 列で表示
+        if (key === "TECH_RULE9_DAILY" || key === "TECH_RULE9_WEEKLY") {
+          html += `<td>${formatRule9(r[key])}</td>`;
+        } else {
+          html += `<td>${boolMark(r[key])}</td>`;
+        }
       }
-
+    
       tr.innerHTML = html;
     }
 
