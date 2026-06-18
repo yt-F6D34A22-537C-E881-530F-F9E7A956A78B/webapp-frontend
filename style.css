@@ -271,6 +271,30 @@ button:disabled {
 }
 
 /* ------------------------------
+   左固定カラム（コード・銘柄名）
+------------------------------ */
+.fixed-col {
+  position: sticky;
+  left: 0;
+  background: white;
+  z-index: 40; /* 通常セルより上、固定ヘッダより下 */
+}
+
+.fixed-col.col-2 {
+  left: 80px; /* 初期値。JS 側で列幅に合わせて上書き予定ならここは暫定値 */
+  z-index: 40;
+}
+
+/* 固定ヘッダ側の左固定カラム */
+.table-header-sticky th.fixed-col {
+  z-index: 60;
+}
+
+.table-header-sticky th.col-2 {
+  left: 80px;
+}
+
+/* ------------------------------
    ○ / × の視認性向上
 ------------------------------ */
 .tech-true {
