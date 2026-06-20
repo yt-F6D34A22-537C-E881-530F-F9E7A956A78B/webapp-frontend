@@ -22,38 +22,51 @@ const API_BASE_URL = "https://yfinance-api-fe86988c-d3b4-f1c6-640d.onrender.com"
    TECH_* 日本語ラベル
 ============================ */
 const TECH_LABELS = {
-  "TECH_MA_SLOPE_UP_DAILY": "移動平均線の傾き↗（日足）",
-  "TECH_MA_SLOPE_DOWN_DAILY": "移動平均線の傾き↘（日足）",
-  "TECH_MA_SLOPE_UP_WEEKLY": "移動平均線の傾き↗（週足）",
-  "TECH_MA_SLOPE_DOWN_WEEKLY": "移動平均線の傾き↘（週足）",
-  "TECH_MA_SLOPE_UP_MONTHLY": "移動平均線の傾き↗（月足）",
-  "TECH_MA_SLOPE_DOWN_MONTHLY": "移動平均線の傾き↘（月足）",
+  // MA SLOPE
+  "TECH_MA_SLOPE_DAILY": "移動平均線の傾き（日足）",
+  "TECH_MA_SLOPE_WEEKLY": "移動平均線の傾き（週足）",
+  "TECH_MA_SLOPE_MONTHLY": "移動平均線の傾き（月足）",
 
-  "TECH_MA_PO_DAILY": "移動平均線の位置（日足）",
-  "TECH_MA_RPO_DAILY": "移動平均線の乖離（日足）",
-  "TECH_MA_PO_WEEKLY": "移動平均線の位置（週足）",
-  "TECH_MA_RPO_WEEKLY": "移動平均線の乖離（週足）",
-  "TECH_MA_PO_MONTHLY": "移動平均線の位置（月足）",
-  "TECH_MA_RPO_MONTHLY": "移動平均線の乖離（月足）",
+  // MA POSITION
+  "TECH_MA_POSITION_DAILY": "移動平均線の位置（日足）",
+  "TECH_MA_POSITION_WEEKLY": "移動平均線の位置（週足）",
+  "TECH_MA_POSITION_MONTHLY": "移動平均線の位置（月足）",
 
-  "TECH_MA_PRE_PO": "直前の位置判定",
-  "TECH_MA_PRE_RPO": "直前の乖離判定",
+  // PERFECT ORDER
+  "TECH_PERFECT_ORDER_DAILY": "パーフェクトオーダー（日足）",
+  "TECH_PERFECT_ORDER_WEEKLY": "パーフェクトオーダー（週足）",
+  "TECH_PERFECT_ORDER_MONTHLY": "パーフェクトオーダー（月足）",
 
-  "TECH_MA_CONGESTION_UP": "移動平均線の収束（上）",
-  "TECH_MA_CONGESTION_DOWN": "移動平均線の収束（下）",
+  "TECH_REVERSE_PERFECT_ORDER_DAILY": "逆パーフェクトオーダー（日足）",
+  "TECH_REVERSE_PERFECT_ORDER_WEEKLY": "逆パーフェクトオーダー（週足）",
+  "TECH_REVERSE_PERFECT_ORDER_MONTHLY": "逆パーフェクトオーダー（月足）",
 
-  "TECH_MA_SPREAD_UP": "移動平均線の拡散（上）",
-  "TECH_MA_SPREAD_DOWN": "移動平均線の拡散（下）",
+  // PRE-PO / PRE-RPO
+  "TECH_PRE_PERFECT_ORDER_DAILY": "直前PO（日足）",
+  "TECH_PRE_PERFECT_ORDER_WEEKLY": "直前PO（週足）",
+  "TECH_PRE_PERFECT_ORDER_MONTHLY": "直前PO（月足）",
 
-  "TECH_MA100_TREND_UP": "100MAトレンド（上）",
-  "TECH_MA100_TREND_DOWN": "100MAトレンド（下）",
+  "TECH_PRE_REVERSE_PERFECT_ORDER_DAILY": "直前逆PO（日足）",
+  "TECH_PRE_REVERSE_PERFECT_ORDER_WEEKLY": "直前逆PO（週足）",
+  "TECH_PRE_REVERSE_PERFECT_ORDER_MONTHLY": "直前逆PO（月足）",
 
+  // MA CONGESTION
+  "TECH_MA_CONGESTION": "移動平均線の収束",
+
+  // MA SPREAD
+  "TECH_MA_SPREAD": "移動平均線の拡散",
+
+  // MA100 TREND
+  "TECH_MA100_TREND": "100MAトレンド",
+
+  // 下半身
   "TECH_KAHANSHIN": "下半身",
   "TECH_GYAKU_KAHANSHIN": "逆下半身",
 
-  "TECH_5MA_HIGH_UPDATE": "5MA高値更新",
-  "TECH_5MA_LOW_UPDATE": "5MA安値更新",
+  // 5MA UPDATE
+  "TECH_5MA_UPDATE": "5MA更新",
 
+  // 酒田五法
   "TECH_SAKATA_TRIPLE_TOP": "三尊天井",
   "TECH_SAKATA_TRIPLE_BOTTOM": "逆三尊",
   "TECH_SAKATA_SANKU_UP": "三空（上）",
@@ -63,33 +76,46 @@ const TECH_LABELS = {
   "TECH_SAKATA_SANPO_UP": "三法（上）",
   "TECH_SAKATA_SANPO_DOWN": "三法（下）",
 
+  // パターン
   "TECH_HEAD_AND_SHOULDERS": "ヘッド＆ショルダー",
   "TECH_DOUBLE_BOTTOM": "ダブルボトム",
-
   "TECH_NICHI_DAI": "日大（上）",
   "TECH_GYAKU_NICHI_DAI": "逆日大（下）",
 
-  "TECH_MONOWAKARE_UP": "物別れ（上）",
-  "TECH_MONOWAKARE_DOWN": "物別れ（下）",
-  "TECH_MONOWAKARE_CROSS_UP": "物別れクロス（上）",
-  "TECH_MONOWAKARE_CROSS_DOWN": "物別れクロス（下）",
+  // Monowakare
+  "TECH_MONOWAKARE": "物別れ",
+  "TECH_MONOWAKARE_RED_BLUE_CROSS": "物別れクロス",
 
+  // Rule9
   "TECH_RULE9_DAILY": "Rule9（日足）",
   "TECH_RULE9_WEEKLY": "Rule9（週足）",
 
-  "TECH_RULE9_DAILY_UP_9": "Rule9（日足）上向き9本",
-  "TECH_RULE9_DAILY_UP_17": "Rule9（日足）上向き17本",
-  "TECH_RULE9_DAILY_UP_23": "Rule9（日足）上向き23本",
-  "TECH_RULE9_DAILY_DOWN_9": "Rule9（日足）下向き9本",
-  "TECH_RULE9_DAILY_DOWN_17": "Rule9（日足）下向き17本",
-  "TECH_RULE9_DAILY_DOWN_23": "Rule9（日足）下向き23本",
+  // BB ZONE BREAK
+  "TECH_BB_ZONE_BREAK_DAILY": "BBゾーンブレイク（日足）",
+  "TECH_BB_ZONE_BREAK_WEEKLY": "BBゾーンブレイク（週足）",
+  "TECH_BB_ZONE_BREAK_MONTHLY": "BBゾーンブレイク（月足）",
 
-  "TECH_RULE9_WEEKLY_UP_9": "Rule9（週足）上向き9本",
-  "TECH_RULE9_WEEKLY_UP_17": "Rule9（週足）上向き17本",
-  "TECH_RULE9_WEEKLY_UP_23": "Rule9（週足）上向き23本",
-  "TECH_RULE9_WEEKLY_DOWN_9": "Rule9（週足）下向き9本",
-  "TECH_RULE9_WEEKLY_DOWN_17": "Rule9（週足）下向き17本",
-  "TECH_RULE9_WEEKLY_DOWN_23": "Rule9（週足）下向き23本"
+  // BOX RANGE
+  "TECH_BOX_RANGE": "ボックスレンジ",
+
+  // OVERHEAT
+  "TECH_OVERHEAT": "過熱",
+
+  // GRANVILLE
+  "TECH_GRANVILLE": "グランビル",
+
+  // In-In / ReturnSellEnd / DownTrendEnd / Momiai
+  "TECH_IN_IN_HARAMI": "陰の陰はらみ",
+  "TECH_RETURN_SELL_END": "戻り待ち売り後",
+  "TECH_DOWN_TREND_END": "下降相場の終わり",
+  "TECH_MOMIAI": "揉み合い",
+
+  // Cycle Progress
+  "TECH_CYCLE_PROGRESS": "サイクル進行度",
+
+  // Fushime
+  "TECH_FUSHIME_UP": "節目（上）",
+  "TECH_FUSHIME_DOWN": "節目（下）"
 };
 
 function boolMark(v) {
@@ -423,13 +449,63 @@ function showResults(results, mode) {
       `;
 
       for (const key in TECH_LABELS) {
+        const val = r[key];
+
+        // --- Rule9（オブジェクト） ---
         if (key === "TECH_RULE9_DAILY" || key === "TECH_RULE9_WEEKLY") {
-          html += `<td>${formatRule9(r[key])}</td>`;
-        } else {
-          html += `<td>${boolMark(r[key])}</td>`;
+          html += `<td>${formatRule9(val)}</td>`;
+          continue;
         }
+
+        // --- Granville（オブジェクト） ---
+        if (key === "TECH_GRANVILLE") {
+          if (!val || !val.direction) {
+            html += `<td></td>`;
+          } else {
+            const arrow =
+              val.direction === "up" ? "↗" :
+              val.direction === "down" ? "↘" : "";
+            html += `<td>${arrow}（${val.count}）</td>`;
+          }
+          continue;
+        }
+
+        // --- Fushime（オブジェクト） ---
+        if (key === "TECH_FUSHIME_UP" || key === "TECH_FUSHIME_DOWN") {
+          if (!val || !val.price) {
+            html += `<td></td>`;
+          } else {
+            html += `<td>${val.price}（${val.tryCount}回）</td>`;
+          }
+          continue;
+        }
+
+        // --- Cycle Progress（数値 or null） ---
+        if (key === "TECH_CYCLE_PROGRESS") {
+          html += `<td>${val ?? ""}</td>`;
+          continue;
+        }
+
+        // --- 文字列（up/down/flat） ---
+        if (typeof val === "string") {
+          const arrow =
+            val === "up" ? "↗" :
+            val === "down" ? "↘" :
+            val === "flat" ? "－" : "";
+          html += `<td>${arrow}</td>`;
+          continue;
+        }
+
+        // --- boolean（○/×） ---
+        if (typeof val === "boolean") {
+          html += `<td>${val ? "○" : "×"}</td>`;
+          continue;
+        }
+
+        // --- null or undefined ---
+        html += `<td></td>`;
       }
-    
+
       tr.innerHTML = html;
     }
 
@@ -462,6 +538,7 @@ document.addEventListener("click", e => {
   currentResults.sort((a, b) => {
     const A = a[key];
     const B = b[key];
+
     return !isNaN(A) && !isNaN(B)
       ? (order === "asc" ? A - B : B - A)
       : (order === "asc"
@@ -490,8 +567,8 @@ function syncColumnWidths() {
   if (!firstRow) return;
 
   const bodyCells = firstRow.children;
-
   const len = bodyCells.length;
+
   if (
     headerTheadCells.length !== len ||
     bodyTheadCells.length !== len
@@ -536,7 +613,6 @@ if (stickyHeader && scrollOuter) {
 
 /* ============================
    テーブル描画後に列幅＋固定列を同期
-   ★ 2段階遅延で「初回表示から隙間ゼロ」を保証
 ============================ */
 function afterTableRendered() {
   setTimeout(() => {
@@ -547,9 +623,9 @@ function afterTableRendered() {
   }, 0);
 }
 
-/* ============================================================
-   ★ 固定列の left を自動調整（隙間ゼロ・今後列が増えても対応）
-============================================================ */
+/* ============================
+   固定列の left を自動調整
+============================ */
 function syncFixedColumns() {
   const table = document.getElementById("resultTable");
   if (!table) return;
