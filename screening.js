@@ -275,13 +275,125 @@ function updateTableHeader(mode, label = "") {
   `;
 
   const heuristics = `
-    <tr>
-      <th class="fixed-col" data-sort-key="コード">コード</th>
-      <th class="fixed-col col-2" data-sort-key="銘柄名">銘柄名</th>
-      ${Object.keys(TECH_LABELS)
-        .map(key => `<th data-sort-key="${key}">${TECH_LABELS[key]}</th>`)
-        .join("")}
-    </tr>
+    <thead>
+      <tr>
+        <th class="fixed-col" rowspan="2">コード</th>
+        <th class="fixed-col col-2" rowspan="2">銘柄名</th>
+
+        <th colspan="3">移動平均線の傾き</th>
+        <th colspan="3">移動平均線の位置</th>
+        <th colspan="3">パーフェクトオーダー</th>
+        <th colspan="3">逆パーフェクトオーダー</th>
+        <th colspan="3">直前PO</th>
+        <th colspan="3">直前逆PO</th>
+
+        <th colspan="3">MA 系</th>
+
+        <th colspan="2">ローソク足</th>
+        <th colspan="1">5MA更新</th>
+
+        <th colspan="8">酒田五法</th>
+
+        <th colspan="4">パターン認識</th>
+
+        <th colspan="2">物別れ</th>
+
+        <th colspan="2">Rule9</th>
+
+        <th colspan="3">BBゾーンブレイク</th>
+
+        <th colspan="7">その他</th>
+
+        <th rowspan="2">サイクル進行度</th>
+        <th colspan="2">節目</th>
+      </tr>
+
+      <tr>
+        <!-- 移動平均線の傾き -->
+        <th data-sort-key="TECH_MA_SLOPE_DAILY">日足</th>
+        <th data-sort-key="TECH_MA_SLOPE_WEEKLY">週足</th>
+        <th data-sort-key="TECH_MA_SLOPE_MONTHLY">月足</th>
+
+        <!-- 移動平均線の位置 -->
+        <th data-sort-key="TECH_MA_POSITION_DAILY">日足</th>
+        <th data-sort-key="TECH_MA_POSITION_WEEKLY">週足</th>
+        <th data-sort-key="TECH_MA_POSITION_MONTHLY">月足</th>
+
+        <!-- PO -->
+        <th data-sort-key="TECH_PERFECT_ORDER_DAILY">日足</th>
+        <th data-sort-key="TECH_PERFECT_ORDER_WEEKLY">週足</th>
+        <th data-sort-key="TECH_PERFECT_ORDER_MONTHLY">月足</th>
+
+        <!-- 逆PO -->
+        <th data-sort-key="TECH_REVERSE_PERFECT_ORDER_DAILY">日足</th>
+        <th data-sort-key="TECH_REVERSE_PERFECT_ORDER_WEEKLY">週足</th>
+        <th data-sort-key="TECH_REVERSE_PERFECT_ORDER_MONTHLY">月足</th>
+
+        <!-- 直前PO -->
+        <th data-sort-key="TECH_PRE_PERFECT_ORDER_DAILY">日足</th>
+        <th data-sort-key="TECH_PRE_PERFECT_ORDER_WEEKLY">週足</th>
+        <th data-sort-key="TECH_PRE_PERFECT_ORDER_MONTHLY">月足</th>
+
+        <!-- 直前逆PO -->
+        <th data-sort-key="TECH_PRE_REVERSE_PERFECT_ORDER_DAILY">日足</th>
+        <th data-sort-key="TECH_PRE_REVERSE_PERFECT_ORDER_WEEKLY">週足</th>
+        <th data-sort-key="TECH_PRE_REVERSE_PERFECT_ORDER_MONTHLY">月足</th>
+
+        <!-- MA 系 -->
+        <th data-sort-key="TECH_MA_CONGESTION">収束</th>
+        <th data-sort-key="TECH_MA_SPREAD">拡散</th>
+        <th data-sort-key="TECH_MA100_TREND">100MA</th>
+
+        <!-- ローソク足 -->
+        <th data-sort-key="TECH_KAHANSHIN">下半身</th>
+        <th data-sort-key="TECH_GYAKU_KAHANSHIN">逆下半身</th>
+
+        <!-- 5MA -->
+        <th data-sort-key="TECH_5MA_UPDATE">更新</th>
+
+        <!-- 酒田五法 -->
+        <th data-sort-key="TECH_SAKATA_TRIPLE_TOP">三尊</th>
+        <th data-sort-key="TECH_SAKATA_TRIPLE_BOTTOM">逆三尊</th>
+        <th data-sort-key="TECH_SAKATA_SANKU_UP">三空↑</th>
+        <th data-sort-key="TECH_SAKATA_SANKU_DOWN">三空↓</th>
+        <th data-sort-key="TECH_SAKATA_SANPEI_UP">三兵↑</th>
+        <th data-sort-key="TECH_SAKATA_SANPEI_DOWN">三兵↓</th>
+        <th data-sort-key="TECH_SAKATA_SANPO_UP">三法↑</th>
+        <th data-sort-key="TECH_SAKATA_SANPO_DOWN">三法↓</th>
+
+        <!-- パターン認識 -->
+        <th data-sort-key="TECH_HEAD_AND_SHOULDERS">H&S</th>
+        <th data-sort-key="TECH_DOUBLE_BOTTOM">DB</th>
+        <th data-sort-key="TECH_NICHI_DAI">日大</th>
+        <th data-sort-key="TECH_GYAKU_NICHI_DAI">逆日大</th>
+
+        <!-- 物別れ -->
+        <th data-sort-key="TECH_MONOWAKARE">物別れ</th>
+        <th data-sort-key="TECH_MONOWAKARE_RED_BLUE_CROSS">クロス</th>
+
+        <!-- Rule9 -->
+        <th data-sort-key="TECH_RULE9_DAILY">日足</th>
+        <th data-sort-key="TECH_RULE9_WEEKLY">週足</th>
+
+        <!-- BB -->
+        <th data-sort-key="TECH_BB_ZONE_BREAK_DAILY">日足</th>
+        <th data-sort-key="TECH_BB_ZONE_BREAK_WEEKLY">週足</th>
+        <th data-sort-key="TECH_BB_ZONE_BREAK_MONTHLY">月足</th>
+
+        <!-- その他 -->
+        <th data-sort-key="TECH_BOX_RANGE">箱</th>
+        <th data-sort-key="TECH_OVERHEAT">過熱</th>
+        <th data-sort-key="TECH_GRANVILLE">グランビル</th>
+        <th data-sort-key="TECH_IN_IN_HARAMI">陰の陰</th>
+        <th data-sort-key="TECH_RETURN_SELL_END">戻り売り</th>
+        <th data-sort-key="TECH_DOWN_TREND_END">下降終わり</th>
+        <th data-sort-key="TECH_MOMIAI">揉み合い</th>
+
+        <!-- 節目 -->
+        <th data-sort-key="TECH_FUSHIME_UP">上</th>
+        <th data-sort-key="TECH_FUSHIME_DOWN">下</th>
+      </tr>
+    </thead>
   `;
 
   const html =
