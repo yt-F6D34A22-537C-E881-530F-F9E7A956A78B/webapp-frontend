@@ -177,22 +177,36 @@ button:disabled {
   border-spacing: 0;
 }
 
-.table-header-sticky th {
-  padding: 10px;
-  border-bottom: 1px solid #e5e7eb;
-  font-size: 14px;
-  font-weight: 600;
+/* 2段ヘッダ：上段 */
+.table-header-sticky thead tr:first-child th {
   background: #f3f4f6;
+  text-align: center;
+  vertical-align: middle;
+  font-weight: 600;
+  padding: 8px 6px;
+  border-bottom: 1px solid #d1d5db;
   white-space: nowrap;
 }
 
-/* 固定ヘッダ table の tbody（空行）も同じ構造にする */
-.table-header-sticky td {
-  padding: 10px;
-  border-bottom: 1px solid #e5e7eb;
-  font-size: 14px;
-  white-space: nowrap;
+/* 2段ヘッダ：下段 */
+.table-header-sticky thead tr:nth-child(2) th {
+  background: #fafafa;
   text-align: center;
+  vertical-align: middle;
+  font-weight: 500;
+  padding: 8px 6px;
+  border-bottom: 1px solid #d1d5db;
+  white-space: nowrap;
+}
+
+.table-header-sticky th {
+  border-right: 1px solid #e5e7eb;
+}
+
+/* 固定ヘッダ側の固定列 */
+.table-header-sticky th.fixed-col {
+  background: #e5e7eb !important;
+  z-index: 70;
 }
 
 /* ------------------------------
@@ -245,8 +259,7 @@ button:disabled {
 }
 
 #resultHeaderBody th {
-  padding-top: 0 !important;
-  padding-bottom: 0 !important;
+  padding: 0 !important;
   height: 0;
   line-height: 0;
   border: none;
@@ -254,7 +267,7 @@ button:disabled {
 
 #resultTable th,
 #resultTable td {
-  padding: 10px;
+  padding: 8px 6px;
   border-bottom: 1px solid #e5e7eb;
   font-size: 14px;
   white-space: nowrap;
@@ -292,18 +305,6 @@ tr.tr-error .fixed-col {
   left: 0;
   background: white;
   z-index: 45;
-}
-
-/* 固定ヘッダ側 */
-.table-header-sticky th.fixed-col {
-  background: #f3f4f6;
-  z-index: 60;
-}
-
-.table-header-sticky th.col-2 {
-  left: 0;
-  background: #f3f4f6;
-  z-index: 60;
 }
 
 /* ------------------------------
@@ -573,6 +574,32 @@ tr.tr-error .fixed-col {
     gap: 6px;
     font-size: 12px;
   }
+
+  /* スマホ時のヘッダ縮小 */
+  .table-header-sticky th {
+    font-size: 10px;
+    padding: 4px 3px;
+  }
+
+  .table-header-sticky thead tr:nth-child(2) th {
+    font-size: 9px;
+    padding: 3px 2px;
+  }
+
+  .fixed-col {
+    background: #f0f0f0 !important;
+    font-weight: 600;
+    font-size: 11px;
+  }
+
+  #resultTable td {
+    font-size: 10px;
+    padding: 4px 3px;
+  }
+
+  #resultTable tr {
+    height: 22px;
+  }
 }
 
 /* ------------------------------
@@ -598,66 +625,4 @@ tr.tr-error .fixed-col {
 #rciContainer,
 #macdContainer {
   position: relative;
-}
-
-.table-header-sticky thead tr:first-child th {
-  background: #f3f4f6;
-  text-align: center;
-  vertical-align: middle;
-  font-weight: 600;
-  padding: 6px 4px;
-  border-bottom: 1px solid #d1d5db;
-  white-space: nowrap;
-}
-
-.table-header-sticky thead tr:nth-child(2) th {
-  background: #fafafa;
-  text-align: center;
-  vertical-align: middle;
-  font-weight: 500;
-  padding: 4px 4px;
-  border-bottom: 1px solid #d1d5db;
-  white-space: nowrap;
-}
-
-.table-header-sticky th {
-  border-right: 1px solid #e5e7eb;
-}
-
-/* 固定列（コード・銘柄名）強調 */
-.table-header-sticky th.fixed-col {
-  background: #e5e7eb !important;
-  z-index: 70;
-}
-
-/* ============================================================
-   ★ スマホ最適化（600px 以下）
-============================================================ */
-@media (max-width: 600px) {
-
-  .table-header-sticky th {
-    font-size: 10px;
-    padding: 3px 2px;
-  }
-
-  .table-header-sticky thead tr:nth-child(2) th {
-    font-size: 9px;
-    padding: 2px 1px;
-  }
-
-  .fixed-col {
-    background: #f0f0f0 !important;
-    font-weight: 600;
-    font-size: 11px;
-  }
-
-  #resultTable td {
-    font-size: 10px;
-    padding: 3px 2px;
-    white-space: nowrap;
-  }
-
-  #resultTable tr {
-    height: 22px;
-  }
 }
