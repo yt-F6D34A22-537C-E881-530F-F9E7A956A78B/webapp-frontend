@@ -118,6 +118,9 @@ const TECH_LABELS = {
   "TECH_FUSHIME_DOWN": "節目（下）"
 };
 
+/* ============================================================
+   表示用ユーティリティ
+============================================================ */
 function boolMark(v) {
   return v === true ? "○" : v === false ? "×" : "";
 }
@@ -129,9 +132,9 @@ function formatRule9(obj) {
   return `${arrow}（${obj.count} 本目）`;
 }
 
-/* ============================
-   DOM 完全構築後
-============================ */
+/* ============================================================
+   初期化処理
+============================================================ */
 window.onload = () => {
   initSearchMode();
   loadDates();
@@ -252,28 +255,43 @@ function updateTableHeader(mode, label = "") {
   const sticky = document.getElementById("resultHeaderSticky");
   const body = document.getElementById("resultHeaderBody");
 
+  /* ------------------------------
+     ratio モード
+  ------------------------------ */
   const ratio = `
-    <tr>
-      <th class="fixed-col" data-sort-key="コード">コード</th>
-      <th class="fixed-col col-2" data-sort-key="銘柄名">銘柄名</th>
-      <th data-sort-key="出来高倍率">出来高倍率</th>
-      <th data-sort-key="上髭実体比">上髭実体比</th>
-      <th data-sort-key="出来高">出来高</th>
-      <th data-sort-key="上髭">上髭</th>
-      <th data-sort-key="実体">実体</th>
-    </tr>
+    <thead>
+      <tr>
+        <th class="fixed-col" data-sort-key="コード" rowspan="2">コード</th>
+        <th class="fixed-col col-2" data-sort-key="銘柄名" rowspan="2">銘柄名</th>
+        <th data-sort-key="出来高倍率" rowspan="2">出来高倍率</th>
+        <th data-sort-key="上髭実体比" rowspan="2">上髭実体比</th>
+        <th data-sort-key="出来高" rowspan="2">出来高</th>
+        <th data-sort-key="上髭" rowspan="2">上髭</th>
+        <th data-sort-key="実体" rowspan="2">実体</th>
+      </tr>
+      <tr></tr>
+    </thead>
   `;
 
+  /* ------------------------------
+     date モード
+  ------------------------------ */
   const date = `
-    <tr>
-      <th class="fixed-col" data-sort-key="コード">コード</th>
-      <th class="fixed-col col-2" data-sort-key="銘柄名">銘柄名</th>
-      <th data-sort-key="値上がり率">値上がり率</th>
-      <th data-sort-key="当日終値">${label}終値</th>
-      <th data-sort-key="前日終値">前日終値</th>
-    </tr>
+    <thead>
+      <tr>
+        <th class="fixed-col" data-sort-key="コード" rowspan="2">コード</th>
+        <th class="fixed-col col-2" data-sort-key="銘柄名" rowspan="2">銘柄名</th>
+        <th data-sort-key="値上がり率" rowspan="2">値上がり率</th>
+        <th data-sort-key="当日終値" rowspan="2">${label}終値</th>
+        <th data-sort-key="前日終値" rowspan="2">前日終値</th>
+      </tr>
+      <tr></tr>
+    </thead>
   `;
 
+  /* ------------------------------
+     heuristics モード（2段ヘッダ完全版）
+  ------------------------------ */
   const heuristics = `
     <thead>
       <tr>
@@ -309,89 +327,33 @@ function updateTableHeader(mode, label = "") {
       </tr>
 
       <tr>
-        <!-- 移動平均線の傾き -->
-        <th data-sort-key="TECH_MA_SLOPE_DAILY">日足</th>
-        <th data-sort-key="TECH_MA_SLOPE_WEEKLY">週足</th>
-        <th data-sort-key="TECH_MA_SLOPE_MONTHLY">月足</th>
+        <th>日足</th><th>週足</th><th>月足</th>
+        <th>日足</th><th>週足</th><th>月足</th>
+        <th>日足</th><th>週足</th><th>月足</th>
+        <th>日足</th><th>週足</th><th>月足</th>
+        <th>日足</th><th>週足</th><th>月足</th>
+        <th>日足</th><th>週足</th><th>月足</th>
 
-        <!-- 移動平均線の位置 -->
-        <th data-sort-key="TECH_MA_POSITION_DAILY">日足</th>
-        <th data-sort-key="TECH_MA_POSITION_WEEKLY">週足</th>
-        <th data-sort-key="TECH_MA_POSITION_MONTHLY">月足</th>
+        <th>収束</th><th>拡散</th><th>100MA</th>
 
-        <!-- PO -->
-        <th data-sort-key="TECH_PERFECT_ORDER_DAILY">日足</th>
-        <th data-sort-key="TECH_PERFECT_ORDER_WEEKLY">週足</th>
-        <th data-sort-key="TECH_PERFECT_ORDER_MONTHLY">月足</th>
+        <th>下半身</th><th>逆下半身</th>
+        <th>更新</th>
 
-        <!-- 逆PO -->
-        <th data-sort-key="TECH_REVERSE_PERFECT_ORDER_DAILY">日足</th>
-        <th data-sort-key="TECH_REVERSE_PERFECT_ORDER_WEEKLY">週足</th>
-        <th data-sort-key="TECH_REVERSE_PERFECT_ORDER_MONTHLY">月足</th>
+        <th>三尊</th><th>逆三尊</th><th>三空↑</th><th>三空↓</th>
+        <th>三兵↑</th><th>三兵↓</th><th>三法↑</th><th>三法↓</th>
 
-        <!-- 直前PO -->
-        <th data-sort-key="TECH_PRE_PERFECT_ORDER_DAILY">日足</th>
-        <th data-sort-key="TECH_PRE_PERFECT_ORDER_WEEKLY">週足</th>
-        <th data-sort-key="TECH_PRE_PERFECT_ORDER_MONTHLY">月足</th>
+        <th>H&S</th><th>DB</th><th>日大</th><th>逆日大</th>
 
-        <!-- 直前逆PO -->
-        <th data-sort-key="TECH_PRE_REVERSE_PERFECT_ORDER_DAILY">日足</th>
-        <th data-sort-key="TECH_PRE_REVERSE_PERFECT_ORDER_WEEKLY">週足</th>
-        <th data-sort-key="TECH_PRE_REVERSE_PERFECT_ORDER_MONTHLY">月足</th>
+        <th>物別れ</th><th>クロス</th>
 
-        <!-- MA 系 -->
-        <th data-sort-key="TECH_MA_CONGESTION">収束</th>
-        <th data-sort-key="TECH_MA_SPREAD">拡散</th>
-        <th data-sort-key="TECH_MA100_TREND">100MA</th>
+        <th>日足</th><th>週足</th>
 
-        <!-- ローソク足 -->
-        <th data-sort-key="TECH_KAHANSHIN">下半身</th>
-        <th data-sort-key="TECH_GYAKU_KAHANSHIN">逆下半身</th>
+        <th>日足</th><th>週足</th><th>月足</th>
 
-        <!-- 5MA -->
-        <th data-sort-key="TECH_5MA_UPDATE">更新</th>
+        <th>箱</th><th>過熱</th><th>グランビル</th><th>陰の陰</th>
+        <th>戻り売り</th><th>下降終わり</th><th>揉み合い</th>
 
-        <!-- 酒田五法 -->
-        <th data-sort-key="TECH_SAKATA_TRIPLE_TOP">三尊</th>
-        <th data-sort-key="TECH_SAKATA_TRIPLE_BOTTOM">逆三尊</th>
-        <th data-sort-key="TECH_SAKATA_SANKU_UP">三空↑</th>
-        <th data-sort-key="TECH_SAKATA_SANKU_DOWN">三空↓</th>
-        <th data-sort-key="TECH_SAKATA_SANPEI_UP">三兵↑</th>
-        <th data-sort-key="TECH_SAKATA_SANPEI_DOWN">三兵↓</th>
-        <th data-sort-key="TECH_SAKATA_SANPO_UP">三法↑</th>
-        <th data-sort-key="TECH_SAKATA_SANPO_DOWN">三法↓</th>
-
-        <!-- パターン認識 -->
-        <th data-sort-key="TECH_HEAD_AND_SHOULDERS">H&S</th>
-        <th data-sort-key="TECH_DOUBLE_BOTTOM">DB</th>
-        <th data-sort-key="TECH_NICHI_DAI">日大</th>
-        <th data-sort-key="TECH_GYAKU_NICHI_DAI">逆日大</th>
-
-        <!-- 物別れ -->
-        <th data-sort-key="TECH_MONOWAKARE">物別れ</th>
-        <th data-sort-key="TECH_MONOWAKARE_RED_BLUE_CROSS">クロス</th>
-
-        <!-- Rule9 -->
-        <th data-sort-key="TECH_RULE9_DAILY">日足</th>
-        <th data-sort-key="TECH_RULE9_WEEKLY">週足</th>
-
-        <!-- BB -->
-        <th data-sort-key="TECH_BB_ZONE_BREAK_DAILY">日足</th>
-        <th data-sort-key="TECH_BB_ZONE_BREAK_WEEKLY">週足</th>
-        <th data-sort-key="TECH_BB_ZONE_BREAK_MONTHLY">月足</th>
-
-        <!-- その他 -->
-        <th data-sort-key="TECH_BOX_RANGE">箱</th>
-        <th data-sort-key="TECH_OVERHEAT">過熱</th>
-        <th data-sort-key="TECH_GRANVILLE">グランビル</th>
-        <th data-sort-key="TECH_IN_IN_HARAMI">陰の陰</th>
-        <th data-sort-key="TECH_RETURN_SELL_END">戻り売り</th>
-        <th data-sort-key="TECH_DOWN_TREND_END">下降終わり</th>
-        <th data-sort-key="TECH_MOMIAI">揉み合い</th>
-
-        <!-- 節目 -->
-        <th data-sort-key="TECH_FUSHIME_UP">上</th>
-        <th data-sort-key="TECH_FUSHIME_DOWN">下</th>
+        <th>上</th><th>下</th>
       </tr>
     </thead>
   `;
@@ -534,6 +496,9 @@ function showResults(results, mode) {
       }
     }
 
+    /* ------------------------------
+       ratio モード
+    ------------------------------ */
     if (mode === "ratio") {
       tr.innerHTML = `
         <td class="fixed-col">${r.コード}</td>
@@ -544,8 +509,12 @@ function showResults(results, mode) {
         <td>${r.上髭}</td>
         <td>${r.実体}</td>
       `;
+    }
 
-    } else if (mode === "date") {
+    /* ------------------------------
+       date モード
+    ------------------------------ */
+    else if (mode === "date") {
       tr.innerHTML = `
         <td class="fixed-col">${r.コード}</td>
         <td class="fixed-col col-2">${r.銘柄名}</td>
@@ -553,8 +522,12 @@ function showResults(results, mode) {
         <td>${r.当日終値}</td>
         <td>${r.前日終値}</td>
       `;
+    }
 
-    } else if (mode === "heuristics") {
+    /* ------------------------------
+       heuristics モード
+    ------------------------------ */
+    else if (mode === "heuristics") {
       let html = `
         <td class="fixed-col">${r.コード}</td>
         <td class="fixed-col col-2">${r.銘柄名}</td>
@@ -671,73 +644,33 @@ function syncColumnWidths() {
 
   if (!headerTable || !bodyTable) return;
 
-  const headerTheadCells = headerTable.querySelectorAll("thead th");
-  const headerTbodyCells = headerTable.querySelectorAll("tbody td");
-  const bodyTheadCells = bodyTable.querySelectorAll("thead th");
+  const headerCells = headerTable.querySelectorAll("thead tr:nth-child(2) th");
   const firstRow = bodyTable.querySelector("tbody tr");
-
   if (!firstRow) return;
 
   const bodyCells = firstRow.children;
-  const len = bodyCells.length;
 
-  if (
-    headerTheadCells.length !== len ||
-    bodyTheadCells.length !== len
-  ) return;
+  if (headerCells.length !== bodyCells.length) {
+    console.warn("列数不一致：ヘッダと本体の列数が一致していません");
+    return;
+  }
 
-  for (let i = 0; i < len; i++) {
+  for (let i = 0; i < headerCells.length; i++) {
     const width = bodyCells[i].getBoundingClientRect().width + "px";
 
-    // 固定ヘッダ thead
-    headerTheadCells[i].style.width = width;
-
-    // 固定ヘッダ tbody（空行）
-    if (headerTbodyCells[i]) {
-      headerTbodyCells[i].style.width = width;
-    }
-
-    // 本体 thead（visibility:hidden）
-    bodyTheadCells[i].style.width = width;
-
-    // 本体 tbody
+    headerCells[i].style.width = width;
     bodyCells[i].style.width = width;
+
+    const bodyHeaderCells = bodyTable.querySelectorAll("thead tr:nth-child(2) th");
+    if (bodyHeaderCells[i]) {
+      bodyHeaderCells[i].style.width = width;
+    }
   }
 }
 
-/* ============================
-   固定ヘッダと本体の横スクロール同期
-============================ */
-const stickyHeader = document.querySelector(".table-header-sticky");
-const scrollOuter = document.querySelector(".table-scroll-outer");
-
-if (stickyHeader && scrollOuter) {
-  // 固定ヘッダ → 本体へ同期
-  stickyHeader.addEventListener("scroll", () => {
-    scrollOuter.scrollLeft = stickyHeader.scrollLeft;
-  });
-
-  // 本体 → 固定ヘッダへ同期
-  scrollOuter.addEventListener("scroll", () => {
-    stickyHeader.scrollLeft = scrollOuter.scrollLeft;
-  });
-}
-
-/* ============================
-   テーブル描画後に列幅＋固定列を同期
-============================ */
-function afterTableRendered() {
-  setTimeout(() => {
-    syncColumnWidths();   // ① 列幅を確定
-    setTimeout(() => {
-      syncFixedColumns(); // ② 列幅確定後に固定列の left を再計算
-    }, 0);
-  }, 0);
-}
-
-/* ============================
-   固定列の left を自動調整
-============================ */
+/* ============================================================
+   2段ヘッダ対応 syncFixedColumns
+============================================================ */
 function syncFixedColumns() {
   const table = document.getElementById("resultTable");
   if (!table) return;
@@ -753,35 +686,63 @@ function syncFixedColumns() {
   fixedCols.forEach(col => {
     const colIndex = Array.from(firstRow.children).indexOf(col);
 
-    // tbody 側
+    const width = col.getBoundingClientRect().width;
+
     document.querySelectorAll(`#resultTable td:nth-child(${colIndex + 1})`)
       .forEach(td => td.style.left = `${left}px`);
 
-    // thead 側
     document.querySelectorAll(`.table-header-sticky th:nth-child(${colIndex + 1})`)
       .forEach(th => th.style.left = `${left}px`);
 
-    left += col.offsetWidth;
+    left += width;
   });
 }
 
-/* ============================
+/* ============================================================
+   スクロール同期
+============================================================ */
+const stickyHeader = document.querySelector(".table-header-sticky");
+const scrollOuter = document.querySelector(".table-scroll-outer");
+
+if (stickyHeader && scrollOuter) {
+  stickyHeader.addEventListener("scroll", () => {
+    scrollOuter.scrollLeft = stickyHeader.scrollLeft;
+  });
+
+  scrollOuter.addEventListener("scroll", () => {
+    stickyHeader.scrollLeft = scrollOuter.scrollLeft;
+  });
+}
+
+/* ============================================================
+   afterTableRendered（描画後に同期処理）
+============================================================ */
+function afterTableRendered() {
+  setTimeout(() => {
+    syncColumnWidths();
+    setTimeout(() => {
+      syncFixedColumns();
+    }, 0);
+  }, 0);
+}
+
+/* ------------------------------
    イベント登録
-============================ */
+------------------------------ */
 startBtn.addEventListener("click", startScreening);
 cancelBtn.addEventListener("click", cancelScreening);
 
-/* ============================
-   リサイズ時にも固定列を再計算
-============================ */
+/* ------------------------------
+   リサイズ時にも同期
+------------------------------ */
 window.addEventListener("resize", () => {
   syncColumnWidths();
   syncFixedColumns();
 });
 
-/* ============================
-   showResults をパッチして固定列同期を保証
-============================ */
+/* ------------------------------
+   showResults パッチ（同期保証）
+------------------------------ */
 (function patchShowResults() {
   const original = showResults;
   showResults = function(results, mode) {
