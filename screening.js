@@ -255,43 +255,35 @@ function updateTableHeader(mode, label = "") {
   const sticky = document.getElementById("resultHeaderSticky");
   const body = document.getElementById("resultHeaderBody");
 
-  /* ------------------------------
-     ratio モード
-  ------------------------------ */
+  // ratio モード
   const ratio = `
     <thead>
       <tr>
-        <th class="fixed-col" data-sort-key="コード" rowspan="2">コード</th>
-        <th class="fixed-col col-2" data-sort-key="銘柄名" rowspan="2">銘柄名</th>
-        <th data-sort-key="出来高倍率" rowspan="2">出来高倍率</th>
-        <th data-sort-key="上髭実体比" rowspan="2">上髭実体比</th>
-        <th data-sort-key="出来高" rowspan="2">出来高</th>
-        <th data-sort-key="上髭" rowspan="2">上髭</th>
-        <th data-sort-key="実体" rowspan="2">実体</th>
+        <th class="fixed-col">コード</th>
+        <th class="fixed-col col-2">銘柄名</th>
+        <th>出来高倍率</th>
+        <th>上髭実体比</th>
+        <th>出来高</th>
+        <th>上髭</th>
+        <th>実体</th>
       </tr>
-      <tr></tr>
     </thead>
   `;
 
-  /* ------------------------------
-     date モード
-  ------------------------------ */
+  // date モード
   const date = `
     <thead>
       <tr>
-        <th class="fixed-col" data-sort-key="コード" rowspan="2">コード</th>
-        <th class="fixed-col col-2" data-sort-key="銘柄名" rowspan="2">銘柄名</th>
-        <th data-sort-key="値上がり率" rowspan="2">値上がり率</th>
-        <th data-sort-key="当日終値" rowspan="2">${label}終値</th>
-        <th data-sort-key="前日終値" rowspan="2">前日終値</th>
+        <th class="fixed-col">コード</th>
+        <th class="fixed-col col-2">銘柄名</th>
+        <th>値上がり率</th>
+        <th>${label}終値</th>
+        <th>前日終値</th>
       </tr>
-      <tr></tr>
     </thead>
   `;
 
-  /* ------------------------------
-     heuristics モード（2段ヘッダ完全版）
-  ------------------------------ */
+  // heuristics モード
   const heuristics = `
     <thead>
       <tr>
@@ -644,16 +636,20 @@ function syncColumnWidths() {
 
   if (!headerTable || !bodyTable) return;
 
-  const headerCells = headerTable.querySelectorAll("thead tr:nth-child(2) th");
+  // ヘッダ側：常に thead の「最後の行」の th を基準にする
+  const headerCells = headerTable.querySelectorAll("thead tr:last-child th");
   const firstRow = bodyTable.querySelector("tbody tr");
   if (!firstRow) return;
 
   const bodyCells = firstRow.children;
 
   if (headerCells.length !== bodyCells.length) {
-    console.warn("列数不一致：ヘッダと本体の列数が一致していません");
+    console.warn("列数不一致：ヘッダと本体の列数が一致していません", headerCells.length, bodyCells.length);
     return;
   }
+
+  // 本体側 thead も「最後の行」の th を同期対象にする
+  const bodyHeaderCells = bodyTable.querySelectorAll("thead tr:last-child th");
 
   for (let i = 0; i < headerCells.length; i++) {
     const width = bodyCells[i].getBoundingClientRect().width + "px";
@@ -661,7 +657,6 @@ function syncColumnWidths() {
     headerCells[i].style.width = width;
     bodyCells[i].style.width = width;
 
-    const bodyHeaderCells = bodyTable.querySelectorAll("thead tr:nth-child(2) th");
     if (bodyHeaderCells[i]) {
       bodyHeaderCells[i].style.width = width;
     }
