@@ -599,3 +599,65 @@ tr.tr-error .fixed-col {
 #macdContainer {
   position: relative;
 }
+
+.table-header-sticky thead tr:first-child th {
+  background: #f3f4f6;
+  text-align: center;
+  vertical-align: middle;
+  font-weight: 600;
+  padding: 6px 4px;
+  border-bottom: 1px solid #d1d5db;
+  white-space: nowrap;
+}
+
+.table-header-sticky thead tr:nth-child(2) th {
+  background: #fafafa;
+  text-align: center;
+  vertical-align: middle;
+  font-weight: 500;
+  padding: 4px 4px;
+  border-bottom: 1px solid #d1d5db;
+  white-space: nowrap;
+}
+
+.table-header-sticky th {
+  border-right: 1px solid #e5e7eb;
+}
+
+/* 固定列（コード・銘柄名）強調 */
+.table-header-sticky th.fixed-col {
+  background: #e5e7eb !important;
+  z-index: 70;
+}
+
+/* ============================================================
+   ★ スマホ最適化（600px 以下）
+============================================================ */
+@media (max-width: 600px) {
+
+  .table-header-sticky th {
+    font-size: 10px;
+    padding: 3px 2px;
+  }
+
+  .table-header-sticky thead tr:nth-child(2) th {
+    font-size: 9px;
+    padding: 2px 1px;
+  }
+
+  .fixed-col {
+    background: #f0f0f0 !important;
+    font-weight: 600;
+    font-size: 11px;
+  }
+
+  #resultTable td {
+    font-size: 10px;
+    padding: 3px 2px;
+    white-space: nowrap;
+  }
+
+  #resultTable tr {
+    height: 22px;
+  }
+}
