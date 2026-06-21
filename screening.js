@@ -583,21 +583,56 @@ function syncColumnWidths() {
   const bodyTable   = document.querySelector("#resultTable");
   if (!headerTable || !bodyTable) return;
 
-  const headerCells = headerTable.querySelectorAll("thead tr:last-child th");
-  const firstRow    = bodyTable.querySelector("tbody tr");
+  const firstRow = bodyTable.querySelector("tbody tr");
   if (!firstRow) return;
 
-  const bodyCells        = firstRow.children;
-  const bodyHeaderCells  = bodyTable.querySelectorAll("thead tr:last-child th");
+  const bodyCells = firstRow.children;
 
-  const len = Math.min(headerCells.length, bodyCells.length);
+  // --- 2段目（最終行）を同期 ---
+  const headerRow2 = headerTable.querySelector("thead tr:last-child");
+  const headerCells2 = headerRow2.querySelectorAll("th");
+
+  const len = Math.min(headerCells2.length, bodyCells.length);
 
   for (let i = 0; i < len; i++) {
     const w = bodyCells[i].getBoundingClientRect().width + "px";
-    headerCells[i].style.width = w;
-    bodyCells[i].style.width   = w;
-    if (bodyHeaderCells[i]) bodyHeaderCells[i].style.width = w;
+    headerCells2[i].style.width = w;
+    bodyCells[i].style.width = w;
   }
+
+  // --- 1段目（グループ行）を同期 ---
+  const headerRow1 = headerTable.querySelector("thead tr:first-child");
+  const headerCells1 = headerRow1.querySelectorAll("th");
+
+  let colIndex = 0;
+
+  headerCells1.forEach(th => {
+    const rowspan = th.getAttribute("rowspan");
+    const colspan = th.getAttribute("colspan");
+
+    // --- rowspan=2（サイクル進行度など） ---
+    if (rowspan === "2") {
+      const w = bodyCells[colIndex].getBoundingClientRect().width + "px";
+      th.style.width = w;
+      colIndex += 1;
+      return;
+    }
+
+    // --- colspan（グループ列） ---
+    if (colspan) {
+      const span = Number(colspan);
+      let total = 0;
+
+      for (let i = 0; i < span; i++) {
+        const w = headerCells2[colIndex + i].getBoundingClientRect().width;
+        total += w;
+      }
+
+      th.style.width = total + "px";
+      colIndex += span;
+      return;
+    }
+  });
 }
 
 /* ============================
