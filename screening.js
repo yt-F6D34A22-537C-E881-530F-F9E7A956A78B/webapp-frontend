@@ -20,90 +20,25 @@ const API_BASE_URL = "https://yfinance-api-fe86988c-d3b4-f1c6-640d.onrender.com"
 
 // 列順だけを定義
 const TECH_KEYS = [
-  // MA SLOPE
-  "TECH_MA_SLOPE_DAILY",
-  "TECH_MA_SLOPE_WEEKLY",
-  "TECH_MA_SLOPE_MONTHLY",
-
-  // MA POSITION
-  "TECH_MA_POSITION_DAILY",
-  "TECH_MA_POSITION_WEEKLY",
-  "TECH_MA_POSITION_MONTHLY",
-
-  // PERFECT ORDER
-  "TECH_PERFECT_ORDER_DAILY",
-  "TECH_PERFECT_ORDER_WEEKLY",
-  "TECH_PERFECT_ORDER_MONTHLY",
-
-  "TECH_REVERSE_PERFECT_ORDER_DAILY",
-  "TECH_REVERSE_PERFECT_ORDER_WEEKLY",
-  "TECH_REVERSE_PERFECT_ORDER_MONTHLY",
-
-  // PRE-PO / PRE-RPO
-  "TECH_PRE_PERFECT_ORDER_DAILY",
-  "TECH_PRE_PERFECT_ORDER_WEEKLY",
-  "TECH_PRE_PERFECT_ORDER_MONTHLY",
-
-  "TECH_PRE_REVERSE_PERFECT_ORDER_DAILY",
-  "TECH_PRE_REVERSE_PERFECT_ORDER_WEEKLY",
-  "TECH_PRE_REVERSE_PERFECT_ORDER_MONTHLY",
-
-  // MA系
-  "TECH_MA_CONGESTION",
-  "TECH_MA_SPREAD",
-  "TECH_MA100_TREND",
-
-  // 下半身
-  "TECH_KAHANSHIN",
-  "TECH_GYAKU_KAHANSHIN",
-
-  // 5MA
+  "TECH_MA_SLOPE_DAILY","TECH_MA_SLOPE_WEEKLY","TECH_MA_SLOPE_MONTHLY",
+  "TECH_MA_POSITION_DAILY","TECH_MA_POSITION_WEEKLY","TECH_MA_POSITION_MONTHLY",
+  "TECH_PERFECT_ORDER_DAILY","TECH_PERFECT_ORDER_WEEKLY","TECH_PERFECT_ORDER_MONTHLY",
+  "TECH_REVERSE_PERFECT_ORDER_DAILY","TECH_REVERSE_PERFECT_ORDER_WEEKLY","TECH_REVERSE_PERFECT_ORDER_MONTHLY",
+  "TECH_PRE_PERFECT_ORDER_DAILY","TECH_PRE_PERFECT_ORDER_WEEKLY","TECH_PRE_PERFECT_ORDER_MONTHLY",
+  "TECH_PRE_REVERSE_PERFECT_ORDER_DAILY","TECH_PRE_REVERSE_PERFECT_ORDER_WEEKLY","TECH_PRE_REVERSE_PERFECT_ORDER_MONTHLY",
+  "TECH_MA_CONGESTION","TECH_MA_SPREAD","TECH_MA100_TREND",
+  "TECH_KAHANSHIN","TECH_GYAKU_KAHANSHIN",
   "TECH_5MA_UPDATE",
-
-  // 酒田五法
-  "TECH_SAKATA_TRIPLE_TOP",
-  "TECH_SAKATA_TRIPLE_BOTTOM",
-  "TECH_SAKATA_SANKU_UP",
-  "TECH_SAKATA_SANKU_DOWN",
-  "TECH_SAKATA_SANPEI_UP",
-  "TECH_SAKATA_SANPEI_DOWN",
-  "TECH_SAKATA_SANPO_UP",
-  "TECH_SAKATA_SANPO_DOWN",
-
-  // パターン認識
-  "TECH_HEAD_AND_SHOULDERS",
-  "TECH_DOUBLE_BOTTOM",
-  "TECH_NICHI_DAI",
-  "TECH_GYAKU_NICHI_DAI",
-
-  // 物別れ
-  "TECH_MONOWAKARE",
-  "TECH_MONOWAKARE_RED_BLUE_CROSS",
-
-  // Rule9
-  "TECH_RULE9_DAILY",
-  "TECH_RULE9_WEEKLY",
-
-  // BB ZONE BREAK
-  "TECH_BB_ZONE_BREAK_DAILY",
-  "TECH_BB_ZONE_BREAK_WEEKLY",
-  "TECH_BB_ZONE_BREAK_MONTHLY",
-
-  // その他
-  "TECH_BOX_RANGE",
-  "TECH_OVERHEAT",
-  "TECH_GRANVILLE",
-  "TECH_IN_IN_HARAMI",
-  "TECH_RETURN_SELL_END",
-  "TECH_DOWN_TREND_END",
-  "TECH_MOMIAI",
-
-  // サイクル
+  "TECH_SAKATA_TRIPLE_TOP","TECH_SAKATA_TRIPLE_BOTTOM","TECH_SAKATA_SANKU_UP","TECH_SAKATA_SANKU_DOWN",
+  "TECH_SAKATA_SANPEI_UP","TECH_SAKATA_SANPEI_DOWN","TECH_SAKATA_SANPO_UP","TECH_SAKATA_SANPO_DOWN",
+  "TECH_HEAD_AND_SHOULDERS","TECH_DOUBLE_BOTTOM","TECH_NICHI_DAI","TECH_GYAKU_NICHI_DAI",
+  "TECH_MONOWAKARE","TECH_MONOWAKARE_RED_BLUE_CROSS",
+  "TECH_RULE9_DAILY","TECH_RULE9_WEEKLY",
+  "TECH_BB_ZONE_BREAK_DAILY","TECH_BB_ZONE_BREAK_WEEKLY","TECH_BB_ZONE_BREAK_MONTHLY",
+  "TECH_BOX_RANGE","TECH_OVERHEAT","TECH_GRANVILLE","TECH_IN_IN_HARAMI",
+  "TECH_RETURN_SELL_END","TECH_DOWN_TREND_END","TECH_MOMIAI",
   "TECH_CYCLE_PROGRESS",
-
-  // 節目
-  "TECH_FUSHIME_UP",
-  "TECH_FUSHIME_DOWN"
+  "TECH_FUSHIME_UP","TECH_FUSHIME_DOWN"
 ];
 
 /* ============================================================
@@ -538,7 +473,7 @@ function showResults(results, mode) {
         <td class="fixed-col col-2">${r.銘柄名}</td>
       `;
 
-      for (const key in TECH_LABELS) {
+      for (const key of TECH_KEYS) {
         const val = r[key];
 
         // --- Rule9（オブジェクト） ---
@@ -665,9 +600,9 @@ function syncColumnWidths() {
   }
 }
 
-/* ============================================================
-   2段ヘッダ対応 syncFixedColumns
-============================================================ */
+/* ============================
+   固定列同期
+============================ */
 function syncFixedColumns() {
   const table = document.getElementById("resultTable");
   if (!table) return;
@@ -682,7 +617,6 @@ function syncFixedColumns() {
 
   fixedCols.forEach(col => {
     const colIndex = Array.from(firstRow.children).indexOf(col);
-
     const width = col.getBoundingClientRect().width;
 
     document.querySelectorAll(`#resultTable td:nth-child(${colIndex + 1})`)
@@ -695,9 +629,9 @@ function syncFixedColumns() {
   });
 }
 
-/* ============================================================
+/* ============================
    スクロール同期
-============================================================ */
+============================ */
 const stickyHeader = document.querySelector(".table-header-sticky");
 const scrollOuter = document.querySelector(".table-scroll-outer");
 
@@ -711,9 +645,9 @@ if (stickyHeader && scrollOuter) {
   });
 }
 
-/* ============================================================
-   afterTableRendered（描画後に同期処理）
-============================================================ */
+/* ============================
+   afterTableRendered
+============================ */
 function afterTableRendered() {
   setTimeout(() => {
     syncColumnWidths();
