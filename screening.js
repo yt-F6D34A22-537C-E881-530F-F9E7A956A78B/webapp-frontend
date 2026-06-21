@@ -626,31 +626,40 @@ document.addEventListener("click", e => {
 ============================ */
 function syncColumnWidths() {
   const headerTable = document.querySelector(".table-header-sticky table");
-  const bodyTable = document.querySelector("#resultTable");
+  const bodyTable   = document.querySelector("#resultTable");
 
   if (!headerTable || !bodyTable) return;
 
-  // ヘッダ側：常に thead の「最後の行」の th を基準にする
+  // 固定ヘッダ側：thead の「最後の tr」の th
   const headerCells = headerTable.querySelectorAll("thead tr:last-child th");
+
+  // 本体側：tbody の最初の行
   const firstRow = bodyTable.querySelector("tbody tr");
   if (!firstRow) return;
 
   const bodyCells = firstRow.children;
 
+  // 本体側 thead の「最後の tr」の th（幅同期用）
+  const bodyHeaderCells = bodyTable.querySelectorAll("thead tr:last-child th");
+
+  // 列数が一致しない場合は同期できない
   if (headerCells.length !== bodyCells.length) {
-    console.warn("列数不一致：ヘッダと本体の列数が一致していません", headerCells.length, bodyCells.length);
+    console.warn("列数不一致：ヘッダと本体の列数が一致していません",
+      headerCells.length, bodyCells.length);
     return;
   }
 
-  // 本体側 thead も「最後の行」の th を同期対象にする
-  const bodyHeaderCells = bodyTable.querySelectorAll("thead tr:last-child th");
-
-  for (let i = 0; i < headerCells.length; i++) {
+  // body の最小幅を基準にヘッダと本体の幅を揃える
+  for (let i = 0; i < bodyCells.length; i++) {
     const width = bodyCells[i].getBoundingClientRect().width + "px";
 
+    // 固定ヘッダ側
     headerCells[i].style.width = width;
+
+    // 本体側
     bodyCells[i].style.width = width;
 
+    // 本体側 thead（非表示ヘッダ）も同期
     if (bodyHeaderCells[i]) {
       bodyHeaderCells[i].style.width = width;
     }
