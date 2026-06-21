@@ -590,7 +590,7 @@ function syncColumnWidths() {
 
   // --- 2段目（最終行）を同期 ---
   const headerRow2 = headerTable.querySelector("thead tr:last-child");
-  const headerCells2 = headerRow2.querySelectorAll("th");
+  const headerCells2 = headerRow2 ? headerRow2.querySelectorAll("th") : [];
 
   const len = Math.min(headerCells2.length, bodyCells.length);
 
@@ -602,7 +602,7 @@ function syncColumnWidths() {
 
   // --- 1段目（グループ行）を同期 ---
   const headerRow1 = headerTable.querySelector("thead tr:first-child");
-  const headerCells1 = headerRow1.querySelectorAll("th");
+  const headerCells1 = headerRow1 ? headerRow1.querySelectorAll("th") : [];
 
   let colIndex = 0;
 
@@ -623,7 +623,6 @@ function syncColumnWidths() {
       const span = Number(colspan);
       let total = 0;
 
-      // tbody の幅を合計する（これが最も正確）
       for (let i = 0; i < span; i++) {
         const w = bodyCells[colIndex + i].getBoundingClientRect().width;
         total += w;
@@ -633,6 +632,28 @@ function syncColumnWidths() {
       colIndex += span;
       return;
     }
+  });
+
+  // --- 固定列の left を再計算 ---
+  const rows = bodyTable.querySelectorAll("tbody tr");
+  if (rows.length === 0) return;
+
+  const first = rows[0];
+  const fixedCols = first.querySelectorAll(".fixed-col");
+
+  let left = 0;
+
+  fixedCols.forEach(col => {
+    const idx = Array.from(first.children).indexOf(col);
+    const w = col.getBoundingClientRect().width;
+
+    document.querySelectorAll(`#resultTable td:nth-child(${idx + 1})`)
+      .forEach(td => td.style.left = `${left}px`);
+
+    document.querySelectorAll(`.table-header-sticky th:nth-child(${idx + 1})`)
+      .forEach(th => th.style.left = `${left}px`);
+
+    left += w;
   });
 }
 
