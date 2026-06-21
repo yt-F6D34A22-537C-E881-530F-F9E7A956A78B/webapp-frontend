@@ -255,7 +255,7 @@ function updateTableHeader(mode, label = "") {
   const stickyThead = document.getElementById("resultHeaderSticky");
   const bodyThead   = document.getElementById("resultHeaderBody");
 
-  // ratio / date は固定構造なので先に処理
+  // ratio / date は固定構造
   if (mode === "ratio") {
     const html = `
       <tr>
@@ -289,76 +289,87 @@ function updateTableHeader(mode, label = "") {
   }
 
   // ============================
-  // heuristics モード：自動生成
+  // heuristics：TECH_LABELS から完全自動生成
   // ============================
 
-  // 1段目（グループ名）
+  // 1段目
   let row1 = `
     <tr>
       <th class="fixed-col" rowspan="2">コード</th>
       <th class="fixed-col col-2" rowspan="2">銘柄名</th>
   `;
 
-  // 2段目（サブ項目）
+  // 2段目
   let row2 = `<tr>`;
 
-  // グループ定義
-  const groups = [
-    { prefix: "TECH_MA_SLOPE", label: "移動平均線の傾き", subs: ["日足","週足","月足"] },
-    { prefix: "TECH_MA_POSITION", label: "移動平均線の位置", subs: ["日足","週足","月足"] },
-    { prefix: "TECH_PERFECT_ORDER", label: "パーフェクトオーダー", subs: ["日足","週足","月足"] },
-    { prefix: "TECH_REVERSE_PERFECT_ORDER", label: "逆パーフェクトオーダー", subs: ["日足","週足","月足"] },
-    { prefix: "TECH_PRE_PERFECT_ORDER", label: "直前PO", subs: ["日足","週足","月足"] },
-    { prefix: "TECH_PRE_REVERSE_PERFECT_ORDER", label: "直前逆PO", subs: ["日足","週足","月足"] },
+  // グループ判定関数
+  function detectGroup(key) {
+    if (key.includes("MA_SLOPE")) return "移動平均線の傾き";
+    if (key.includes("MA_POSITION")) return "移動平均線の位置";
+    if (key.includes("PERFECT_ORDER") && !key.includes("REVERSE")) return "パーフェクトオーダー";
+    if (key.includes("REVERSE_PERFECT_ORDER")) return "逆パーフェクトオーダー";
+    if (key.includes("PRE_PERFECT_ORDER") && !key.includes("REVERSE")) return "直前PO";
+    if (key.includes("PRE_REVERSE_PERFECT_ORDER")) return "直前逆PO";
 
-    { keys: ["TECH_MA_CONGESTION","TECH_MA_SPREAD","TECH_MA100_TREND"], label: "MA 系", subs: ["収束","拡散","100MA"] },
+    if (key === "TECH_MA_CONGESTION" || key === "TECH_MA_SPREAD" || key === "TECH_MA100_TREND")
+      return "MA系";
 
-    { keys: ["TECH_KAHANSHIN","TECH_GYAKU_KAHANSHIN"], label: "ローソク足", subs: ["下半身","逆下半身"] },
+    if (key === "TECH_KAHANSHIN" || key === "TECH_GYAKU_KAHANSHIN")
+      return "ローソク足";
 
-    { keys: ["TECH_5MA_UPDATE"], label: "5MA更新", subs: ["更新"] },
+    if (key === "TECH_5MA_UPDATE")
+      return "5MA更新";
 
-    { prefix: "TECH_SAKATA", label: "酒田五法", subs: ["三尊","逆三尊","三空↑","三空↓","三兵↑","三兵↓","三法↑","三法↓"] },
+    if (key.includes("SAKATA"))
+      return "酒田五法";
 
-    { keys: ["TECH_HEAD_AND_SHOULDERS","TECH_DOUBLE_BOTTOM","TECH_NICHI_DAI","TECH_GYAKU_NICHI_DAI"], label: "パターン認識", subs: ["H&S","DB","日大","逆日大"] },
+    if (key.includes("HEAD_AND_SHOULDERS") || key.includes("DOUBLE_BOTTOM") ||
+        key.includes("NICHI_DAI"))
+      return "パターン認識";
 
-    { keys: ["TECH_MONOWAKARE","TECH_MONOWAKARE_RED_BLUE_CROSS"], label: "物別れ", subs: ["物別れ","クロス"] },
+    if (key.includes("MONOWAKARE"))
+      return "物別れ";
 
-    { keys: ["TECH_RULE9_DAILY","TECH_RULE9_WEEKLY"], label: "Rule9", subs: ["日足","週足"] },
+    if (key.includes("RULE9"))
+      return "Rule9";
 
-    { prefix: "TECH_BB_ZONE_BREAK", label: "BBゾーンブレイク", subs: ["日足","週足","月足"] },
+    if (key.includes("BB_ZONE_BREAK"))
+      return "BBゾーンブレイク";
 
-    { keys: ["TECH_BOX_RANGE","TECH_OVERHEAT","TECH_GRANVILLE","TECH_IN_IN_HARAMI","TECH_RETURN_SELL_END","TECH_DOWN_TREND_END","TECH_MOMIAI"], 
-      label: "その他", 
-      subs: ["箱","過熱","グランビル","陰の陰","戻り売り","下降終わり","揉み合い"] },
+    if (key === "TECH_BOX_RANGE" || key === "TECH_OVERHEAT" || key === "TECH_GRANVILLE" ||
+        key === "TECH_IN_IN_HARAMI" || key === "TECH_RETURN_SELL_END" ||
+        key === "TECH_DOWN_TREND_END" || key === "TECH_MOMIAI")
+      return "その他";
 
-    { keys: ["TECH_CYCLE_PROGRESS"], label: "サイクル進行度", subs: ["進行度"], rowspan: 2 },
+    if (key === "TECH_CYCLE_PROGRESS")
+      return "サイクル進行度";
 
-    { keys: ["TECH_FUSHIME_UP","TECH_FUSHIME_DOWN"], label: "節目", subs: ["上","下"] }
-  ];
+    if (key.includes("FUSHIME"))
+      return "節目";
 
-  // TECH_LABELS の順番に従ってヘッダを生成
-  const keys = Object.keys(TECH_LABELS);
+    return "その他";
+  }
 
-  for (const g of groups) {
-    let matchedKeys = [];
+  // グループ → キー配列
+  const groups = {};
+  for (const key of Object.keys(TECH_LABELS)) {
+    const g = detectGroup(key);
+    if (!groups[g]) groups[g] = [];
+    groups[g].push(key);
+  }
 
-    if (g.prefix) {
-      matchedKeys = keys.filter(k => k.startsWith(g.prefix));
-    } else if (g.keys) {
-      matchedKeys = g.keys;
+  // 1段目・2段目生成
+  for (const [groupName, keys] of Object.entries(groups)) {
+    if (groupName === "サイクル進行度") {
+      row1 += `<th rowspan="2">${groupName}</th>`;
+      continue;
     }
 
-    if (matchedKeys.length === 0) continue;
+    row1 += `<th colspan="${keys.length}">${groupName}</th>`;
 
-    const colspan = matchedKeys.length;
-
-    if (g.rowspan === 2) {
-      row1 += `<th rowspan="2">${g.label}</th>`;
-    } else {
-      row1 += `<th colspan="${colspan}">${g.label}</th>`;
-      for (const sub of g.subs) {
-        row2 += `<th>${sub}</th>`;
-      }
+    for (const key of keys) {
+      const label = TECH_LABELS[key];
+      row2 += `<th>${label}</th>`;
     }
   }
 
