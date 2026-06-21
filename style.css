@@ -209,6 +209,12 @@ button:disabled {
   z-index: 70;
 }
 
+.table-header-sticky th,
+#resultTable th,
+#resultTable td {
+  box-sizing: border-box;
+}
+
 /* ------------------------------
    本体テーブル
 ------------------------------ */
@@ -291,7 +297,7 @@ tr.tr-error .fixed-col {
 }
 
 /* ------------------------------
-   左固定カラム（コード・銘柄名）
+   左固定カラム
 ------------------------------ */
 .fixed-col {
   position: sticky;
@@ -387,7 +393,6 @@ tr.tr-error .fixed-col {
   align-items: center;
   gap: 12px;
   width: 100%;
-  box-sizing: border-box;
 }
 
 .modal #chartHeaderLeft {
