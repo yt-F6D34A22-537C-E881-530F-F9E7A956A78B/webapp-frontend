@@ -255,99 +255,117 @@ function updateTableHeader(mode, label = "") {
   const stickyThead = document.getElementById("resultHeaderSticky");
   const bodyThead   = document.getElementById("resultHeaderBody");
 
-  // ratio モード
-  const ratio = `
-    <tr>
-      <th class="fixed-col">コード</th>
-      <th class="fixed-col col-2">銘柄名</th>
-      <th>出来高倍率</th>
-      <th>上髭実体比</th>
-      <th>出来高</th>
-      <th>上髭</th>
-      <th>実体</th>
-    </tr>
-  `;
+  // ratio / date は固定構造なので先に処理
+  if (mode === "ratio") {
+    const html = `
+      <tr>
+        <th class="fixed-col">コード</th>
+        <th class="fixed-col col-2">銘柄名</th>
+        <th>出来高倍率</th>
+        <th>上髭実体比</th>
+        <th>出来高</th>
+        <th>上髭</th>
+        <th>実体</th>
+      </tr>
+    `;
+    stickyThead.innerHTML = html;
+    bodyThead.innerHTML   = html;
+    return;
+  }
 
-  // date モード
-  const date = `
-    <tr>
-      <th class="fixed-col">コード</th>
-      <th class="fixed-col col-2">銘柄名</th>
-      <th>値上がり率</th>
-      <th>${label}終値</th>
-      <th>前日終値</th>
-    </tr>
-  `;
+  if (mode === "date") {
+    const html = `
+      <tr>
+        <th class="fixed-col">コード</th>
+        <th class="fixed-col col-2">銘柄名</th>
+        <th>値上がり率</th>
+        <th>${label}終値</th>
+        <th>前日終値</th>
+      </tr>
+    `;
+    stickyThead.innerHTML = html;
+    bodyThead.innerHTML   = html;
+    return;
+  }
 
-  // heuristics モード（2段ヘッダ）
-  const heuristics = `
+  // ============================
+  // heuristics モード：自動生成
+  // ============================
+
+  // 1段目（グループ名）
+  let row1 = `
     <tr>
       <th class="fixed-col" rowspan="2">コード</th>
       <th class="fixed-col col-2" rowspan="2">銘柄名</th>
-
-      <th colspan="3">移動平均線の傾き</th>
-      <th colspan="3">移動平均線の位置</th>
-      <th colspan="3">パーフェクトオーダー</th>
-      <th colspan="3">逆パーフェクトオーダー</th>
-      <th colspan="3">直前PO</th>
-      <th colspan="3">直前逆PO</th>
-
-      <th colspan="3">MA 系</th>
-
-      <th colspan="2">ローソク足</th>
-      <th>5MA更新</th>
-
-      <th colspan="8">酒田五法</th>
-
-      <th colspan="4">パターン認識</th>
-
-      <th colspan="2">物別れ</th>
-
-      <th colspan="2">Rule9</th>
-
-      <th colspan="3">BBゾーンブレイク</th>
-
-      <th colspan="7">その他</th>
-
-      <th rowspan="2">サイクル進行度</th>
-      <th colspan="2">節目</th>
-    </tr>
-
-    <tr>
-      <th>日足</th><th>週足</th><th>月足</th>
-      <th>日足</th><th>週足</th><th>月足</th>
-      <th>日足</th><th>週足</th><th>月足</th>
-      <th>日足</th><th>週足</th><th>月足</th>
-      <th>日足</th><th>週足</th><th>月足</th>
-      <th>日足</th><th>週足</th><th>月足</th>
-
-      <th>収束</th><th>拡散</th><th>100MA</th>
-
-      <th>下半身</th><th>逆下半身</th>
-      <th>更新</th>
-
-      <th>三尊</th><th>逆三尊</th><th>三空↑</th><th>三空↓</th>
-      <th>三兵↑</th><th>三兵↓</th><th>三法↑</th><th>三法↓</th>
-
-      <th>H&S</th><th>DB</th><th>日大</th><th>逆日大</th>
-
-      <th>物別れ</th><th>クロス</th>
-
-      <th>日足</th><th>週足</th>
-
-      <th>日足</th><th>週足</th><th>月足</th>
-
-      <th>箱</th><th>過熱</th><th>グランビル</th><th>陰の陰</th>
-      <th>戻り売り</th><th>下降終わり</th><th>揉み合い</th>
-
-      <th>上</th><th>下</th>
-    </tr>
   `;
 
-  const html =
-    mode === "ratio" ? ratio :
-    mode === "date"  ? date  :
-    heuristics;
+  // 2段目（サブ項目）
+  let row2 = `<tr>`;
+
+  // グループ定義
+  const groups = [
+    { prefix: "TECH_MA_SLOPE", label: "移動平均線の傾き", subs: ["日足","週足","月足"] },
+    { prefix: "TECH_MA_POSITION", label: "移動平均線の位置", subs: ["日足","週足","月足"] },
+    { prefix: "TECH_PERFECT_ORDER", label: "パーフェクトオーダー", subs: ["日足","週足","月足"] },
+    { prefix: "TECH_REVERSE_PERFECT_ORDER", label: "逆パーフェクトオーダー", subs: ["日足","週足","月足"] },
+    { prefix: "TECH_PRE_PERFECT_ORDER", label: "直前PO", subs: ["日足","週足","月足"] },
+    { prefix: "TECH_PRE_REVERSE_PERFECT_ORDER", label: "直前逆PO", subs: ["日足","週足","月足"] },
+
+    { keys: ["TECH_MA_CONGESTION","TECH_MA_SPREAD","TECH_MA100_TREND"], label: "MA 系", subs: ["収束","拡散","100MA"] },
+
+    { keys: ["TECH_KAHANSHIN","TECH_GYAKU_KAHANSHIN"], label: "ローソク足", subs: ["下半身","逆下半身"] },
+
+    { keys: ["TECH_5MA_UPDATE"], label: "5MA更新", subs: ["更新"] },
+
+    { prefix: "TECH_SAKATA", label: "酒田五法", subs: ["三尊","逆三尊","三空↑","三空↓","三兵↑","三兵↓","三法↑","三法↓"] },
+
+    { keys: ["TECH_HEAD_AND_SHOULDERS","TECH_DOUBLE_BOTTOM","TECH_NICHI_DAI","TECH_GYAKU_NICHI_DAI"], label: "パターン認識", subs: ["H&S","DB","日大","逆日大"] },
+
+    { keys: ["TECH_MONOWAKARE","TECH_MONOWAKARE_RED_BLUE_CROSS"], label: "物別れ", subs: ["物別れ","クロス"] },
+
+    { keys: ["TECH_RULE9_DAILY","TECH_RULE9_WEEKLY"], label: "Rule9", subs: ["日足","週足"] },
+
+    { prefix: "TECH_BB_ZONE_BREAK", label: "BBゾーンブレイク", subs: ["日足","週足","月足"] },
+
+    { keys: ["TECH_BOX_RANGE","TECH_OVERHEAT","TECH_GRANVILLE","TECH_IN_IN_HARAMI","TECH_RETURN_SELL_END","TECH_DOWN_TREND_END","TECH_MOMIAI"], 
+      label: "その他", 
+      subs: ["箱","過熱","グランビル","陰の陰","戻り売り","下降終わり","揉み合い"] },
+
+    { keys: ["TECH_CYCLE_PROGRESS"], label: "サイクル進行度", subs: ["進行度"], rowspan: 2 },
+
+    { keys: ["TECH_FUSHIME_UP","TECH_FUSHIME_DOWN"], label: "節目", subs: ["上","下"] }
+  ];
+
+  // TECH_LABELS の順番に従ってヘッダを生成
+  const keys = Object.keys(TECH_LABELS);
+
+  for (const g of groups) {
+    let matchedKeys = [];
+
+    if (g.prefix) {
+      matchedKeys = keys.filter(k => k.startsWith(g.prefix));
+    } else if (g.keys) {
+      matchedKeys = g.keys;
+    }
+
+    if (matchedKeys.length === 0) continue;
+
+    const colspan = matchedKeys.length;
+
+    if (g.rowspan === 2) {
+      row1 += `<th rowspan="2">${g.label}</th>`;
+    } else {
+      row1 += `<th colspan="${colspan}">${g.label}</th>`;
+      for (const sub of g.subs) {
+        row2 += `<th>${sub}</th>`;
+      }
+    }
+  }
+
+  row1 += `</tr>`;
+  row2 += `</tr>`;
+
+  const html = row1 + row2;
 
   stickyThead.innerHTML = html;
   bodyThead.innerHTML   = html;
