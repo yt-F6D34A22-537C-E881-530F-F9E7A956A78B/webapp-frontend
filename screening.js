@@ -595,9 +595,9 @@ function syncColumnWidths() {
   const len = Math.min(headerCells2.length, bodyCells.length);
 
   for (let i = 0; i < len; i++) {
-    const w = bodyCells[i].getBoundingClientRect().width + "px";
-    headerCells2[i].style.width = w;
-    bodyCells[i].style.width = w;
+    const w = bodyCells[i].getBoundingClientRect().width;
+    headerCells2[i].style.width = w + "px";
+    bodyCells[i].style.width = w + "px";
   }
 
   // --- 1段目（グループ行）を同期 ---
@@ -610,21 +610,22 @@ function syncColumnWidths() {
     const rowspan = th.getAttribute("rowspan");
     const colspan = th.getAttribute("colspan");
 
-    // --- rowspan=2（サイクル進行度など） ---
+    // rowspan=2（コード・銘柄名・サイクル進行度）
     if (rowspan === "2") {
-      const w = bodyCells[colIndex].getBoundingClientRect().width + "px";
-      th.style.width = w;
+      const w = bodyCells[colIndex].getBoundingClientRect().width;
+      th.style.width = w + "px";
       colIndex += 1;
       return;
     }
 
-    // --- colspan（グループ列） ---
+    // colspan（グループ列）
     if (colspan) {
       const span = Number(colspan);
       let total = 0;
 
+      // tbody の幅を合計する（これが最も正確）
       for (let i = 0; i < span; i++) {
-        const w = headerCells2[colIndex + i].getBoundingClientRect().width;
+        const w = bodyCells[colIndex + i].getBoundingClientRect().width;
         total += w;
       }
 
