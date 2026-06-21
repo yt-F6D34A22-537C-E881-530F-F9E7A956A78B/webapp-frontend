@@ -630,40 +630,37 @@ function syncColumnWidths() {
 
   if (!headerTable || !bodyTable) return;
 
-  // 固定ヘッダ側：thead の「最後の tr」の th
-  const headerCells = headerTable.querySelectorAll("thead tr:last-child th");
+  // レイアウト確定後に実行（これが最重要）
+  requestAnimationFrame(() => {
+    const headerCells = headerTable.querySelectorAll("thead tr:last-child th");
+    const firstRow    = bodyTable.querySelector("tbody tr");
+    if (!firstRow) return;
 
-  // 本体側：tbody の最初の行
-  const firstRow = bodyTable.querySelector("tbody tr");
-  if (!firstRow) return;
+    const bodyCells = firstRow.children;
+    const bodyHeaderCells = bodyTable.querySelectorAll("thead tr:last-child th");
 
-  const bodyCells = firstRow.children;
-
-  // 本体側 thead の「最後の tr」の th（幅同期用）
-  const bodyHeaderCells = bodyTable.querySelectorAll("thead tr:last-child th");
-
-  // 列数が一致しない場合は同期できない
-  if (headerCells.length !== bodyCells.length) {
-    console.warn("列数不一致：ヘッダと本体の列数が一致していません",
-      headerCells.length, bodyCells.length);
-    return;
-  }
-
-  // body の最小幅を基準にヘッダと本体の幅を揃える
-  for (let i = 0; i < bodyCells.length; i++) {
-    const width = bodyCells[i].getBoundingClientRect().width + "px";
-
-    // 固定ヘッダ側
-    headerCells[i].style.width = width;
-
-    // 本体側
-    bodyCells[i].style.width = width;
-
-    // 本体側 thead（非表示ヘッダ）も同期
-    if (bodyHeaderCells[i]) {
-      bodyHeaderCells[i].style.width = width;
+    if (headerCells.length !== bodyCells.length) {
+      console.warn("列数不一致", headerCells.length, bodyCells.length);
+      return;
     }
-  }
+
+    for (let i = 0; i < bodyCells.length; i++) {
+      const width = bodyCells[i].getBoundingClientRect().width;
+
+      // 固定ヘッダ側に強制適用
+      headerCells[i].style.minWidth = width + "px";
+      headerCells[i].style.width    = width + "px";
+
+      // 本体側にも適用（念のため）
+      bodyCells[i].style.minWidth = width + "px";
+      bodyCells[i].style.width    = width + "px";
+
+      if (bodyHeaderCells[i]) {
+        bodyHeaderCells[i].style.minWidth = width + "px";
+        bodyHeaderCells[i].style.width    = width + "px";
+      }
+    }
+  });
 }
 
 /* ============================================================
