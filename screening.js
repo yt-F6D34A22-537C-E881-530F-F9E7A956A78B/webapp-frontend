@@ -252,111 +252,105 @@ function makeOption(d) {
    テーブルヘッダ更新
 ============================ */
 function updateTableHeader(mode, label = "") {
-  const sticky = document.getElementById("resultHeaderSticky");
-  const body = document.getElementById("resultHeaderBody");
+  const stickyThead = document.getElementById("resultHeaderSticky");
+  const bodyThead   = document.getElementById("resultHeaderBody");
 
   // ratio モード
   const ratio = `
-    <thead>
-      <tr>
-        <th class="fixed-col">コード</th>
-        <th class="fixed-col col-2">銘柄名</th>
-        <th>出来高倍率</th>
-        <th>上髭実体比</th>
-        <th>出来高</th>
-        <th>上髭</th>
-        <th>実体</th>
-      </tr>
-    </thead>
+    <tr>
+      <th class="fixed-col">コード</th>
+      <th class="fixed-col col-2">銘柄名</th>
+      <th>出来高倍率</th>
+      <th>上髭実体比</th>
+      <th>出来高</th>
+      <th>上髭</th>
+      <th>実体</th>
+    </tr>
   `;
 
   // date モード
   const date = `
-    <thead>
-      <tr>
-        <th class="fixed-col">コード</th>
-        <th class="fixed-col col-2">銘柄名</th>
-        <th>値上がり率</th>
-        <th>${label}終値</th>
-        <th>前日終値</th>
-      </tr>
-    </thead>
+    <tr>
+      <th class="fixed-col">コード</th>
+      <th class="fixed-col col-2">銘柄名</th>
+      <th>値上がり率</th>
+      <th>${label}終値</th>
+      <th>前日終値</th>
+    </tr>
   `;
 
-  // heuristics モード
+  // heuristics モード（2段ヘッダ）
   const heuristics = `
-    <thead>
-      <tr>
-        <th class="fixed-col" rowspan="2">コード</th>
-        <th class="fixed-col col-2" rowspan="2">銘柄名</th>
+    <tr>
+      <th class="fixed-col" rowspan="2">コード</th>
+      <th class="fixed-col col-2" rowspan="2">銘柄名</th>
 
-        <th colspan="3">移動平均線の傾き</th>
-        <th colspan="3">移動平均線の位置</th>
-        <th colspan="3">パーフェクトオーダー</th>
-        <th colspan="3">逆パーフェクトオーダー</th>
-        <th colspan="3">直前PO</th>
-        <th colspan="3">直前逆PO</th>
+      <th colspan="3">移動平均線の傾き</th>
+      <th colspan="3">移動平均線の位置</th>
+      <th colspan="3">パーフェクトオーダー</th>
+      <th colspan="3">逆パーフェクトオーダー</th>
+      <th colspan="3">直前PO</th>
+      <th colspan="3">直前逆PO</th>
 
-        <th colspan="3">MA 系</th>
+      <th colspan="3">MA 系</th>
 
-        <th colspan="2">ローソク足</th>
-        <th colspan="1">5MA更新</th>
+      <th colspan="2">ローソク足</th>
+      <th>5MA更新</th>
 
-        <th colspan="8">酒田五法</th>
+      <th colspan="8">酒田五法</th>
 
-        <th colspan="4">パターン認識</th>
+      <th colspan="4">パターン認識</th>
 
-        <th colspan="2">物別れ</th>
+      <th colspan="2">物別れ</th>
 
-        <th colspan="2">Rule9</th>
+      <th colspan="2">Rule9</th>
 
-        <th colspan="3">BBゾーンブレイク</th>
+      <th colspan="3">BBゾーンブレイク</th>
 
-        <th colspan="7">その他</th>
+      <th colspan="7">その他</th>
 
-        <th rowspan="2">サイクル進行度</th>
-        <th colspan="2">節目</th>
-      </tr>
+      <th rowspan="2">サイクル進行度</th>
+      <th colspan="2">節目</th>
+    </tr>
 
-      <tr>
-        <th>日足</th><th>週足</th><th>月足</th>
-        <th>日足</th><th>週足</th><th>月足</th>
-        <th>日足</th><th>週足</th><th>月足</th>
-        <th>日足</th><th>週足</th><th>月足</th>
-        <th>日足</th><th>週足</th><th>月足</th>
-        <th>日足</th><th>週足</th><th>月足</th>
+    <tr>
+      <th>日足</th><th>週足</th><th>月足</th>
+      <th>日足</th><th>週足</th><th>月足</th>
+      <th>日足</th><th>週足</th><th>月足</th>
+      <th>日足</th><th>週足</th><th>月足</th>
+      <th>日足</th><th>週足</th><th>月足</th>
+      <th>日足</th><th>週足</th><th>月足</th>
 
-        <th>収束</th><th>拡散</th><th>100MA</th>
+      <th>収束</th><th>拡散</th><th>100MA</th>
 
-        <th>下半身</th><th>逆下半身</th>
-        <th>更新</th>
+      <th>下半身</th><th>逆下半身</th>
+      <th>更新</th>
 
-        <th>三尊</th><th>逆三尊</th><th>三空↑</th><th>三空↓</th>
-        <th>三兵↑</th><th>三兵↓</th><th>三法↑</th><th>三法↓</th>
+      <th>三尊</th><th>逆三尊</th><th>三空↑</th><th>三空↓</th>
+      <th>三兵↑</th><th>三兵↓</th><th>三法↑</th><th>三法↓</th>
 
-        <th>H&S</th><th>DB</th><th>日大</th><th>逆日大</th>
+      <th>H&S</th><th>DB</th><th>日大</th><th>逆日大</th>
 
-        <th>物別れ</th><th>クロス</th>
+      <th>物別れ</th><th>クロス</th>
 
-        <th>日足</th><th>週足</th>
+      <th>日足</th><th>週足</th>
 
-        <th>日足</th><th>週足</th><th>月足</th>
+      <th>日足</th><th>週足</th><th>月足</th>
 
-        <th>箱</th><th>過熱</th><th>グランビル</th><th>陰の陰</th>
-        <th>戻り売り</th><th>下降終わり</th><th>揉み合い</th>
+      <th>箱</th><th>過熱</th><th>グランビル</th><th>陰の陰</th>
+      <th>戻り売り</th><th>下降終わり</th><th>揉み合い</th>
 
-        <th>上</th><th>下</th>
-      </tr>
-    </thead>
+      <th>上</th><th>下</th>
+    </tr>
   `;
 
   const html =
     mode === "ratio" ? ratio :
-    mode === "date" ? date :
+    mode === "date"  ? date  :
     heuristics;
 
-  sticky.innerHTML = html;
-  body.innerHTML = html;
+  stickyThead.innerHTML = html;
+  bodyThead.innerHTML   = html;
 }
 
 /* ============================
