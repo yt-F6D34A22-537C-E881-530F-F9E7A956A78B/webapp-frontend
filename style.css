@@ -182,9 +182,6 @@ button:disabled {
   text-align: center;
   vertical-align: middle;
   font-weight: 600;
-  padding: 8px 6px;
-  border-bottom: 1px solid #d1d5db;
-  white-space: nowrap;
 }
 
 /* 2段ヘッダ：下段 */
@@ -193,9 +190,6 @@ button:disabled {
   text-align: center;
   vertical-align: middle;
   font-weight: 500;
-  padding: 8px 6px;
-  border-bottom: 1px solid #d1d5db;
-  white-space: nowrap;
 }
 
 .result-table th {
@@ -284,16 +278,7 @@ tr.tr-error .fixed-col {
 ------------------------------ */
 .fixed-col {
   position: sticky;
-  left: 0;
-  background: white;
   z-index: 45; /* ← 透け防止のため調整 */
-}
-
-/* 2列目以降の固定列は JS が left を設定するため 0 にしておく */
-.fixed-col.col-2 {
-  left: 0;
-  background: white;
-  z-index: 45;
 }
 
 /* ------------------------------
