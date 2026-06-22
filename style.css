@@ -158,52 +158,68 @@ button:disabled {
   position: relative;
 }
 
-/* 固定ヘッダ専用コンテナ */
-.table-header-sticky {
-  position: sticky;
-  top: 0;
-  z-index: 50;
-  background: #f3f4f6;
-  border-bottom: 1px solid #e5e7eb;
-
-  /* 横スクロール同期 */
-  overflow-x: auto;
-}
-
 .result-table {
   width: max-content;
   border-collapse: separate;
   border-spacing: 0;
 }
 
-/* 2段ヘッダ：上段 */
-.result-table thead tr:first-child th {
-  background: #f3f4f6;
+.result-table th,
+.result-table td {
+  box-sizing: border-box;
+  padding: 8px 6px;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 14px;
+  white-space: nowrap;
   text-align: center;
-  vertical-align: middle;
-  font-weight: 600;
-}
-
-/* 2段ヘッダ：下段 */
-.result-table thead tr:nth-child(2) th {
-  background: #fafafa;
-  text-align: center;
-  vertical-align: middle;
-  font-weight: 500;
 }
 
 .result-table th {
   border-right: 1px solid #e5e7eb;
 }
 
-.result-table th,
-#resultTable th,
-#resultTable td {
-  box-sizing: border-box;
+.tr-error {
+  background: #e5e7eb !important; /* gray-200 */
+  color: #555;
 }
 
-/* 固定ヘッダ側の固定列 */
-.table-header-sticky th.fixed-col {
+// 左固定カラム
+.fixed-col {
+  position: sticky;
+  z-index: 45; /* ← 透け防止のため調整 */
+}
+
+/* ------------------------------
+   固定ヘッダテーブル
+------------------------------ */
+/* コンテナ */
+.table-header-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  overflow-x: auto;
+}
+
+/* 2段ヘッダ */
+.result-table thead tr th {
+  text-align: center;
+  vertical-align: middle;
+}
+
+/* 2段ヘッダ：上段 */
+.result-table thead tr:first-child th {
+  background: #f3f4f6;
+  font-weight: 600;
+}
+
+/* 2段ヘッダ：下段 */
+.result-table thead tr:nth-child(2) th {
+  background: #fafafa;
+  font-weight: 500;
+}
+
+/* 固定列 */
+.table-header-sticky .fixed-col {
   background: #e5e7eb !important;
   z-index: 70;
 }
@@ -212,13 +228,11 @@ button:disabled {
    本体テーブル
 ------------------------------ */
 .table-scroll-outer {
-  overflow-x: auto;          /* ← 横スクロール可能にする */
+  overflow-x: auto;
   overflow-y: hidden;
   position: relative;
   -webkit-overflow-scrolling: touch;
-
-  /* スクロールバー非表示 */
-  scrollbar-width: none;     /* Firefox */
+  scrollbar-width: none;
 }
 
 .table-scroll-outer::-webkit-scrollbar {
@@ -229,9 +243,7 @@ button:disabled {
   overflow-x: auto;
   overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
-
-  /* スクロールバー非表示 */
-  scrollbar-width: none; /* Firefox */
+  scrollbar-width: none;
 }
 
 .table-scroll-body::-webkit-scrollbar {
@@ -244,41 +256,14 @@ button:disabled {
   overflow: hidden;     /* 内容を隠す */
 }
 #resultHeaderBody th {
-    padding-top: 0;
-    padding-bottom: 0;
-}
-
-.result-table th,
-.result-table td {
-  padding: 8px 6px;
-  border-bottom: 1px solid #e5e7eb;
-  font-size: 14px;
-  white-space: nowrap;
-  text-align: center;
+  padding-top: 0;
+  padding-bottom: 0;
 }
 
 #resultTable tr:hover,
 #resultTable tr:hover .fixed-col {
   background: #f0f9ff;
   cursor: pointer;
-}
-
-.tr-error {
-  background: #e5e7eb !important; /* gray-200 */
-  color: #555;
-}
-
-/* heuristics の error 行の固定列も背景色を合わせる */
-tr.tr-error .fixed-col {
-  background-color: #e5e7eb !important; /* gray-200 */
-}
-
-/* ------------------------------
-   左固定カラム
------------------------------- */
-.fixed-col {
-  position: sticky;
-  z-index: 45; /* ← 透け防止のため調整 */
 }
 
 /* ------------------------------
