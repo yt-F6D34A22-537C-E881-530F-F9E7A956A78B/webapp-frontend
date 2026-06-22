@@ -257,13 +257,13 @@ button:disabled {
   overflow: hidden;     /* 内容を隠す */
 }
 
-#resultHeaderBody tr {
-  background-color: #fff;
-}
-
 #resultHeaderBody th {
   padding-top: 0;
   padding-bottom: 0;
+}
+
+#resultTable tr {
+  background-color: #fff;
 }
 
 #resultTable tr:hover,
