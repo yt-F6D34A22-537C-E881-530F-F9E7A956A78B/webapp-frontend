@@ -178,7 +178,7 @@ button:disabled {
 }
 
 /* 2段ヘッダ：上段 */
-.table-header-sticky thead tr:first-child th {
+.result-table thead tr:first-child th {
   background: #f3f4f6;
   text-align: center;
   vertical-align: middle;
@@ -189,7 +189,7 @@ button:disabled {
 }
 
 /* 2段ヘッダ：下段 */
-.table-header-sticky thead tr:nth-child(2) th {
+.result-table thead tr:nth-child(2) th {
   background: #fafafa;
   text-align: center;
   vertical-align: middle;
@@ -199,20 +199,20 @@ button:disabled {
   white-space: nowrap;
 }
 
-.table-header-sticky th {
+.result-table th {
   border-right: 1px solid #e5e7eb;
+}
+
+.result-table th,
+#resultTable th,
+#resultTable td {
+  box-sizing: border-box;
 }
 
 /* 固定ヘッダ側の固定列 */
 .table-header-sticky th.fixed-col {
   background: #e5e7eb !important;
   z-index: 70;
-}
-
-.table-header-sticky th,
-#resultTable th,
-#resultTable td {
-  box-sizing: border-box;
 }
 
 /* ------------------------------
@@ -255,24 +255,11 @@ button:disabled {
 /* 本体側 thead は完全非表示 */
 #resultHeaderBody {
   visibility: hidden;   /* 幅計算には参加 */
-  height: 0; /* 高さゼロにする */
-  line-height: 0;
-  font-size: 0;
   overflow: hidden;     /* 内容を隠す */
-  padding: 0;
-  margin: 0;
-  border: none;
 }
 
-#resultHeaderBody th {
-  padding: 0 !important;
-  height: 0;
-  line-height: 0;
-  border: none;
-}
-
-#resultTable th,
-#resultTable td {
+.result-table th,
+.result-table td {
   padding: 8px 6px;
   border-bottom: 1px solid #e5e7eb;
   font-size: 14px;
