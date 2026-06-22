@@ -183,7 +183,7 @@ button:disabled {
   color: #555;
 }
 
-// 左固定カラム
+/* 左固定カラム */
 .fixed-col {
   position: sticky;
   z-index: 45; /* ← 透け防止のため調整 */
