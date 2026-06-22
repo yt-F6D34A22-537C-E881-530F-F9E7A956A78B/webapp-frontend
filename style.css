@@ -246,8 +246,12 @@ button:disabled {
 
 /* 本体側 thead は完全非表示 */
 #resultHeaderBody {
-  visibility: hidden;   /* 幅計算には参加 */
+  visibility: collapse;   /* 幅計算には参加 */
   overflow: hidden;     /* 内容を隠す */
+}
+#resultHeaderBody th {
+    padding-top: 0;
+    padding-bottom: 0;
 }
 
 .result-table th,
