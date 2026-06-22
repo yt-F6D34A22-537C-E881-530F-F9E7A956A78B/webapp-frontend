@@ -174,7 +174,7 @@ button:disabled {
   text-align: center;
 }
 
-.result-table th {
+.result-table th, .result-table td {
   border-right: 1px solid #e5e7eb;
 }
 
