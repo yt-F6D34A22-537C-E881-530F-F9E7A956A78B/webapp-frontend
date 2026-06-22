@@ -186,7 +186,8 @@ button:disabled {
 /* 左固定カラム */
 .fixed-col {
   position: sticky;
-  z-index: 45; /* ← 透け防止のため調整 */
+  z-index: 45;
+  background-color: inherit;
 }
 
 /* ------------------------------
@@ -255,6 +256,11 @@ button:disabled {
   visibility: collapse;   /* 幅計算には参加 */
   overflow: hidden;     /* 内容を隠す */
 }
+
+#resultHeaderBody tr {
+  background-color: #fff;
+}
+
 #resultHeaderBody th {
   padding-top: 0;
   padding-bottom: 0;
@@ -262,7 +268,7 @@ button:disabled {
 
 #resultTable tr:hover,
 #resultTable tr:hover .fixed-col {
-  background: #f0f9ff;
+  background: #f0f9ff !important;
   cursor: pointer;
 }
 
