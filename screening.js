@@ -578,13 +578,10 @@ function showResults(results, mode) {
             // --- 節目（オブジェクト） ---
             case "TECH_FUSHIME_UP":
             case "TECH_FUSHIME_DOWN":
-              if (key === "") {
-                if (!val || !val.price) {
-                  html += `<td></td>`;
-                } else {
-                  html += `<td>${val.price}（${val.tryCount}回）</td>`;
-                }
-                continue;
+              if (!val || !val.price) {
+                html += `<td></td>`;
+              } else {
+                html += `<td>${val.price}（${val.tryCount}回）</td>`;
               }
               continue;
               
