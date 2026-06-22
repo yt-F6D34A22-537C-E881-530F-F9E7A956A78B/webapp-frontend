@@ -20,25 +20,107 @@ const API_BASE_URL = "https://yfinance-api-fe86988c-d3b4-f1c6-640d.onrender.com"
 
 // 列順だけを定義
 const TECH_KEYS = [
-  "TECH_MA_SLOPE_DAILY","TECH_MA_SLOPE_WEEKLY","TECH_MA_SLOPE_MONTHLY",
-  "TECH_MA_POSITION_DAILY","TECH_MA_POSITION_WEEKLY","TECH_MA_POSITION_MONTHLY",
-  "TECH_PERFECT_ORDER_DAILY","TECH_PERFECT_ORDER_WEEKLY","TECH_PERFECT_ORDER_MONTHLY",
-  "TECH_REVERSE_PERFECT_ORDER_DAILY","TECH_REVERSE_PERFECT_ORDER_WEEKLY","TECH_REVERSE_PERFECT_ORDER_MONTHLY",
-  "TECH_PRE_PERFECT_ORDER_DAILY","TECH_PRE_PERFECT_ORDER_WEEKLY","TECH_PRE_PERFECT_ORDER_MONTHLY",
-  "TECH_PRE_REVERSE_PERFECT_ORDER_DAILY","TECH_PRE_REVERSE_PERFECT_ORDER_WEEKLY","TECH_PRE_REVERSE_PERFECT_ORDER_MONTHLY",
-  "TECH_MA_CONGESTION","TECH_MA_SPREAD","TECH_MA100_TREND",
-  "TECH_KAHANSHIN","TECH_GYAKU_KAHANSHIN",
-  "TECH_5MA_UPDATE",
-  "TECH_SAKATA_TRIPLE_TOP","TECH_SAKATA_TRIPLE_BOTTOM","TECH_SAKATA_SANKU_UP","TECH_SAKATA_SANKU_DOWN",
-  "TECH_SAKATA_SANPEI_UP","TECH_SAKATA_SANPEI_DOWN","TECH_SAKATA_SANPO_UP","TECH_SAKATA_SANPO_DOWN",
-  "TECH_HEAD_AND_SHOULDERS","TECH_DOUBLE_BOTTOM","TECH_NICHI_DAI","TECH_GYAKU_NICHI_DAI",
-  "TECH_MONOWAKARE","TECH_MONOWAKARE_RED_BLUE_CROSS",
-  "TECH_RULE9_DAILY","TECH_RULE9_WEEKLY",
-  "TECH_BB_ZONE_BREAK_DAILY","TECH_BB_ZONE_BREAK_WEEKLY","TECH_BB_ZONE_BREAK_MONTHLY",
-  "TECH_BOX_RANGE","TECH_OVERHEAT","TECH_GRANVILLE","TECH_IN_IN_HARAMI",
-  "TECH_RETURN_SELL_END","TECH_DOWN_TREND_END","TECH_MOMIAI",
-  "TECH_CYCLE_PROGRESS",
-  "TECH_FUSHIME_UP","TECH_FUSHIME_DOWN"
+  // 移動平均線の傾き
+  "TECH_MA_SLOPE_DAILY" ,
+  "TECH_MA_SLOPE_WEEKLY" ,
+  "TECH_MA_SLOPE_MONTHLY" ,
+
+  // 移動平均線の位置
+  "TECH_MA_POSITION_DAILY" ,
+  "TECH_MA_POSITION_WEEKLY" ,
+  "TECH_MA_POSITION_MONTHLY" ,
+
+  // パーフェクトオーダー
+  "TECH_PERFECT_ORDER_DAILY" ,
+  "TECH_PERFECT_ORDER_WEEKLY" ,
+  "TECH_PERFECT_ORDER_MONTHLY" ,
+
+  // 逆パーフェクトオーダー
+  "TECH_REVERSE_PERFECT_ORDER_DAILY" ,
+  "TECH_REVERSE_PERFECT_ORDER_WEEKLY" ,
+  "TECH_REVERSE_PERFECT_ORDER_MONTHLY" ,
+
+  // パーフェクトオーダー前夜
+  "TECH_PRE_PERFECT_ORDER_DAILY" ,
+  "TECH_PRE_PERFECT_ORDER_WEEKLY" ,
+  "TECH_PRE_PERFECT_ORDER_MONTHLY" ,
+
+  // 逆パーフェクトオーダー前夜
+  "TECH_PRE_REVERSE_PERFECT_ORDER_DAILY" ,
+  "TECH_PRE_REVERSE_PERFECT_ORDER_WEEKLY" ,
+  "TECH_PRE_REVERSE_PERFECT_ORDER_MONTHLY" ,
+
+  // 移動平均線の収束
+  "TECH_MA_CONGESTION" ,
+
+  // 移動平均線の拡散
+  "TECH_MA_SPREAD" ,
+
+  // 100MAトレンド
+  "TECH_MA100_TREND" ,
+
+  // 下半身
+  "TECH_KAHANSHIN" ,
+
+  // 逆下半身
+  "TECH_GYAKU_KAHANSHIN" ,
+
+  // 5MA更新
+  "TECH_5MA_UPDATE" ,
+
+  // 酒田五法（三尊天井 / 逆三尊 / 三空（上） / 三空（下） / 三兵（上） / 三兵（下） / 三法（上） / 三法（下））
+  "TECH_SAKATA_TRIPLE_TOP" ,
+  "TECH_SAKATA_TRIPLE_BOTTOM" ,
+  "TECH_SAKATA_SANKU_UP" ,
+  "TECH_SAKATA_SANKU_DOWN" ,
+  "TECH_SAKATA_SANPEI_UP" ,
+  "TECH_SAKATA_SANPEI_DOWN" ,
+  "TECH_SAKATA_SANPO_UP" ,
+  "TECH_SAKATA_SANPO_DOWN" ,
+
+  // パターン（ヘッド＆ショルダー / ダブルボトム / N大（上） / 逆N大（下））
+  "TECH_HEAD_AND_SHOULDERS" ,
+  "TECH_DOUBLE_BOTTOM" ,
+  "TECH_NICHI_DAI" ,
+  "TECH_GYAKU_NICHI_DAI" ,
+
+  // 物別れ
+  "TECH_MONOWAKARE" ,
+  "TECH_MONOWAKARE_RED_BLUE_CROSS" ,
+
+  // 9の法則
+  "TECH_RULE9_DAILY" ,
+  "TECH_RULE9_WEEKLY" ,
+
+  // BBゾーンブレイク
+  "TECH_BB_ZONE_BREAK_DAILY" ,
+  "TECH_BB_ZONE_BREAK_WEEKLY" ,
+  "TECH_BB_ZONE_BREAK_MONTHLY" ,
+
+  // ボックスレンジ
+  "TECH_BOX_RANGE" ,
+
+  // 過熱
+  "TECH_OVERHEAT" ,
+
+  // グランビル
+  "TECH_GRANVILLE" ,
+
+  // 陰の陰はらみ
+  "TECH_IN_IN_HARAMI" ,
+  // 戻り待ち売り後
+  "TECH_RETURN_SELL_END" ,
+  // 下降相場の終わり
+  "TECH_DOWN_TREND_END" ,
+  // 揉み合い
+  "TECH_MOMIAI" ,
+
+  // トレンドサイクル進行度
+  "TECH_CYCLE_PROGRESS" ,
+
+  // 節目
+  "TECH_FUSHIME_UP" ,
+  "TECH_FUSHIME_DOWN" 
 ];
 
 /* ============================================================
@@ -579,83 +661,100 @@ document.addEventListener("click", e => {
    固定ヘッダと本体テーブルの列幅同期
 ============================ */
 function syncColumnWidths() {
-  return;
-  const headerTable = document.querySelector(".table-header-sticky table");
-  const bodyTable   = document.querySelector("#resultTable");
+  const headerTable = document.getElementById("resultTableSticky");
+  const bodyTable   = document.getElementById("resultTable");
   if (!headerTable || !bodyTable) return;
 
-  const firstRow = bodyTable.querySelector("tbody tr");
-  if (!firstRow) return;
+  if (bodyTable.querySelectorAll("tbody tr").length === 0) return;
 
-  const bodyCells = firstRow.children;
+  // thead要素は一致している前提とする
+  const headerTableTHeadRows = headerTable.querySelectorAll("thead tr");
+  const bodyTableTHeadRows = bodyTable.querySelectorAll("thead tr");
 
-  // --- 2段目（最終行）を同期 ---
-  const headerRow2 = headerTable.querySelector("thead tr:last-child");
-  const headerCells2 = headerRow2 ? headerRow2.querySelectorAll("th") : [];
+  for (let i = 0; i < bodyTableTHeadRows.length; i++) {
+    const hRow = headerTableTHeadRows[i];
+    const hThs = hRow.querySelectorAll("th");
 
-  const len = Math.min(headerCells2.length, bodyCells.length);
+    const bRow = bodyTableTHeadRows[i];
+    const bThs = bRow.querySelectorAll("th");
 
-  for (let i = 0; i < len; i++) {
-    const w = bodyCells[i].getBoundingClientRect().width;
-    headerCells2[i].style.width = w + "px";
-    bodyCells[i].style.width = w + "px";
+    for (let j = 0; j < bThs.length; j++) {
+      hThs[j].style.width = bThs[j].getBoundingClientRect().width + "px";
+    }
   }
 
-  // --- 1段目（グループ行）を同期 ---
-  const headerRow1 = headerTable.querySelector("thead tr:first-child");
-  const headerCells1 = headerRow1 ? headerRow1.querySelectorAll("th") : [];
 
-  let colIndex = 0;
 
-  headerCells1.forEach(th => {
-    const rowspan = th.getAttribute("rowspan");
-    const colspan = th.getAttribute("colspan");
 
-    // rowspan=2（コード・銘柄名・サイクル進行度）
-    if (rowspan === "2") {
-      const w = bodyCells[colIndex].getBoundingClientRect().width;
-      th.style.width = w + "px";
-      colIndex += 1;
-      return;
-    }
+  // const bodyCells = firstRow.children;
 
-    // colspan（グループ列）
-    if (colspan) {
-      const span = Number(colspan);
-      let total = 0;
+  // // --- 2段目（最終行）を同期 ---
+  // const headerRow2 = headerTable.querySelector("thead tr:last-child");
+  // const headerCells2 = headerRow2 ? headerRow2.querySelectorAll("th") : [];
 
-      for (let i = 0; i < span; i++) {
-        const w = bodyCells[colIndex + i].getBoundingClientRect().width;
-        total += w;
-      }
+  // const len = Math.min(headerCells2.length, bodyCells.length);
 
-      th.style.width = total + "px";
-      colIndex += span;
-      return;
-    }
-  });
+  // for (let i = 0; i < len; i++) {
+  //   const w = bodyCells[i].getBoundingClientRect().width;
+  //   headerCells2[i].style.width = w + "px";
+  //   bodyCells[i].style.width = w + "px";
+  // }
 
-  // --- 固定列の left を再計算 ---
-  const rows = bodyTable.querySelectorAll("tbody tr");
-  if (rows.length === 0) return;
+  // // --- 1段目（グループ行）を同期 ---
+  // const headerRow1 = headerTable.querySelector("thead tr:first-child");
+  // const headerCells1 = headerRow1 ? headerRow1.querySelectorAll("th") : [];
 
-  const first = rows[0];
-  const fixedCols = first.querySelectorAll(".fixed-col");
+  // let colIndex = 0;
 
-  let left = 0;
+  // headerCells1.forEach(th => {
+  //   const rowspan = th.getAttribute("rowspan");
+  //   const colspan = th.getAttribute("colspan");
 
-  fixedCols.forEach(col => {
-    const idx = Array.from(first.children).indexOf(col);
-    const w = col.getBoundingClientRect().width;
+  //   // rowspan=2（コード・銘柄名・サイクル進行度）
+  //   if (rowspan === "2") {
+  //     const w = bodyCells[colIndex].getBoundingClientRect().width;
+  //     th.style.width = w + "px";
+  //     colIndex += 1;
+  //     return;
+  //   }
 
-    document.querySelectorAll(`#resultTable td:nth-child(${idx + 1})`)
-      .forEach(td => td.style.left = `${left}px`);
+  //   // colspan（グループ列）
+  //   if (colspan) {
+  //     const span = Number(colspan);
+  //     let total = 0;
 
-    document.querySelectorAll(`.table-header-sticky th:nth-child(${idx + 1})`)
-      .forEach(th => th.style.left = `${left}px`);
+  //     for (let i = 0; i < span; i++) {
+  //       const w = bodyCells[colIndex + i].getBoundingClientRect().width;
+  //       total += w;
+  //     }
 
-    left += w;
-  });
+  //     th.style.width = total + "px";
+  //     colIndex += span;
+  //     return;
+  //   }
+  // });
+
+  // // --- 固定列の left を再計算 ---
+  // const rows = bodyTable.querySelectorAll("tbody tr");
+  // if (rows.length === 0) return;
+
+  // const first = rows[0];
+  // const fixedCols = first.querySelectorAll(".fixed-col");
+
+  // let left = 0;
+
+  // fixedCols.forEach(col => {
+  //   const idx = Array.from(first.children).indexOf(col);
+  //   const w = col.getBoundingClientRect().width;
+
+  //   document.querySelectorAll(`#resultTable td:nth-child(${idx + 1})`)
+  //     .forEach(td => td.style.left = `${left}px`);
+
+  //   document.querySelectorAll(`.table-header-sticky th:nth-child(${idx + 1})`)
+  //     .forEach(th => th.style.left = `${left}px`);
+
+  //   left += w;
+  // });
 }
 
 /* ============================
