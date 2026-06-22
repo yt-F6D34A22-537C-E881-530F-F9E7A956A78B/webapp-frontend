@@ -265,7 +265,7 @@ function updateTableHeader(mode, label = "") {
     const html = `
       <tr>
         <th class="fixed-col">コード</th>
-        <th class="fixed-col col-2">銘柄名</th>
+        <th class="fixed-col">銘柄名</th>
         <th>出来高倍率</th>
         <th>上髭実体比</th>
         <th>出来高</th>
@@ -283,7 +283,7 @@ function updateTableHeader(mode, label = "") {
     const html = `
       <tr>
         <th class="fixed-col">コード</th>
-        <th class="fixed-col col-2">銘柄名</th>
+        <th class="fixed-col">銘柄名</th>
         <th>値上がり率</th>
         <th>${label}終値</th>
         <th>前日終値</th>
@@ -300,7 +300,7 @@ function updateTableHeader(mode, label = "") {
     let row1 = `
       <tr>
         <th class="fixed-col" rowspan="2">コード</th>
-        <th class="fixed-col col-2" rowspan="2">銘柄名</th>
+        <th class="fixed-col" rowspan="2">銘柄名</th>
     `;
     let row2 = `<tr>`;
 
@@ -524,7 +524,7 @@ function showResults(results, mode) {
     if (mode === "ratio") {
       tr.innerHTML = `
         <td class="fixed-col">${r.コード}</td>
-        <td class="fixed-col col-2">${r.銘柄名}</td>
+        <td class="fixed-col">${r.銘柄名}</td>
         <td>${r.出来高倍率}</td>
         <td>${r.上髭実体比}</td>
         <td>${r.出来高.toLocaleString()}</td>
@@ -539,7 +539,7 @@ function showResults(results, mode) {
     else if (mode === "date") {
       tr.innerHTML = `
         <td class="fixed-col">${r.コード}</td>
-        <td class="fixed-col col-2">${r.銘柄名}</td>
+        <td class="fixed-col">${r.銘柄名}</td>
         <td>${r.値上がり率}%</td>
         <td>${r.当日終値}</td>
         <td>${r.前日終値}</td>
@@ -552,7 +552,7 @@ function showResults(results, mode) {
     else if (mode === "heuristics") {
       let html = `
         <td class="fixed-col">${r.コード}</td>
-        <td class="fixed-col col-2">${r.銘柄名}</td>
+        <td class="fixed-col">${r.銘柄名}</td>
       `;
 
       for (const key of TECH_KEYS) {
