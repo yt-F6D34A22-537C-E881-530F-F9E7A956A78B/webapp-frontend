@@ -18,109 +18,166 @@ let timerId = null;
 
 const API_BASE_URL = "https://yfinance-api-fe86988c-d3b4-f1c6-640d.onrender.com";
 
-// 列順だけを定義
-const TECH_KEYS = [
-  // 移動平均線の傾き
-  "TECH_MA_SLOPE_DAILY" ,
-  "TECH_MA_SLOPE_WEEKLY" ,
-  "TECH_MA_SLOPE_MONTHLY" ,
-
-  // 移動平均線の位置
-  "TECH_MA_POSITION_DAILY" ,
-  "TECH_MA_POSITION_WEEKLY" ,
-  "TECH_MA_POSITION_MONTHLY" ,
-
-  // パーフェクトオーダー
-  "TECH_PERFECT_ORDER_DAILY" ,
-  "TECH_PERFECT_ORDER_WEEKLY" ,
-  "TECH_PERFECT_ORDER_MONTHLY" ,
-
-  // 逆パーフェクトオーダー
-  "TECH_REVERSE_PERFECT_ORDER_DAILY" ,
-  "TECH_REVERSE_PERFECT_ORDER_WEEKLY" ,
-  "TECH_REVERSE_PERFECT_ORDER_MONTHLY" ,
-
-  // パーフェクトオーダー前夜
-  "TECH_PRE_PERFECT_ORDER_DAILY" ,
-  "TECH_PRE_PERFECT_ORDER_WEEKLY" ,
-  "TECH_PRE_PERFECT_ORDER_MONTHLY" ,
-
-  // 逆パーフェクトオーダー前夜
-  "TECH_PRE_REVERSE_PERFECT_ORDER_DAILY" ,
-  "TECH_PRE_REVERSE_PERFECT_ORDER_WEEKLY" ,
-  "TECH_PRE_REVERSE_PERFECT_ORDER_MONTHLY" ,
-
-  // 移動平均線の収束
-  "TECH_MA_CONGESTION" ,
-
-  // 移動平均線の拡散
-  "TECH_MA_SPREAD" ,
-
-  // 100MAトレンド
-  "TECH_MA100_TREND" ,
-
-  // 下半身
-  "TECH_KAHANSHIN" ,
-
-  // 逆下半身
-  "TECH_GYAKU_KAHANSHIN" ,
-
-  // 5MA更新
-  "TECH_5MA_UPDATE" ,
-
-  // 酒田五法（三尊天井 / 逆三尊 / 三空（上） / 三空（下） / 三兵（上） / 三兵（下） / 三法（上） / 三法（下））
-  "TECH_SAKATA_TRIPLE_TOP" ,
-  "TECH_SAKATA_TRIPLE_BOTTOM" ,
-  "TECH_SAKATA_SANKU_UP" ,
-  "TECH_SAKATA_SANKU_DOWN" ,
-  "TECH_SAKATA_SANPEI_UP" ,
-  "TECH_SAKATA_SANPEI_DOWN" ,
-  "TECH_SAKATA_SANPO_UP" ,
-  "TECH_SAKATA_SANPO_DOWN" ,
-
-  // パターン（ヘッド＆ショルダー / ダブルボトム / N大（上） / 逆N大（下））
-  "TECH_HEAD_AND_SHOULDERS" ,
-  "TECH_DOUBLE_BOTTOM" ,
-  "TECH_NICHI_DAI" ,
-  "TECH_GYAKU_NICHI_DAI" ,
-
-  // 物別れ
-  "TECH_MONOWAKARE" ,
-  "TECH_MONOWAKARE_RED_BLUE_CROSS" ,
-
-  // 9の法則
-  "TECH_RULE9_DAILY" ,
-  "TECH_RULE9_WEEKLY" ,
-
-  // BBゾーンブレイク
-  "TECH_BB_ZONE_BREAK_DAILY" ,
-  "TECH_BB_ZONE_BREAK_WEEKLY" ,
-  "TECH_BB_ZONE_BREAK_MONTHLY" ,
-
-  // ボックスレンジ
-  "TECH_BOX_RANGE" ,
-
-  // 過熱
-  "TECH_OVERHEAT" ,
-
-  // グランビル
-  "TECH_GRANVILLE" ,
-
-  // 陰の陰はらみ
-  "TECH_IN_IN_HARAMI" ,
-  // 戻り待ち売り後
-  "TECH_RETURN_SELL_END" ,
-  // 下降相場の終わり
-  "TECH_DOWN_TREND_END" ,
-  // 揉み合い
-  "TECH_MOMIAI" ,
-
-  // トレンドサイクル進行度
-  "TECH_CYCLE_PROGRESS" ,
-
-  // 節目
-  "TECH_FUSHIME_UP" ,
-  "TECH_FUSHIME_DOWN" 
+// heuristicsの種別
+const HEURISTICS_TYPES = [
+  {
+    group_label: "移動平均線の傾き",
+    items: [
+      { key: "TECH_MA_SLOPE_DAILY",   label: "日足" },
+      { key: "TECH_MA_SLOPE_WEEKLY",  label: "週足" },
+      { key: "TECH_MA_SLOPE_MONTHLY", label: "月足" }
+    ]
+  },
+  {
+    group_label: "移動平均線の位置",
+    items: [
+      { key: "TECH_MA_POSITION_DAILY",   label: "日足" },
+      { key: "TECH_MA_POSITION_WEEKLY",  label: "週足" },
+      { key: "TECH_MA_POSITION_MONTHLY", label: "月足" }
+    ]
+  },
+  {
+    group_label: "パーフェクトオーダー",
+    items: [
+      { key: "TECH_PERFECT_ORDER_DAILY",   label: "日足" },
+      { key: "TECH_PERFECT_ORDER_WEEKLY",  label: "週足" },
+      { key: "TECH_PERFECT_ORDER_MONTHLY", label: "月足" }
+    ]
+  },
+  {
+    group_label: "逆パーフェクトオーダー",
+    items: [
+      { key: "TECH_REVERSE_PERFECT_ORDER_DAILY",   label: "日足" },
+      { key: "TECH_REVERSE_PERFECT_ORDER_WEEKLY",  label: "週足" },
+      { key: "TECH_REVERSE_PERFECT_ORDER_MONTHLY", label: "月足" }
+    ]
+  },
+  {
+    group_label: "パーフェクトオーダー前夜",
+    items: [
+      { key: "TECH_PRE_PERFECT_ORDER_DAILY",   label: "日足" },
+      { key: "TECH_PRE_PERFECT_ORDER_WEEKLY",  label: "週足" },
+      { key: "TECH_PRE_PERFECT_ORDER_MONTHLY", label: "月足" }
+    ]
+  },
+  {
+    group_label: "逆パーフェクトオーダー前夜",
+    items: [
+      { key: "TECH_PRE_REVERSE_PERFECT_ORDER_DAILY",   label: "日足" },
+      { key: "TECH_PRE_REVERSE_PERFECT_ORDER_WEEKLY",  label: "週足" },
+      { key: "TECH_PRE_REVERSE_PERFECT_ORDER_MONTHLY", label: "月足" }
+    ]
+  },
+  {
+    group_label: "移動平均線の収束",
+    items: [
+      { key: "TECH_MA_CONGESTION", label: "移動平均線の収束" }
+    ]
+  },
+  {
+    group_label: "移動平均線の拡散",
+    items: [
+      { key: "TECH_MA_SPREAD",     label: "移動平均線の拡散" }
+    ]
+  },
+  {
+    group_label: "100MAトレンド",
+    items: [
+      { key: "TECH_MA100_TREND", label: "100MAトレンド" }
+    ]
+  },
+  {
+    group_label: "下半身・逆下半身",
+    items: [
+      { key: "TECH_KAHANSHIN",       label: "下半身" },
+      { key: "TECH_GYAKU_KAHANSHIN", label: "逆下半身" }
+    ]
+  },
+  {
+    group_label: "5MA更新",
+    items: [
+      { key: "TECH_5MA_UPDATE", label: "5MA更新" }
+    ]
+  },
+  {
+    group_label: "酒田五法",
+    items: [
+      { key: "TECH_SAKATA_TRIPLE_TOP",    label: "三尊天井" },
+      { key: "TECH_SAKATA_TRIPLE_BOTTOM", label: "逆三尊" },
+      { key: "TECH_SAKATA_SANKU_UP",      label: "三空（上）" },
+      { key: "TECH_SAKATA_SANKU_DOWN",    label: "三空（下）" },
+      { key: "TECH_SAKATA_SANPEI_UP",     label: "三兵（上）" },
+      { key: "TECH_SAKATA_SANPEI_DOWN",   label: "三兵（下）" },
+      { key: "TECH_SAKATA_SANPO_UP",      label: "三法（上）" },
+      { key: "TECH_SAKATA_SANPO_DOWN",    label: "三法（下）" }
+    ]
+  },
+  {
+    group_label: "パターン",
+    items: [
+      { key: "TECH_HEAD_AND_SHOULDERS", label: "ヘッド＆ショルダー" },
+      { key: "TECH_DOUBLE_BOTTOM",      label: "ダブルボトム" },
+      { key: "TECH_NICHI_DAI",          label: "N大" },
+      { key: "TECH_GYAKU_NICHI_DAI",    label: "逆N大" },
+      { key: "TECH_IN_IN_HARAMI",       label: "陰の陰はらみ" },
+      { key: "TECH_RETURN_SELL_END",    label: "戻り待ち売り後" },
+      { key: "TECH_DOWN_TREND_END",     label: "下降相場の終わり" },
+      { key: "TECH_MOMIAI",             label: "揉み合い" }
+    ]
+  },
+  {
+    group_label: "物別れ",
+    items: [
+      { key: "TECH_MONOWAKARE",              label: "物別れ" },
+      { key: "TECH_MONOWAKARE_RED_BLUE_CROSS", label: "物別れ（赤青クロス）" }
+    ]
+  },
+  {
+    group_label: "9の法則",
+    items: [
+      { key: "TECH_RULE9_DAILY",  label: "日足" },
+      { key: "TECH_RULE9_WEEKLY", label: "週足" }
+    ]
+  },
+  {
+    group_label: "BBゾーンブレイク",
+    items: [
+      { key: "TECH_BB_ZONE_BREAK_DAILY",   label: "日足" },
+      { key: "TECH_BB_ZONE_BREAK_WEEKLY",  label: "週足" },
+      { key: "TECH_BB_ZONE_BREAK_MONTHLY", label: "月足" }
+    ]
+  },
+  {
+    group_label: "ボックスレンジ",
+    items: [
+      { key: "TECH_BOX_RANGE", label: "ボックスレンジ" }
+    ]
+  },
+  {
+    group_label: "過熱",
+    items: [
+      { key: "TECH_OVERHEAT", label: "過熱" }
+    ]
+  },
+  {
+    group_label: "グランビル",
+    items: [
+      { key: "TECH_GRANVILLE", label: "グランビル" }
+    ]
+  },
+  {
+    group_label: "トレンドサイクル進行度",
+    items: [
+      { key: "TECH_CYCLE_PROGRESS", label: "トレンドサイクル進行度" }
+    ]
+  },
+  {
+    group_label: "節目",
+    items: [
+      { key: "TECH_FUSHIME_UP",   label: "上" },
+      { key: "TECH_FUSHIME_DOWN", label: "下" }
+    ]
+  }
 ];
 
 /* ============================================================
@@ -130,11 +187,10 @@ function boolMark(v) {
   return v === true ? "○" : v === false ? "×" : "";
 }
 
-function formatRule9(obj) {
-  if (!obj || !obj.direction) return "";
-  const arrow = obj.direction === "up" ? "↗" :
-                obj.direction === "down" ? "↘" : "";
-  return `${arrow}（${obj.count} 本目）`;
+function formatDirectionMark(direction) {
+  return direction === "up" ? "↗" :
+         direction === "down" ? "↘" :
+         direction === "flat" ? "－" : "";
 }
 
 /* ============================================================
@@ -296,7 +352,6 @@ function updateTableHeader(mode, label = "") {
 
   // heuristics
   if (mode === "heuristics") {
-
     let row1 = `
       <tr>
         <th class="fixed-col" rowspan="2">コード</th>
@@ -304,80 +359,18 @@ function updateTableHeader(mode, label = "") {
     `;
     let row2 = `<tr>`;
 
-    // グループ名判定
-    function detectGroup(key) {
-      if (key.startsWith("TECH_MA_SLOPE")) return "移動平均線の傾き";
-      if (key.startsWith("TECH_MA_POSITION")) return "移動平均線の位置";
-      if (key.startsWith("TECH_PERFECT_ORDER") && !key.includes("REVERSE") && !key.includes("PRE_")) return "パーフェクトオーダー";
-      if (key.startsWith("TECH_REVERSE_PERFECT_ORDER") && !key.includes("PRE_")) return "逆パーフェクトオーダー";
-      if (key.startsWith("TECH_PRE_PERFECT_ORDER") && !key.includes("REVERSE")) return "直前PO";
-      if (key.startsWith("TECH_PRE_REVERSE_PERFECT_ORDER")) return "直前逆PO";
 
-      if (key === "TECH_MA_CONGESTION" || key === "TECH_MA_SPREAD" || key === "TECH_MA100_TREND") return "MA系";
+    for (const typeObj of HEURISTICS_TYPES) {
+      // item数
+      const itemCount = typeObj.items.length;
 
-      if (key === "TECH_KAHANSHIN" || key === "TECH_GYAKU_KAHANSHIN") return "ローソク足";
-
-      if (key === "TECH_5MA_UPDATE") return "5MA更新";
-
-      if (key.startsWith("TECH_SAKATA")) return "酒田五法";
-
-      if (key === "TECH_HEAD_AND_SHOULDERS" ||
-          key === "TECH_DOUBLE_BOTTOM" ||
-          key === "TECH_NICHI_DAI" ||
-          key === "TECH_GYAKU_NICHI_DAI") return "パターン認識";
-
-      if (key.startsWith("TECH_MONOWAKARE")) return "物別れ";
-
-      if (key.startsWith("TECH_RULE9")) return "Rule9";
-
-      if (key.startsWith("TECH_BB_ZONE_BREAK")) return "BBゾーンブレイク";
-
-      if (key === "TECH_BOX_RANGE" ||
-          key === "TECH_OVERHEAT" ||
-          key === "TECH_GRANVILLE" ||
-          key === "TECH_IN_IN_HARAMI" ||
-          key === "TECH_RETURN_SELL_END" ||
-          key === "TECH_DOWN_TREND_END" ||
-          key === "TECH_MOMIAI") return "その他";
-
-      if (key === "TECH_CYCLE_PROGRESS") return "サイクル進行度";
-
-      if (key.startsWith("TECH_FUSHIME")) return "節目";
-
-      return "その他";
-    }
-
-    // 2段目ラベル
-    function shortLabel(key) {
-      if (key.endsWith("_DAILY")) return "日足";
-      if (key.endsWith("_WEEKLY")) return "週足";
-      if (key.endsWith("_MONTHLY")) return "月足";
-      return key.replace("TECH_", "");
-    }
-
-    // グループ化
-    const groups = [];
-    let current = null;
-
-    for (const key of TECH_KEYS) {
-      const g = detectGroup(key);
-      if (!current || current.name !== g) {
-        current = { name: g, keys: [] };
-        groups.push(current);
-      }
-      current.keys.push(key);
-    }
-
-    // 1段目・2段目生成
-    for (const g of groups) {
-      if (g.name === "サイクル進行度") {
-        row1 += `<th rowspan="2">${g.name}</th>`;
-        continue;
-      }
-
-      row1 += `<th colspan="${g.keys.length}">${g.name}</th>`;
-      for (const key of g.keys) {
-        row2 += `<th>${shortLabel(key)}</th>`;
+      if (itemCount > 1) {
+        row1 += `<th colspan="${itemCount}">${typeObj.group_label}</th>`;
+        for (const item of typeObj.items) {
+          row2 += `<th>${item.label}</th>`;
+        }
+      } else {
+        row1 += `<th rowspan="2">${typeObj.group_label}</th>`;
       }
     }
 
@@ -555,62 +548,72 @@ function showResults(results, mode) {
         <td class="fixed-col">${r.銘柄名}</td>
       `;
 
-      for (const key of TECH_KEYS) {
-        const val = r[key];
+      for (const typeObj of HEURISTICS_TYPES) {
+        for (const item of typeObj.items) {
+          const key = item.key
+          const val = r[key];
 
-        // --- Rule9（オブジェクト） ---
-        if (key === "TECH_RULE9_DAILY" || key === "TECH_RULE9_WEEKLY") {
-          html += `<td>${formatRule9(val)}</td>`;
-          continue;
-        }
+          switch (key) {
+            // --- 9の法則（オブジェクト） ---
+            case "TECH_RULE9_DAILY":
+            case "TECH_RULE9_WEEKLY":
+              if (!val || !val.direction) {
+                html += `<td></td>`;
+              } else {
+                const arrow = formatDirectionMark(val.direction);
+                html += `<td>${arrow}（${val.count} 本目）</td>`;
+              }
+              continue;
 
-        // --- Granville（オブジェクト） ---
-        if (key === "TECH_GRANVILLE") {
-          if (!val || !val.direction) {
-            html += `<td></td>`;
-          } else {
-            const arrow =
-              val.direction === "up" ? "↗" :
-              val.direction === "down" ? "↘" : "";
-            html += `<td>${arrow}（${val.count}）</td>`;
+            // --- グランビル（オブジェクト） ---
+            case "TECH_GRANVILLE":
+              if (!val || !val.direction) {
+                html += `<td></td>`;
+              } else {
+                const arrow = formatDirectionMark(val.direction);
+                html += `<td>${arrow}（${val.count}）</td>`;
+              }
+              continue;
+              
+            // --- 節目（オブジェクト） ---
+            case "TECH_FUSHIME_UP":
+            case "TECH_FUSHIME_DOWN":
+              if (key === "") {
+                if (!val || !val.price) {
+                  html += `<td></td>`;
+                } else {
+                  html += `<td>${val.price}（${val.tryCount}回）</td>`;
+                }
+                continue;
+              }
+              continue;
+              
+            // --- トレンドサイクル進行度（数値 or null） ---
+            case "TECH_CYCLE_PROGRESS":
+              html += `<td>${val ?? ""}</td>`;
+              continue;
+
+            // 上記以外
+            default:
+              // type判定
+              switch (typeof val) {
+                // --- 文字列（up/down/flat） ---
+                case "string":
+                  const arrow = formatDirectionMark(val);
+                  html += `<td>${arrow}</td>`;
+                  continue;
+                  
+                // --- boolean（○/×） ---
+                case "boolean":
+                  html += `<td>${boolMark(val)}</td>`;
+                  continue;
+
+                // --- 上記以外（null or undefined） ---
+                default:
+                  html += `<td></td>`;
+                  continue;
           }
-          continue;
         }
-
-        // --- Fushime（オブジェクト） ---
-        if (key === "TECH_FUSHIME_UP" || key === "TECH_FUSHIME_DOWN") {
-          if (!val || !val.price) {
-            html += `<td></td>`;
-          } else {
-            html += `<td>${val.price}（${val.tryCount}回）</td>`;
-          }
-          continue;
-        }
-
-        // --- Cycle Progress（数値 or null） ---
-        if (key === "TECH_CYCLE_PROGRESS") {
-          html += `<td>${val ?? ""}</td>`;
-          continue;
-        }
-
-        // --- 文字列（up/down/flat） ---
-        if (typeof val === "string") {
-          const arrow =
-            val === "up" ? "↗" :
-            val === "down" ? "↘" :
-            val === "flat" ? "－" : "";
-          html += `<td>${arrow}</td>`;
-          continue;
-        }
-
-        // --- boolean（○/×） ---
-        if (typeof val === "boolean") {
-          html += `<td>${val ? "○" : "×"}</td>`;
-          continue;
-        }
-
-        // --- null or undefined ---
-        html += `<td></td>`;
       }
 
       tr.innerHTML = html;
