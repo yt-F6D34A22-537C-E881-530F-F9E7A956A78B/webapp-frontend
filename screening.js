@@ -579,6 +579,7 @@ document.addEventListener("click", e => {
    固定ヘッダと本体テーブルの列幅同期
 ============================ */
 function syncColumnWidths() {
+  return;
   const headerTable = document.querySelector(".table-header-sticky table");
   const bodyTable   = document.querySelector("#resultTable");
   if (!headerTable || !bodyTable) return;
