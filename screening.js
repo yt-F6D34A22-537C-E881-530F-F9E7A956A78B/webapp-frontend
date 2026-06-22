@@ -612,6 +612,7 @@ function showResults(results, mode) {
                 default:
                   html += `<td></td>`;
                   continue;
+              }
           }
         }
       }
