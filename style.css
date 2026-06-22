@@ -170,9 +170,8 @@ button:disabled {
   overflow-x: auto;
 }
 
-/* 固定ヘッダ用テーブル */
-.table-header-sticky table {
-  width: max-content; /* 本体と幅を合わせる */
+.result-table {
+  width: max-content;
   border-collapse: separate;
   border-spacing: 0;
 }
@@ -243,13 +242,6 @@ button:disabled {
 
 .table-scroll-body::-webkit-scrollbar {
   display: none; /* Chrome / Safari */
-}
-
-/* 本体テーブル */
-#resultTable {
-  width: max-content; /* 固定ヘッダと一致 */
-  border-collapse: separate;
-  border-spacing: 0;
 }
 
 /* 本体側 thead は完全非表示 */
