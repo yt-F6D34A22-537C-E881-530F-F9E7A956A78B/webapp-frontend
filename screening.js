@@ -120,6 +120,7 @@ const HEURISTICS_TYPES = [
       { key: "TECH_NICHI_DAI",          label: "N大" },
       { key: "TECH_GYAKU_NICHI_DAI",    label: "逆N大" },
       { key: "TECH_IN_IN_HARAMI",       label: "陰の陰はらみ" },
+      { key: "TECH_RED_BLUE_CROSS",     label: "赤と青の交差" },
       { key: "TECH_RETURN_SELL_END",    label: "戻り待ち売り後" },
       { key: "TECH_DOWN_TREND_END",     label: "下降相場の終わり" },
       { key: "TECH_MOMIAI",             label: "揉み合い" }
