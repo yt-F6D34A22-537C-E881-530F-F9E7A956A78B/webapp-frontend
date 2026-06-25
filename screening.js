@@ -357,6 +357,8 @@ function updateTableHeader(mode, label = "") {
       <tr>
         <th class="fixed-col" rowspan="2">コード</th>
         <th class="fixed-col" rowspan="2">銘柄名</th>
+        <th class="fixed-col" rowspan="2">トレンド</th>
+        <th class="fixed-col" rowspan="2">スコア</th>
     `;
     let row2 = `<tr>`;
 
@@ -466,7 +468,23 @@ async function startScreening() {
       return;
     }
 
-    const results = data.data;
+    let results = null;
+    if (mode === "heuristics") {
+      const dataUp = data.up.map(up => ({
+        ...up,
+        トレンド: "up",
+        スコア: up["アップスコア"]
+      }));
+      const dataDown = data.down.map(down => ({
+        ...up,
+        トレンド: "down",
+        スコア: down["ダウンスコア"]
+      }));
+      results = [...dataUp, ...dataDown];
+    } else {
+      results = data.data;
+    }
+
     currentResults = results;
     showResults(results, mode);
 
@@ -547,6 +565,8 @@ function showResults(results, mode) {
       let html = `
         <td class="fixed-col">${r.コード}</td>
         <td class="fixed-col">${r.銘柄名}</td>
+        <td class="fixed-col">${formatDirectionMark(r.トレンド)}</td>
+        <td class="fixed-col">${r.スコア}</td>
       `;
 
       for (const typeObj of HEURISTICS_TYPES) {
