@@ -470,12 +470,12 @@ async function startScreening() {
 
     let results = null;
     if (mode === "heuristics") {
-      const dataUp = data.up.map(up => ({
+      const dataUp = data.data.up.map(up => ({
         ...up,
         トレンド: "up",
         スコア: up["アップスコア"]
       }));
-      const dataDown = data.down.map(down => ({
+      const dataDown = data.data.down.map(down => ({
         ...down,
         トレンド: "down",
         スコア: down["ダウンスコア"]
