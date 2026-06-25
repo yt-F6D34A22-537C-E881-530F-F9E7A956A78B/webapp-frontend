@@ -476,7 +476,7 @@ async function startScreening() {
         スコア: up["アップスコア"]
       }));
       const dataDown = data.down.map(down => ({
-        ...up,
+        ...down,
         トレンド: "down",
         スコア: down["ダウンスコア"]
       }));
