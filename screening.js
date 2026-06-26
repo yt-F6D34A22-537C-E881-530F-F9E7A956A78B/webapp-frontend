@@ -22,6 +22,7 @@ const API_BASE_URL = "https://yfinance-api-fe86988c-d3b4-f1c6-640d.onrender.com"
 const HEURISTICS_TYPES = [
   {
     group_label: "移動平均線の傾き",
+    trend_direction_css: "th-bg-trend-either",
     items: [
       { key: "TECH_MA_SLOPE_DAILY",   label: "日足" },
       { key: "TECH_MA_SLOPE_WEEKLY",  label: "週足" },
@@ -30,6 +31,7 @@ const HEURISTICS_TYPES = [
   },
   {
     group_label: "移動平均線の位置",
+    trend_direction_css: "th-bg-trend-either",
     items: [
       { key: "TECH_MA_POSITION_DAILY",   label: "日足" },
       { key: "TECH_MA_POSITION_WEEKLY",  label: "週足" },
@@ -38,6 +40,7 @@ const HEURISTICS_TYPES = [
   },
   {
     group_label: "パーフェクトオーダー",
+    trend_direction_css: "th-bg-trend-up",
     items: [
       { key: "TECH_PERFECT_ORDER_DAILY",   label: "日足" },
       { key: "TECH_PERFECT_ORDER_WEEKLY",  label: "週足" },
@@ -46,6 +49,7 @@ const HEURISTICS_TYPES = [
   },
   {
     group_label: "逆パーフェクトオーダー",
+    trend_direction_css: "th-bg-trend-down",
     items: [
       { key: "TECH_REVERSE_PERFECT_ORDER_DAILY",   label: "日足" },
       { key: "TECH_REVERSE_PERFECT_ORDER_WEEKLY",  label: "週足" },
@@ -54,6 +58,7 @@ const HEURISTICS_TYPES = [
   },
   {
     group_label: "パーフェクトオーダー前夜",
+    trend_direction_css: "th-bg-trend-up",
     items: [
       { key: "TECH_PRE_PERFECT_ORDER_DAILY",   label: "日足" },
       { key: "TECH_PRE_PERFECT_ORDER_WEEKLY",  label: "週足" },
@@ -62,6 +67,7 @@ const HEURISTICS_TYPES = [
   },
   {
     group_label: "逆パーフェクトオーダー前夜",
+    trend_direction_css: "th-bg-trend-down",
     items: [
       { key: "TECH_PRE_REVERSE_PERFECT_ORDER_DAILY",   label: "日足" },
       { key: "TECH_PRE_REVERSE_PERFECT_ORDER_WEEKLY",  label: "週足" },
@@ -70,64 +76,72 @@ const HEURISTICS_TYPES = [
   },
   {
     group_label: "移動平均線の収束",
+    trend_direction_css: "th-bg-trend-up",
     items: [
       { key: "TECH_MA_CONGESTION", label: "移動平均線の収束" }
     ]
   },
   {
     group_label: "移動平均線の拡散",
+    trend_direction_css: "th-bg-trend-either",
     items: [
       { key: "TECH_MA_SPREAD",     label: "移動平均線の拡散" }
     ]
   },
   {
     group_label: "100MAトレンド",
+    trend_direction_css: "th-bg-trend-either",
     items: [
       { key: "TECH_MA100_TREND", label: "100MAトレンド" }
     ]
   },
   {
     group_label: "下半身・逆下半身",
+    trend_direction_css: "th-bg-trend-either",
     items: [
-      { key: "TECH_KAHANSHIN",       label: "下半身" },
-      { key: "TECH_GYAKU_KAHANSHIN", label: "逆下半身" }
+      { key: "TECH_KAHANSHIN",       label: "下半身",     trend_direction_css: "th-bg-trend-up" },
+      { key: "TECH_GYAKU_KAHANSHIN", label: "逆下半身",   trend_direction_css: "th-bg-trend-down" }
     ]
   },
   {
     group_label: "5MA更新",
+    trend_direction_css: "th-bg-trend-either",
     items: [
       { key: "TECH_5MA_UPDATE", label: "5MA更新" }
     ]
   },
   {
     group_label: "酒田五法",
+    trend_direction_css: "th-bg-trend-either",
     items: [
-      { key: "TECH_SAKATA_TRIPLE_TOP",    label: "三尊天井" },
-      { key: "TECH_SAKATA_TRIPLE_BOTTOM", label: "逆三尊" },
-      { key: "TECH_SAKATA_SANKU_UP",      label: "三空（上）" },
-      { key: "TECH_SAKATA_SANKU_DOWN",    label: "三空（下）" },
-      { key: "TECH_SAKATA_SANPEI_UP",     label: "三兵（上）" },
-      { key: "TECH_SAKATA_SANPEI_DOWN",   label: "三兵（下）" },
-      { key: "TECH_SAKATA_SANPO_UP",      label: "三法（上）" },
-      { key: "TECH_SAKATA_SANPO_DOWN",    label: "三法（下）" }
+      { key: "TECH_SAKATA_TRIPLE_TOP",    label: "三尊天井",   trend_direction_css: "th-bg-trend-down" },
+      { key: "TECH_SAKATA_TRIPLE_BOTTOM", label: "逆三尊",     trend_direction_css: "th-bg-trend-up" },
+      { key: "TECH_SAKATA_SANKU_UP",      label: "三空（上）", trend_direction_css: "th-bg-trend-up" },
+      { key: "TECH_SAKATA_SANKU_DOWN",    label: "三空（下）", trend_direction_css: "th-bg-trend-down" },
+      { key: "TECH_SAKATA_SANPEI_UP",     label: "三兵（上）", trend_direction_css: "th-bg-trend-up" },
+      { key: "TECH_SAKATA_SANPEI_DOWN",   label: "三兵（下）", trend_direction_css: "th-bg-trend-down" },
+      { key: "TECH_SAKATA_SANPO_UP",      label: "三法（上）", trend_direction_css: "th-bg-trend-up" },
+      { key: "TECH_SAKATA_SANPO_DOWN",    label: "三法（下）", trend_direction_css: "th-bg-trend-down" }
     ]
   },
   {
     group_label: "パターン",
+    trend_direction_css: "th-bg-trend-either",
     items: [
-      { key: "TECH_HEAD_AND_SHOULDERS", label: "ヘッド＆ショルダー" },
-      { key: "TECH_DOUBLE_BOTTOM",      label: "ダブルボトム" },
-      { key: "TECH_NICHI_DAI",          label: "N大" },
-      { key: "TECH_GYAKU_NICHI_DAI",    label: "逆N大" },
-      { key: "TECH_IN_IN_HARAMI",       label: "陰の陰はらみ" },
-      { key: "TECH_RED_BLUE_CROSS",     label: "赤と青の交差" },
-      { key: "TECH_RETURN_SELL_END",    label: "戻り待ち売り後" },
-      { key: "TECH_DOWN_TREND_END",     label: "下降相場の終わり" },
-      { key: "TECH_MOMIAI",             label: "揉み合い" }
+      { key: "TECH_HEAD_AND_SHOULDERS", label: "ヘッド＆ショルダー",  trend_direction_css: "th-bg-trend-down" },
+      { key: "TECH_DOUBLE_BOTTOM",      label: "ダブルボトム",        trend_direction_css: "th-bg-trend-up" },
+      { key: "TECH_NICHI_DAI",          label: "N大",                trend_direction_css: "th-bg-trend-up" },
+      { key: "TECH_GYAKU_NICHI_DAI",    label: "逆N大",              trend_direction_css: "th-bg-trend-down" },
+      { key: "TECH_IN_IN_HARAMI",       label: "陰の陰はらみ",        trend_direction_css: "th-bg-trend-up" },
+      { key: "TECH_RED_BLUE_CROSS",     label: "赤と青の交差",        trend_direction_css: "th-bg-trend-up" },
+      { key: "TECH_RETURN_SELL_END",    label: "戻り待ち売り後",      trend_direction_css: "th-bg-trend-up" },
+      { key: "TECH_DOWN_TREND_END",     label: "下降相場の終わり",    trend_direction_css: "th-bg-trend-up" },
+      { key: "TECH_MOMIAI",             label: "揉み合い",           trend_direction_css: "th-bg-trend-up" }
     ]
   },
   {
     group_label: "物別れ",
+    trend_direction_css: "th-bg-trend-either",
     items: [
       { key: "TECH_MONOWAKARE",              label: "物別れ" },
       { key: "TECH_MONOWAKARE_RED_BLUE_CROSS", label: "物別れ（赤青クロス）" }
@@ -135,6 +149,7 @@ const HEURISTICS_TYPES = [
   },
   {
     group_label: "9の法則",
+    trend_direction_css: "th-bg-trend-either",
     items: [
       { key: "TECH_RULE9_DAILY",  label: "日足" },
       { key: "TECH_RULE9_WEEKLY", label: "週足" }
@@ -142,6 +157,7 @@ const HEURISTICS_TYPES = [
   },
   {
     group_label: "BBゾーンブレイク",
+    trend_direction_css: "th-bg-trend-up",
     items: [
       { key: "TECH_BB_ZONE_BREAK_DAILY",   label: "日足" },
       { key: "TECH_BB_ZONE_BREAK_WEEKLY",  label: "週足" },
@@ -156,27 +172,31 @@ const HEURISTICS_TYPES = [
   },
   {
     group_label: "過熱",
+    trend_direction_css: "th-bg-trend-down",
     items: [
       { key: "TECH_OVERHEAT", label: "過熱" }
     ]
   },
   {
     group_label: "グランビル",
+    trend_direction_css: "th-bg-trend-either",
     items: [
       { key: "TECH_GRANVILLE", label: "グランビル" }
     ]
   },
   {
     group_label: "トレンドサイクル進行度",
+    trend_direction_css: "th-bg-trend-either",
     items: [
-      { key: "TECH_CYCLE_PROGRESS", label: "トレンドサイクル進行度" }
+      { key: "TECH_CYCLE_PROGRESS", label: "上", trend_direction_css: "th-bg-trend-up" }
     ]
   },
   {
     group_label: "節目",
+    trend_direction_css: "th-bg-trend-either",
     items: [
-      { key: "TECH_FUSHIME_UP",   label: "上" },
-      { key: "TECH_FUSHIME_DOWN", label: "下" }
+      { key: "TECH_FUSHIME_UP",   label: "上", trend_direction_css: "th-bg-trend-up" },
+      { key: "TECH_FUSHIME_DOWN", label: "下", trend_direction_css: "th-bg-trend-down" }
     ]
   }
 ];
@@ -365,12 +385,12 @@ function updateTableHeader(mode, label = "") {
       const itemCount = typeObj.items.length;
 
       if (itemCount > 1) {
-        row1 += `<th colspan="${itemCount}">${typeObj.group_label}</th>`;
+        row1 += `<th colspan="${itemCount}" class="${typeObj.trend_direction_css ?? ''}">${typeObj.group_label}</th>`;
         for (const item of typeObj.items) {
-          row2 += `<th>${item.label}</th>`;
+          row2 += `<th class="${item.trend_direction_css ?? ''}">${item.label}</th>`;
         }
       } else {
-        row1 += `<th rowspan="2">${typeObj.group_label}</th>`;
+        row1 += `<th rowspan="2" class="${typeObj.trend_direction_css ?? ''}">${typeObj.group_label}</th>`;
       }
     }
 
