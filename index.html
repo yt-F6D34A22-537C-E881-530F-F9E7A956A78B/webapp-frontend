@@ -95,11 +95,28 @@
             <input type="radio" name="searchMode" value="heuristics">
             heuristics（経験則判定）
           </label>
-        
+
           <div class="mode-conditions" id="heuristicsConditions">
             <label>日付
               <select id="heuristicsDateSelect" disabled></select>
             </label>
+          </div>
+
+          <!-- 除外する市場・商品区分 -->
+          <div class="mode-conditions" id="heuristicsExcludeMarkets">
+            <fieldset class="exclude-markets-fieldset">
+              <legend>除外する市場・商品区分</legend>
+              <label><input type="checkbox" class="exclude-market-checkbox" value="ETF・ETN" checked disabled> ETF・ETN</label>
+              <label><input type="checkbox" class="exclude-market-checkbox" value="PRO Market" disabled> PRO Market</label>
+              <label><input type="checkbox" class="exclude-market-checkbox" value="REIT・ベンチャーファンド・カントリーファンド・インフラファンド" disabled> REIT・ベンチャーファンド・カントリーファンド・インフラファンド</label>
+              <label><input type="checkbox" class="exclude-market-checkbox" value="グロース（内国株式）" disabled> グロース（内国株式）</label>
+              <label><input type="checkbox" class="exclude-market-checkbox" value="グロース（外国株式）" disabled> グロース（外国株式）</label>
+              <label><input type="checkbox" class="exclude-market-checkbox" value="スタンダード（内国株式）" disabled> スタンダード（内国株式）</label>
+              <label><input type="checkbox" class="exclude-market-checkbox" value="スタンダード（外国株式）" disabled> スタンダード（外国株式）</label>
+              <label><input type="checkbox" class="exclude-market-checkbox" value="プライム（内国株式）" disabled> プライム（内国株式）</label>
+              <label><input type="checkbox" class="exclude-market-checkbox" value="プライム（外国株式）" disabled> プライム（外国株式）</label>
+              <label><input type="checkbox" class="exclude-market-checkbox" value="出資証券" disabled> 出資証券</label>
+            </fieldset>
           </div>
         </div>
 
@@ -134,7 +151,7 @@
           <thead id="resultHeaderSticky"></thead>
         </table>
       </div>
-      
+
       <!-- 本体テーブル（横スクロール） -->
       <div class="table-scroll-outer">
         <table id="resultTable" class="result-table">
