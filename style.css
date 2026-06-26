@@ -99,6 +99,7 @@ body {
   border: 1px solid #d1d5db;
   border-radius: 6px;
   background: #fff;
+  width: fit-content;
 }
 
 .mode-conditions input:disabled,
@@ -110,23 +111,13 @@ body {
 /* ------------------------------
    除外市場・商品区分
 ------------------------------ */
-#heuristicsExcludeMarkets {
-  margin-top: 8px;
-}
-
 .exclude-markets-fieldset {
   border: 1px solid #d1d5db;
   border-radius: 6px;
   padding: 6px 12px 10px;
-  margin: 0;
+  margin: 4px 0 0;
   box-sizing: border-box;
-}
-
-.exclude-markets-fieldset legend {
-  font-size: 13px;
-  font-weight: 600;
-  color: #374151;
-  padding: 0 4px;
+  background-color: #fff;
 }
 
 /* チェックボックスを横並び・折り返し */
@@ -140,6 +131,7 @@ body {
   white-space: nowrap;
   margin-right: 20px;
   margin-top: 6px;
+  flex-direction: row;
 }
 
 .exclude-markets-fieldset input[type="checkbox"] {
