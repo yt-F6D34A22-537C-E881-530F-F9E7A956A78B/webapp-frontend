@@ -247,7 +247,7 @@ button:disabled {
 }
 
 .th-bg-trend-either {
-   background: linear-gradient(to bottom, #FBE1E7 45%, #E9F9F0 55%) !important;
+   background: linear-gradient(to bottom right, #FBE1E7 45%, #E9F9F0 55%) !important;
 }
 .th-bg-trend-up {
    background-color: #FBE1E7 !important;
@@ -288,24 +288,14 @@ button:disabled {
   color: #555;
 }
 
-.tr-trend-up {
-    background-color: #FDF2F4 !important;
-}
-
-.tr-trend-up .fixed-col {
+.tr-trend-up .fixed-col,
+.tr-trend-up .td-heuristics-applied {
     background-color: #FBE1E7 !important;
 }
 
-.tr-trend-down {
-    background-color: #F4FCF8 !important;
-}
-
-.tr-trend-down .fixed-col {
+.tr-trend-down .fixed-col,
+.tr-trend-down .td-heuristics-applied {
     background-color: #E9F9F0 !important;
-}
-
-.td-heuristics-applied {
-    background-color: #FFF7CC !important;
 }
 
 .table-scroll-outer {
