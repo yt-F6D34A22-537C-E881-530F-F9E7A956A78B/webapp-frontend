@@ -35,13 +35,20 @@ body {
 }
 
 /* ------------------------------
-   条件設定（横並び）
+   条件設定グリッド
 ------------------------------ */
+
+/* 上段グリッド（出来高・値上がり率）*/
 .controls-grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 24px;
-  padding-left: 16px;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+/* 下段グリッド（heuristics・全幅）*/
+.controls-grid-heuristics {
+  margin-bottom: 0;
 }
 
 .mode-block {
@@ -53,6 +60,11 @@ body {
   border-radius: 8px;
   background: #fafafa;
   min-width: 260px;
+}
+
+/* heuristics ブロックは全幅 */
+.mode-block-heuristics {
+  flex: 1 1 100%;
 }
 
 .mode-title {
@@ -97,11 +109,16 @@ body {
 /* ------------------------------
    除外市場・商品区分
 ------------------------------ */
+#heuristicsExcludeMarkets {
+  margin-top: 8px;
+}
+
 .exclude-markets-fieldset {
   border: 1px solid #d1d5db;
   border-radius: 6px;
-  padding: 8px 12px;
+  padding: 6px 12px 10px;
   margin: 0;
+  box-sizing: border-box;
 }
 
 .exclude-markets-fieldset legend {
@@ -111,14 +128,22 @@ body {
   padding: 0 4px;
 }
 
+/* チェックボックスを横並び・折り返し */
 .exclude-markets-fieldset label {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   font-size: 13px;
   font-weight: normal;
   color: #374151;
-  padding: 2px 0;
+  white-space: nowrap;
+  margin-right: 20px;
+  margin-top: 6px;
+}
+
+.exclude-markets-fieldset input[type="checkbox"] {
+  margin: 0;
+  flex-shrink: 0;
 }
 
 .exclude-markets-fieldset input[type="checkbox"]:disabled {
@@ -211,7 +236,7 @@ button:disabled {
 }
 
 .tr-error {
-  background: #e5e7eb !important; /* gray-200 */
+  background: #e5e7eb !important;
   color: #555;
 }
 
@@ -225,7 +250,6 @@ button:disabled {
 /* ------------------------------
    固定ヘッダテーブル
 ------------------------------ */
-/* コンテナ */
 .table-header-sticky {
   position: sticky;
   top: 0;
@@ -308,12 +332,12 @@ button:disabled {
    ○ / × の視認性向上
 ------------------------------ */
 .tech-true {
-  color: #059669; /* green-600 */
+  color: #059669;
   font-weight: bold;
 }
 
 .tech-false {
-  color: #dc2626; /* red-600 */
+  color: #dc2626;
   font-weight: bold;
 }
 
@@ -571,7 +595,6 @@ button:disabled {
     font-size: 12px;
   }
 
-  /* スマホ時のヘッダ縮小 */
   .table-header-sticky th {
     font-size: 10px;
     padding: 4px 3px;
@@ -595,6 +618,11 @@ button:disabled {
 
   #resultTable tr {
     height: 22px;
+  }
+
+  .exclude-markets-fieldset label {
+    margin-right: 10px;
+    font-size: 12px;
   }
 }
 
