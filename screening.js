@@ -538,9 +538,12 @@ function showResults(results, mode) {
   results.forEach((r, index) => {
     const tr = document.createElement("tr");
 
-    if (r.error) {
-      if (mode === "heuristics") {
+    if (mode === "heuristics") {
+      if (r.error) {
         tr.classList.add("tr-error");
+      } else {
+        const trendBg = (r.トレンド === "up") ? "trend-up-bg" : "trend-down-bg";
+        tr.classList.add(trendBg);
       }
     }
 
