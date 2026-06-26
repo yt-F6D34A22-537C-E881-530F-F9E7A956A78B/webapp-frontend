@@ -242,12 +242,20 @@ button:disabled {
     background-color: #F7C9D2 !important;
 }
 
+.tr-trend-up .td-heuristics-applied {
+    background-color: #FFF7CC !important;
+}
+
 .tr-trend-down {
    background-color: #ECFAF2 !important;
 }
 
 .tr-trend-down .fixed-col {
     background-color: #D8F3E3 !important;
+}
+
+.tr-trend-down .td-heuristics-applied　{
+    background-color: #FFF0B3 !important;
 }
 
 /* 左固定カラム */
