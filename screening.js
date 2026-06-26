@@ -593,26 +593,28 @@ function showResults(results, mode) {
         for (const item of typeObj.items) {
           const key = item.key;
           const val = r[key];
+          
+          html += `<td data-rule-key="${key}">`;
 
           switch (key) {
             // --- 9の法則（オブジェクト） ---
             case "TECH_RULE9_DAILY":
             case "TECH_RULE9_WEEKLY":
               if (!val || !val.direction) {
-                html += `<td></td>`;
+                html += `</td>`;
               } else {
                 const arrow = formatDirectionMark(val.direction);
-                html += `<td>${arrow}（${val.count} 本目）</td>`;
+                html += `${arrow}（${val.count} 本目）</td>`;
               }
               continue;
 
             // --- グランビル（オブジェクト） ---
             case "TECH_GRANVILLE":
               if (!val || !val.direction) {
-                html += `<td></td>`;
+                html += `</td>`;
               } else {
                 const arrow = formatDirectionMark(val.direction);
-                html += `<td>${arrow}（${val.count}）</td>`;
+                html += `${arrow}（${val.count}）</td>`;
               }
               continue;
 
@@ -620,15 +622,15 @@ function showResults(results, mode) {
             case "TECH_FUSHIME_UP":
             case "TECH_FUSHIME_DOWN":
               if (!val || !val.price) {
-                html += `<td></td>`;
+                html += `</td>`;
               } else {
-                html += `<td>${val.price}（${val.tryCount}回）</td>`;
+                html += `${val.price}（${val.tryCount}回）</td>`;
               }
               continue;
 
             // --- トレンドサイクル進行度（数値 or null） ---
             case "TECH_CYCLE_PROGRESS":
-              html += `<td>${val ?? ""}</td>`;
+              html += `${val ?? ""}</td>`;
               continue;
 
             // 上記以外
@@ -637,17 +639,17 @@ function showResults(results, mode) {
                 // --- 文字列（up/down/flat） ---
                 case "string":
                   const arrow = formatDirectionMark(val);
-                  html += `<td>${arrow}</td>`;
+                  html += `${arrow}</td>`;
                   continue;
 
                 // --- boolean（○/×） ---
                 case "boolean":
-                  html += `<td>${boolMark(val)}</td>`;
+                  html += `${boolMark(val)}</td>`;
                   continue;
 
                 // --- 上記以外（null or undefined） ---
                 default:
-                  html += `<td></td>`;
+                  html += `</td>`;
                   continue;
               }
           }
@@ -655,6 +657,18 @@ function showResults(results, mode) {
       }
 
       tr.innerHTML = html;
+
+      // ハイライト処理
+      const applied = (r.トレンド === "up")
+          ? r.applied_up_rules
+          : r.applied_down_rules;
+  
+      tr.querySelectorAll("td[data-rule-key]").forEach(td => {
+          const ruleKey = td.dataset.ruleKey;
+          if (applied.includes(ruleKey)) {
+              td.classList.add("td-heuristics-applied");
+          }
+      });
     }
 
     tr.addEventListener("click", () => {
