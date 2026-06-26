@@ -34,14 +34,6 @@ body {
   font-weight: 600;
 }
 
-.trend-up-bg {
-   background-color: #DF6179;
-}
-
-.trend-down-bg {
-   background-color: #8DDAAC;
-}
-
 /* ------------------------------
    条件設定グリッド
 ------------------------------ */
@@ -247,6 +239,14 @@ button:disabled {
 .tr-error {
   background: #e5e7eb !important;
   color: #555;
+}
+
+.tr-trend-up {
+   background-color: #DF6179 !important;
+}
+
+.tr-trend-down {
+   background-color: #8DDAAC !important;
 }
 
 /* 左固定カラム */
