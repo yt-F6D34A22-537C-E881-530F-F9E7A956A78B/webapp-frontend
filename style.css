@@ -238,8 +238,16 @@ button:disabled {
    background-color: #FCE8EC !important;
 }
 
+.tr-trend-up .fixed-col {
+    background-color: #F7C9D2 !important;
+}
+
 .tr-trend-down {
    background-color: #ECFAF2 !important;
+}
+
+.tr-trend-down .fixed-col {
+    background-color: #D8F3E3 !important;
 }
 
 /* 左固定カラム */
