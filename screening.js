@@ -296,12 +296,9 @@ async function loadHeuristicsDates() {
     }
 
     const dates = data.dates;
-    const latest = dates[0];
 
     select.innerHTML = "";
-    select.appendChild(new Option("最新を使用", latest));
-
-    dates.slice(1).forEach(d => select.appendChild(makeOption(d)));
+    dates.forEach(d => select.appendChild(makeOption(d)));
 
   } catch (e) {
     console.error("heuristics 日付取得エラー:", e);
