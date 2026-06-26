@@ -89,8 +89,11 @@
           </div>
         </div>
 
-        <!-- モード C：heuristics -->
-        <div class="mode-block">
+      </div>
+
+      <div class="controls-grid controls-grid-heuristics">
+
+        <div class="mode-block mode-block-heuristics">
           <label class="mode-title">
             <input type="radio" name="searchMode" value="heuristics">
             heuristics（経験則判定）
@@ -103,19 +106,19 @@
           </div>
 
           <!-- 除外する市場・商品区分 -->
-          <div class="mode-conditions" id="heuristicsExcludeMarkets">
+          <div id="heuristicsExcludeMarkets">
             <fieldset class="exclude-markets-fieldset">
               <legend>除外する市場・商品区分</legend>
               <label><input type="checkbox" class="exclude-market-checkbox" value="ETF・ETN" checked disabled> ETF・ETN</label>
               <label><input type="checkbox" class="exclude-market-checkbox" value="PRO Market" disabled> PRO Market</label>
               <label><input type="checkbox" class="exclude-market-checkbox" value="REIT・ベンチャーファンド・カントリーファンド・インフラファンド" disabled> REIT・ベンチャーファンド・カントリーファンド・インフラファンド</label>
+              <label><input type="checkbox" class="exclude-market-checkbox" value="出資証券" disabled> 出資証券</label>
               <label><input type="checkbox" class="exclude-market-checkbox" value="グロース（内国株式）" disabled> グロース（内国株式）</label>
               <label><input type="checkbox" class="exclude-market-checkbox" value="グロース（外国株式）" disabled> グロース（外国株式）</label>
               <label><input type="checkbox" class="exclude-market-checkbox" value="スタンダード（内国株式）" disabled> スタンダード（内国株式）</label>
               <label><input type="checkbox" class="exclude-market-checkbox" value="スタンダード（外国株式）" disabled> スタンダード（外国株式）</label>
               <label><input type="checkbox" class="exclude-market-checkbox" value="プライム（内国株式）" disabled> プライム（内国株式）</label>
               <label><input type="checkbox" class="exclude-market-checkbox" value="プライム（外国株式）" disabled> プライム（外国株式）</label>
-              <label><input type="checkbox" class="exclude-market-checkbox" value="出資証券" disabled> 出資証券</label>
             </fieldset>
           </div>
         </div>
@@ -204,12 +207,10 @@
 
           <div id="chartSettingsModal" class="chart-settings-modal hidden">
             <div class="settings-content">
-
               <label><input type="checkbox" id="toggleCandles" checked> ローソク足を表示</label>
               <label><input type="checkbox" id="toggleMA" checked> 移動平均線（MA）を表示</label>
               <label><input type="checkbox" id="toggleBB" checked> ボリンジャーバンドを表示</label>
               <label><input type="checkbox" id="toggleIchimoku" checked> 一目均衡表を表示</label>
-
             </div>
           </div>
 
