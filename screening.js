@@ -571,7 +571,7 @@ function showResults(results, mode) {
       if (r.error) {
         tr.classList.add("tr-error");
       } else {
-        const trendBg = (r.トレンド === "up") ? "trend-up-bg" : "trend-down-bg";
+        const trendBg = (r.トレンド === "up") ? "tr-trend-up" : "tr-trend-down";
         tr.classList.add(trendBg);
       }
         
