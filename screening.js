@@ -496,6 +496,8 @@ async function startScreening() {
       countLabel.textContent = `検索結果：${results.length} 件`;
     }
 
+    document.getElementById("resultSection").scrollIntoView({ behavior: "smooth" });
+
   } catch (e) {
     if (!abortController.signal.aborted) {
       console.error("screening fetch error:", e);
