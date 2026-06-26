@@ -34,6 +34,14 @@ body {
   font-weight: 600;
 }
 
+.trend-up-bg {
+   background-color: #DF6179;
+}
+
+.trend-down-bg {
+   background-color: #8DDAAC;
+}
+
 /* ------------------------------
    条件設定グリッド
 ------------------------------ */
