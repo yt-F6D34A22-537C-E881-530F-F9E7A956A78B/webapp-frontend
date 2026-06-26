@@ -43,6 +43,7 @@ body {
   display: flex;
   flex-wrap: wrap;
   gap: 16px;
+  padding-left: 16px;
   margin-bottom: 12px;
 }
 
