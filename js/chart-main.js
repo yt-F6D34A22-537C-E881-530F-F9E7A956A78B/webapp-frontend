@@ -216,7 +216,7 @@ async function drawChart(ticker, name) {
     width: rect.width,
     height: rect.height,
     layout: {
-      background: { color: '#666' },
+      background: { color: '#fff' },
       textColor: '#333',
     },
     rightPriceScale: { visible: true, borderVisible: true },
