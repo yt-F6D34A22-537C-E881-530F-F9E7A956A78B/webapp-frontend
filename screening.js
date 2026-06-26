@@ -496,7 +496,12 @@ async function startScreening() {
       countLabel.textContent = `検索結果：${results.length} 件`;
     }
 
-    document.getElementById("resultSection").scrollIntoView({ behavior: "smooth" });
+    const target = document.getElementById("resultSection");
+    const offset = -10;
+    window.scrollTo({
+      top: target.getBoundingClientRect().top + window.pageYOffset + offset,
+      behavior: "smooth"
+    });
 
   } catch (e) {
     if (!abortController.signal.aborted) {
