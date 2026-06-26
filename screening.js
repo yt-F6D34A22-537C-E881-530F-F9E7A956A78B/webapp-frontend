@@ -390,7 +390,13 @@ function updateTableHeader(mode, label = "") {
           row2 += `<th class="${item.trend_direction_css ?? ''}">${item.label}</th>`;
         }
       } else {
-        row1 += `<th rowspan="2" class="${typeObj.trend_direction_css ?? ''}">${typeObj.group_label}</th>`;
+        const item = typeObj.items[0];
+        if (typeObj.group_label === item.label) {
+          row1 += `<th rowspan="2" class="${typeObj.trend_direction_css ?? ''}">${typeObj.group_label}</th>`;
+        } else {
+          row1 += `<th class="${typeObj.trend_direction_css ?? ''}">${typeObj.group_label}</th>`;
+          row2 += `<th class="${item.trend_direction_css ?? ''}">${item.label}</th>`;
+        }
       }
     }
 
