@@ -235,19 +235,19 @@ button:disabled {
 }
 
 .tr-trend-up {
-   background-color: #FCE8EC !important;
+    background-color: #FDF2F4 !important;
 }
 
 .tr-trend-up .fixed-col {
-    background-color: #F7C9D2 !important;
+    background-color: #FBE1E7 !important;
 }
 
 .tr-trend-down {
-   background-color: #ECFAF2 !important;
+    background-color: #F4FCF8 !important;
 }
 
 .tr-trend-down .fixed-col {
-    background-color: #D8F3E3 !important;
+    background-color: #E9F9F0 !important;
 }
 
 .td-heuristics-applied {
