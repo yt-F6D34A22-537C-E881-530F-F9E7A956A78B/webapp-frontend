@@ -211,7 +211,7 @@ function initSearchMode() {
   const ratioInputs = document.querySelectorAll("#ratioConditions input, #ratioConditions select");
   const dateInputs = document.querySelectorAll("#dateConditions select");
   const heuristicsInputs = document.querySelectorAll("#heuristicsConditions select");
-  const excludeMarketCheckboxes = document.querySelectorAll(".exclude-market-checkbox");
+  const heuristicsFieldset = document.querySelectorAll("#heuristicsConditions fieldset");
 
   function updateMode() {
     const mode = document.querySelector('input[name="searchMode"]:checked').value;
@@ -219,19 +219,11 @@ function initSearchMode() {
     ratioInputs.forEach(i => i.disabled = (mode !== "ratio"));
     dateInputs.forEach(i => i.disabled = (mode !== "date"));
     heuristicsInputs.forEach(i => i.disabled = (mode !== "heuristics"));
-    excludeMarketCheckboxes.forEach(i => i.disabled = (mode !== "heuristics"));
+    heuristicsFieldset.forEach(i => i.disabled = (mode !== "heuristics"));
   }
 
   radios.forEach(r => r.addEventListener("change", updateMode));
   updateMode();
-}
-
-/* ============================
-   除外市場の収集
-============================ */
-function getExcludeMarkets() {
-  const checked = document.querySelectorAll(".exclude-market-checkbox:checked");
-  return Array.from(checked).map(cb => cb.value).join(",");
 }
 
 /* ============================
@@ -515,6 +507,14 @@ async function startScreening() {
     startBtn.disabled = false;
     cancelBtn.disabled = true;
   }
+}
+
+/* ============================
+   除外市場の収集
+============================ */
+function getExcludeMarkets() {
+  const checked = document.querySelectorAll(".exclude-market-checkbox:checked");
+  return Array.from(checked).map(cb => cb.value).join(",");
 }
 
 /* ============================
