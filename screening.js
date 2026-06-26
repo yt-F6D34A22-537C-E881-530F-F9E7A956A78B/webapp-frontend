@@ -597,6 +597,23 @@ function showResults(results, mode) {
           html += `<td data-rule-key="${key}">`;
 
           switch (key) {
+            // --- 酒田五法（数値 or null） ---
+            case "TECH_SAKATA_TRIPLE_TOP":
+            case "TECH_SAKATA_TRIPLE_BOTTOM":
+            case "TECH_SAKATA_SANKU_UP":
+            case "TECH_SAKATA_SANKU_DOWN":
+            case "TECH_SAKATA_SANPEI_UP":
+            case "TECH_SAKATA_SANPEI_DOWN":
+            case "TECH_SAKATA_SANPO_UP":
+            case "TECH_SAKATA_SANPO_DOWN":
+              if (!val) {
+                html += `</td>`;
+              } else {
+                const arrow = formatDirectionMark(val.direction);
+                html += `トライ ${val} 回目</td>`;
+              }
+              continue;
+              
             // --- 9の法則（オブジェクト） ---
             case "TECH_RULE9_DAILY":
             case "TECH_RULE9_WEEKLY":
