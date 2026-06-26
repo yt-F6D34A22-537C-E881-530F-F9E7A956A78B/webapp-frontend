@@ -103,7 +103,8 @@ body {
 }
 
 .mode-conditions input:disabled,
-.mode-conditions select:disabled {
+.mode-conditions select:disabled,
+.mode-conditions fieldset:disabled {
   background: #e5e7eb;
   cursor: not-allowed;
 }
