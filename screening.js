@@ -538,15 +538,6 @@ function showResults(results, mode) {
   results.forEach((r, index) => {
     const tr = document.createElement("tr");
 
-    if (mode === "heuristics") {
-      if (r.error) {
-        tr.classList.add("tr-error");
-      } else {
-        const trendBg = (r.トレンド === "up") ? "trend-up-bg" : "trend-down-bg";
-        tr.classList.add(trendBg);
-      }
-    }
-
     /* ------------------------------
        ratio モード
     ------------------------------ */
@@ -579,6 +570,14 @@ function showResults(results, mode) {
        heuristics モード
     ------------------------------ */
     else if (mode === "heuristics") {
+
+      if (r.error) {
+        tr.classList.add("tr-error");
+      } else {
+        const trendBg = (r.トレンド === "up") ? "trend-up-bg" : "trend-down-bg";
+        tr.classList.add(trendBg);
+      }
+        
       let html = `
         <td class="fixed-col">${r.コード}</td>
         <td class="fixed-col">${r.銘柄名}</td>
