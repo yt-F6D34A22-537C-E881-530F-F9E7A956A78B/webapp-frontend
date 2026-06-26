@@ -211,6 +211,7 @@ function initSearchMode() {
   const ratioInputs = document.querySelectorAll("#ratioConditions input, #ratioConditions select");
   const dateInputs = document.querySelectorAll("#dateConditions select");
   const heuristicsInputs = document.querySelectorAll("#heuristicsConditions select");
+  const excludeMarketCheckboxes = document.querySelectorAll(".exclude-market-checkbox");
 
   function updateMode() {
     const mode = document.querySelector('input[name="searchMode"]:checked').value;
@@ -218,10 +219,19 @@ function initSearchMode() {
     ratioInputs.forEach(i => i.disabled = (mode !== "ratio"));
     dateInputs.forEach(i => i.disabled = (mode !== "date"));
     heuristicsInputs.forEach(i => i.disabled = (mode !== "heuristics"));
+    excludeMarketCheckboxes.forEach(i => i.disabled = (mode !== "heuristics"));
   }
 
   radios.forEach(r => r.addEventListener("change", updateMode));
   updateMode();
+}
+
+/* ============================
+   除外市場の収集
+============================ */
+function getExcludeMarkets() {
+  const checked = document.querySelectorAll(".exclude-market-checkbox:checked");
+  return Array.from(checked).map(cb => cb.value).join(",");
 }
 
 /* ============================
@@ -362,9 +372,7 @@ function updateTableHeader(mode, label = "") {
     `;
     let row2 = `<tr>`;
 
-
     for (const typeObj of HEURISTICS_TYPES) {
-      // item数
       const itemCount = typeObj.items.length;
 
       if (itemCount > 1) {
@@ -454,6 +462,12 @@ async function startScreening() {
     } else if (mode === "heuristics") {
       url.searchParams.set("mode", "heuristics");
       url.searchParams.set("target_date", targetDateHeuristics);
+
+      // 除外市場をパラメータに追加（1件以上チェックされている場合のみ）
+      const excludeMarkets = getExcludeMarkets();
+      if (excludeMarkets) {
+        url.searchParams.set("exclude_markets", excludeMarkets);
+      }
     }
 
     const res = await fetch(url.toString(), { signal: abortController.signal });
@@ -523,7 +537,7 @@ function showResults(results, mode) {
 
   results.forEach((r, index) => {
     const tr = document.createElement("tr");
-    
+
     if (r.error) {
       if (mode === "heuristics") {
         tr.classList.add("tr-error");
@@ -571,7 +585,7 @@ function showResults(results, mode) {
 
       for (const typeObj of HEURISTICS_TYPES) {
         for (const item of typeObj.items) {
-          const key = item.key
+          const key = item.key;
           const val = r[key];
 
           switch (key) {
@@ -595,7 +609,7 @@ function showResults(results, mode) {
                 html += `<td>${arrow}（${val.count}）</td>`;
               }
               continue;
-              
+
             // --- 節目（オブジェクト） ---
             case "TECH_FUSHIME_UP":
             case "TECH_FUSHIME_DOWN":
@@ -605,7 +619,7 @@ function showResults(results, mode) {
                 html += `<td>${val.price}（${val.tryCount}回）</td>`;
               }
               continue;
-              
+
             // --- トレンドサイクル進行度（数値 or null） ---
             case "TECH_CYCLE_PROGRESS":
               html += `<td>${val ?? ""}</td>`;
@@ -613,14 +627,13 @@ function showResults(results, mode) {
 
             // 上記以外
             default:
-              // type判定
               switch (typeof val) {
                 // --- 文字列（up/down/flat） ---
                 case "string":
                   const arrow = formatDirectionMark(val);
                   html += `<td>${arrow}</td>`;
                   continue;
-                  
+
                 // --- boolean（○/×） ---
                 case "boolean":
                   html += `<td>${boolMark(val)}</td>`;
@@ -689,7 +702,6 @@ function syncColumnWidths() {
 
   if (bodyTable.querySelectorAll("tbody tr").length === 0) return;
 
-  // thead要素は一致している前提とする
   const headerTableTHeadRows = headerTable.querySelectorAll("thead tr");
   const bodyTableTHeadRows = bodyTable.querySelectorAll("thead tr");
 
