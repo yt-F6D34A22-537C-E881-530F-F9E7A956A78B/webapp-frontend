@@ -632,12 +632,7 @@ function showResults(results, mode) {
             case "TECH_SAKATA_SANPEI_DOWN":
             case "TECH_SAKATA_SANPO_UP":
             case "TECH_SAKATA_SANPO_DOWN":
-              if (!val) {
-                html += `</td>`;
-              } else {
-                const arrow = formatDirectionMark(val.direction);
-                html += `トライ ${val} 回目</td>`;
-              }
+              html += val ? `<span class="tech-true">○</span></td>` : `</td>`;
               continue;
               
             // --- 9の法則（オブジェクト） ---
@@ -671,9 +666,14 @@ function showResults(results, mode) {
               }
               continue;
 
-            // --- トレンドサイクル進行度（数値 or null） ---
+            // --- トレンドサイクル進行度（{direction, count, startDate, lastDate} or null） ---
             case "TECH_CYCLE_PROGRESS":
-              html += `${val ?? ""}</td>`;
+              if (!val || !val.direction) {
+                html += `</td>`;
+              } else {
+                const arrow = formatDirectionMark(val.direction);
+                html += `${arrow}（${val.count}日）</td>`;
+              }
               continue;
 
             // 上記以外
