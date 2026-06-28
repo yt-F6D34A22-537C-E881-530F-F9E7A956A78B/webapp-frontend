@@ -188,15 +188,15 @@ const HEURISTICS_TYPES = [
     group_label: "トレンドサイクル進行度",
     trend_direction_css: "th-bg-trend-either",
     items: [
-      { key: "TECH_CYCLE_PROGRESS", label: "上", trend_direction_css: "th-bg-trend-up" }
+      { key: "TECH_CYCLE_PROGRESS", label: "トレンドサイクル進行度", trend_direction_css: "th-bg-trend-up" }
     ]
   },
   {
     group_label: "節目",
     trend_direction_css: "th-bg-trend-either",
     items: [
-      { key: "TECH_FUSHIME_UP",   label: "上", trend_direction_css: "th-bg-trend-up" },
-      { key: "TECH_FUSHIME_DOWN", label: "下", trend_direction_css: "th-bg-trend-down" }
+      { key: "TECH_FUSHIME_UP",   label: "レジスタンス", trend_direction_css: "th-bg-trend-up" },
+      { key: "TECH_FUSHIME_DOWN", label: "サポート", trend_direction_css: "th-bg-trend-down" }
     ]
   }
 ];
