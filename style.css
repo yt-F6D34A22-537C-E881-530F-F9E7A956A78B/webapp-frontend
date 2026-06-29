@@ -367,7 +367,7 @@ button:disabled {
   position: sticky;
   top: 0;
   z-index: var(--z-table-header);
-  overflow-x: hidden; /* scrollLeft 同期は screening.js に委ねる */
+  overflow-x: auto;
 }
 
 .th-bg-trend-either {
