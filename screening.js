@@ -937,6 +937,12 @@ function showResults(results, mode) {
   if (typeof window.setScreeningResults === "function") {
     window.setScreeningResults(results);
   }
+  
+  // CSV ダウンロードボタンを有効化（結果が存在する場合のみ）
+  const csvBtn = document.getElementById("csvDownloadBtn");
+  if (csvBtn) {
+    csvBtn.disabled = results.length === 0;
+  }
 
   // テーブル描画後に列幅＋固定列を同期（2段階遅延）
   afterTableRendered();
@@ -1056,6 +1062,11 @@ function afterTableRendered() {
 ------------------------------ */
 startBtn.addEventListener("click", startScreening);
 cancelBtn.addEventListener("click", cancelScreening);
+
+const csvDownloadBtn = document.getElementById("csvDownloadBtn");
+if (csvDownloadBtn) {
+  csvDownloadBtn.addEventListener("click", downloadCsv);
+}
 
 /* ------------------------------
    リサイズ時にも同期
