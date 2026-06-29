@@ -35,6 +35,38 @@ body {
 }
 
 /* ------------------------------
+   結果セクション ヘッダ行
+------------------------------ */
+.result-section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.result-section-header h2 {
+  margin: 0;          /* .card h2 の margin-bottom をリセット */
+}
+
+.csv-download-btn {
+  margin-left: auto;  /* 右端へ押し出す */
+  padding: 4px 6px;
+  color: #374151;
+  border-radius: 6px;
+  line-height: 0;     /* SVG の余白を詰める */
+  transition: color 0.15s, background 0.15s;
+}
+
+.csv-download-btn:not(:disabled):hover {
+  color: #2563eb;
+  background: #eff6ff;
+}
+
+.csv-download-btn:disabled {
+  color: #9ca3af;
+}
+
+/* ------------------------------
    条件設定グリッド
 ------------------------------ */
 
