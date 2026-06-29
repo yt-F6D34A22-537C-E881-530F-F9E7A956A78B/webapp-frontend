@@ -463,6 +463,11 @@ function initSearchMode() {
    /dates のロード
 ============================ */
 async function loadDates() {
+  const controlsOverlay = document.getElementById("controlsLoadingOverlay");
+
+  // サーバ通信前にオーバーレイを表示する（共通仕様）
+  controlsOverlay.classList.remove("hidden");
+
   try {
     dateSelect.innerHTML = "";
     dateSelect.appendChild(new Option("読み込み中...", ""));
@@ -495,6 +500,9 @@ async function loadDates() {
 
   } catch (e) {
     console.error("日付取得エラー:", e);
+  } finally {
+    // 必ずオーバーレイを非表示にする（共通仕様）
+    controlsOverlay.classList.add("hidden");
   }
 }
 
@@ -505,7 +513,12 @@ async function loadHeuristicsDates() {
   const select = heuristicsDateSelect;
   if (!select) return;
 
+  const controlsOverlay = document.getElementById("controlsLoadingOverlay");
+
   select.innerHTML = `<option>読み込み中...</option>`;
+
+  // サーバ通信前にオーバーレイを表示する（共通仕様）
+  controlsOverlay.classList.remove("hidden");
 
   try {
     const res = await fetch(`${API_BASE_URL}/heuristics_dates`);
@@ -528,6 +541,9 @@ async function loadHeuristicsDates() {
   } catch (e) {
     console.error("heuristics 日付取得エラー:", e);
     select.innerHTML = `<option value="">取得失敗</option>`;
+  } finally {
+    // 必ずオーバーレイを非表示にする（共通仕様）
+    controlsOverlay.classList.add("hidden");
   }
 }
 
@@ -749,9 +765,11 @@ async function startScreening() {
     }
   } finally {
     clearInterval(timerId);
+    // サーバ通信後に必ずオーバーレイを非表示にする（共通仕様）
     loadingOverlay.classList.add("hidden");
     startBtn.disabled = false;
     cancelBtn.disabled = true;
+    cancelBtn.textContent = "キャンセル";  // "キャンセル中…" からリセット
   }
 }
 
