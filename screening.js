@@ -215,6 +215,219 @@ function formatDirectionMark(direction) {
 }
 
 /* ============================================================
+   CSV ダウンロード
+============================================================ */
+
+/**
+ * CSV セル値をエスケープする（RFC 4180 準拠）
+ * ダブルクォート・カンマ・改行を含む場合はダブルクォートで囲む
+ * @param {*} value
+ * @returns {string}
+ */
+function escapeCsvCell(value) {
+  const str = (value === null || value === undefined) ? "" : String(value);
+  if (str.includes('"') || str.includes(',') || str.includes('\n') || str.includes('\r')) {
+    return '"' + str.replaceAll('"', '""') + '"';
+  }
+  return str;
+}
+
+/**
+ * heuristics モードの TECH_* 値を画面表示と同等のテキストに変換する
+ * specifications.json の cellRendering 定義に準拠
+ * @param {string} key   TECH_* キー名
+ * @param {*}      val   セル値
+ * @returns {string}
+ */
+function techValueToText(key, val) {
+  switch (key) {
+    // --- 酒田五法（数値 or null） ---
+    case "TECH_SAKATA_TRIPLE_TOP":
+    case "TECH_SAKATA_TRIPLE_BOTTOM":
+    case "TECH_SAKATA_SANKU_UP":
+    case "TECH_SAKATA_SANKU_DOWN":
+    case "TECH_SAKATA_SANPEI_UP":
+    case "TECH_SAKATA_SANPEI_DOWN":
+    case "TECH_SAKATA_SANPO_UP":
+    case "TECH_SAKATA_SANPO_DOWN":
+      return val ? "○" : "";
+
+    // --- 9の法則（オブジェクト） ---
+    case "TECH_RULE9_DAILY":
+    case "TECH_RULE9_WEEKLY":
+      if (!val || !val.direction) return "";
+      return `${formatDirectionMark(val.direction)}（${val.count} 本目）`;
+
+    // --- グランビル（オブジェクト） ---
+    case "TECH_GRANVILLE":
+      if (!val || !val.direction) return "";
+      return `${formatDirectionMark(val.direction)}（${val.count}）`;
+
+    // --- 節目（オブジェクト） ---
+    case "TECH_FUSHIME_UP":
+    case "TECH_FUSHIME_DOWN":
+      if (!val || !val.price) return "";
+      return `${val.price}（${val.tryCount}回）`;
+
+    // --- トレンドサイクル進行度（オブジェクト or null） ---
+    case "TECH_CYCLE_PROGRESS":
+      if (!val || !val.direction) return "";
+      return `${formatDirectionMark(val.direction)}（${val.count}日）`;
+
+    // 上記以外
+    default:
+      switch (typeof val) {
+        case "string":  return formatDirectionMark(val);
+        case "boolean": return boolMark(val);
+        default:        return "";
+      }
+  }
+}
+
+/**
+ * 現在の表示モードに応じた CSV ヘッダ行（1行）を生成する
+ * 2行ヘッダ（heuristics）は「1行目（2行目）」形式でまとめる
+ * @param {string} mode   ratio | date | heuristics
+ * @param {string} label  date モードの日付ラベル（例: 2025/06/27（金））
+ * @returns {string[]}    ヘッダセルの配列
+ */
+function buildCsvHeaders(mode, label) {
+  if (mode === "ratio") {
+    return ["コード", "銘柄名", "出来高倍率", "上髭実体比", "出来高", "上髭", "実体"];
+  }
+
+  if (mode === "date") {
+    return ["コード", "銘柄名", "値上がり率", `${label}終値`, "前日終値"];
+  }
+
+  if (mode === "heuristics") {
+    // 固定列（rowspan=2 なので 1行目のみ）
+    const headers = ["コード", "銘柄名", "トレンド", "スコア"];
+
+    for (const typeObj of HEURISTICS_TYPES) {
+      const itemCount = typeObj.items.length;
+
+      if (itemCount > 1) {
+        // グループ複数 → 「グループ名（item.label）」
+        for (const item of typeObj.items) {
+          headers.push(`${typeObj.group_label}（${item.label}）`);
+        }
+      } else {
+        const item = typeObj.items[0];
+        if (typeObj.group_label === item.label) {
+          // rowspan=2 の単独列 → グループ名のみ
+          headers.push(typeObj.group_label);
+        } else {
+          // グループ名と item.label が異なる → 「グループ名（item.label）」
+          headers.push(`${typeObj.group_label}（${item.label}）`);
+        }
+      }
+    }
+
+    return headers;
+  }
+
+  return [];
+}
+
+/**
+ * 結果1行分のセル値配列を返す
+ * @param {object} r     結果オブジェクト
+ * @param {string} mode  ratio | date | heuristics
+ * @returns {string[]}
+ */
+function buildCsvRow(r, mode) {
+  if (mode === "ratio") {
+    return [
+      r.コード,
+      r.銘柄名,
+      r.出来高倍率,
+      r.上髭実体比,
+      r.出来高,
+      r.上髭,
+      r.実体
+    ].map(String);
+  }
+
+  if (mode === "date") {
+    return [
+      r.コード,
+      r.銘柄名,
+      `${r.値上がり率}%`,
+      r.当日終値,
+      r.前日終値
+    ].map(String);
+  }
+
+  if (mode === "heuristics") {
+    const cells = [
+      r.コード,
+      r.銘柄名,
+      formatDirectionMark(r.トレンド),
+      r.スコア
+    ].map(String);
+
+    for (const typeObj of HEURISTICS_TYPES) {
+      for (const item of typeObj.items) {
+        cells.push(techValueToText(item.key, r[item.key]));
+      }
+    }
+
+    return cells;
+  }
+
+  return [];
+}
+
+/**
+ * 現在の currentResults を CSV ファイルとしてダウンロードする
+ * ファイル名: screening_<mode>_<YYYYMMDD>.csv
+ */
+function downloadCsv() {
+  const mode = document.querySelector('input[name="searchMode"]:checked').value;
+
+  if (!currentResults || currentResults.length === 0) return;
+
+  // date モードのラベル（ヘッダに使用）
+  let label = "";
+  if (mode === "date") {
+    const d = dateSelect.value;
+    const y = d.substring(0, 4);
+    const m = d.substring(4, 6);
+    const day = d.substring(6, 8);
+    const w = ["日","月","火","水","木","金","土"][new Date(`${y}-${m}-${day}`).getDay()];
+    label = `${y}/${m}/${day}（${w}）`;
+  }
+
+  const headers = buildCsvHeaders(mode, label);
+  const rows = currentResults.map(r => buildCsvRow(r, mode));
+
+  // CSV 文字列を組み立てる（RFC 4180 準拠）
+  const csvLines = [headers, ...rows]
+    .map(cells => cells.map(escapeCsvCell).join(","))
+    .join("\r\n");
+
+  // BOM 付き UTF-8（Excel での文字化け防止）
+  const bom = "\uFEFF";
+  const blob = new Blob([bom + csvLines], { type: "text/csv;charset=utf-8;" });
+
+  // ファイル名: screening_<mode>_<YYYYMMDD>.csv
+  const today = new Date();
+  const dateStr = today.getFullYear().toString()
+    + String(today.getMonth() + 1).padStart(2, "0")
+    + String(today.getDate()).padStart(2, "0");
+  const fileName = `screening_${mode}_${dateStr}.csv`;
+
+  // <a> 要素でダウンロードをトリガー
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = fileName;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/* ============================================================
    初期化処理
 ============================================================ */
 window.onload = () => {
