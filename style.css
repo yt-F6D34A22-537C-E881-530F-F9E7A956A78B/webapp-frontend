@@ -1,15 +1,106 @@
-/* ------------------------------
+/* ============================================================
+   CSS カスタムプロパティ（設計トークン）
+   ・色・サイズ・ブレークポイントをここで一元管理する
+   ・値を変えるときはここだけ修正すればよい
+   ============================================================ */
+:root {
+  /* --- カラーパレット --- */
+  --color-bg-page:          #f5f5f5;
+  --color-bg-card:          #ffffff;
+  --color-bg-input:         #ffffff;
+  --color-bg-mode-block:    #fafafa;
+  --color-bg-table-header1: #f3f4f6;
+  --color-bg-table-header2: #fafafa;
+  --color-bg-table-fixed:   #e5e7eb;
+  --color-bg-table-fixed-mobile: #f0f0f0;
+  --color-bg-table-row:     #ffffff;
+  --color-bg-table-hover:   #FFEFA3;
+  --color-bg-table-error:   #e5e7eb;
+  --color-bg-disabled:      #e5e7eb;
+  --color-bg-overlay:       rgba(0, 0, 0, 0.4);
+  --color-bg-chart-loading: rgba(0, 0, 0, 0.45);
+  --color-bg-legend:        rgba(255, 255, 255, 0.85);
+  --color-bg-settings:      #ffffff;
+  --color-bg-timeframe:     rgba(255, 255, 255, 0.7);
+
+  --color-text-primary:     #111827;
+  --color-text-secondary:   #374151;
+  --color-text-muted:       #666666;
+  --color-text-disabled:    #9ca3af;
+  --color-text-error-row:   #555555;
+  --color-text-white:       #ffffff;
+  --color-text-chart:       #333333;
+  --color-text-legend:      #333333;
+
+  --color-border:           #e5e7eb;
+  --color-border-input:     #d1d5db;
+
+  --color-accent-primary:   #2563eb;
+  --color-accent-primary-bg:#eff6ff;
+  --color-accent-elapsed:   #2563eb;
+
+  --color-trend-up-bg:      #FBE1E7;
+  --color-trend-down-bg:    #E9F9F0;
+
+  --color-tech-true:        #059669;
+  --color-tech-false:       #dc2626;
+
+  /* --- シャドウ --- */
+  --shadow-card:            0 4px 10px rgba(0, 0, 0, 0.05);
+  --shadow-legend:          0 0 4px rgba(0, 0, 0, 0.15);
+  --shadow-settings:        0 4px 12px rgba(0, 0, 0, 0.2);
+
+  /* --- ボーダー半径 --- */
+  --radius-card:            12px;
+  --radius-modal:           12px;
+  --radius-btn:             8px;
+  --radius-input:           6px;
+  --radius-mode-block:      8px;
+  --radius-fieldset:        6px;
+  --radius-legend:          4px;
+  --radius-settings:        8px;
+  --radius-csv-btn:         6px;
+
+  /* --- サイズ・余白 --- */
+  --container-max-width:    1500px;
+  --card-padding:           20px;
+  --mode-block-min-width:   260px;   /* PC 時の mode-block 最小幅 */
+  --rci-macd-height:        160px;   /* PC 時の RCI / MACD チャート高さ */
+  --rci-macd-height-mobile: 120px;   /* スマホ時の RCI / MACD チャート高さ */
+
+  /* --- z-index 体系 --- */
+  --z-fixed-col:            45;
+  --z-table-header:         50;
+  --z-table-header-fixed:   70;
+  --z-modal:                1000;
+  --z-modal-content:        10;
+  --z-loading-overlay:      9999;
+  --z-chart-tooltip:        2100;
+  --z-chart-settings-btn:   2000;
+  --z-chart-settings-modal: 3000;
+  --z-chart-loading:        3000;
+  --z-chart-legend:         3000;
+
+  /* --- ブレークポイント（メディアクエリ内で直接使用） ---
+     CSS カスタムプロパティはメディアクエリ条件内では使えないため
+     コメントで定義値を明示し、下部の @media と値を統一する。
+     変更時はこのコメントと @media の数値を同時に修正すること。
+       --bp-mobile: 600px   → @media (max-width: 600px)
+  ---------------------------------------------------------------- */
+}
+
+/* ============================================================
    全体レイアウト
------------------------------- */
+   ============================================================ */
 body {
   margin: 0;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  background: #f5f5f5;
-  color: #111827;
+  background: var(--color-bg-page);
+  color: var(--color-text-primary);
 }
 
 .app-container {
-  max-width: 1500px;
+  max-width: var(--container-max-width);
   margin: 0 auto;
   padding: 16px;
 }
@@ -20,10 +111,10 @@ body {
 }
 
 .card {
-  background: white;
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+  background: var(--color-bg-card);
+  padding: var(--card-padding);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
   margin-bottom: 20px;
 }
 
@@ -34,9 +125,9 @@ body {
   font-weight: 600;
 }
 
-/* ------------------------------
+/* ============================================================
    結果セクション ヘッダ行
------------------------------- */
+   ============================================================ */
 .result-section-header {
   display: flex;
   align-items: center;
@@ -51,24 +142,24 @@ body {
 .csv-download-btn {
   margin-left: auto;  /* 右端へ押し出す */
   padding: 4px 6px;
-  color: #374151;
-  border-radius: 6px;
+  color: var(--color-text-secondary);
+  border-radius: var(--radius-csv-btn);
   line-height: 0;     /* SVG の余白を詰める */
   transition: color 0.15s, background 0.15s;
 }
 
 .csv-download-btn:not(:disabled):hover {
-  color: #2563eb;
-  background: #eff6ff;
+  color: var(--color-accent-primary);
+  background: var(--color-accent-primary-bg);
 }
 
 .csv-download-btn:disabled {
-  color: #9ca3af;
+  color: var(--color-text-disabled);
 }
 
-/* ------------------------------
+/* ============================================================
    条件設定グリッド
------------------------------- */
+   ============================================================ */
 
 /* 上段グリッド（出来高・値上がり率）*/
 .controls-grid {
@@ -89,10 +180,11 @@ body {
   flex-direction: column;
   gap: 6px;
   padding: 12px 16px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  background: #fafafa;
-  min-width: 260px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-mode-block);
+  background: var(--color-bg-mode-block);
+  min-width: var(--mode-block-min-width);
+  box-sizing: border-box;
 }
 
 /* heuristics ブロックは全幅 */
@@ -103,7 +195,7 @@ body {
 .mode-title {
   font-size: 15px;
   font-weight: 600;
-  color: #111827;
+  color: var(--color-text-primary);
   display: flex;
   align-items: center;
   gap: 6px;
@@ -120,7 +212,7 @@ body {
   flex-direction: column;
   font-size: 13px;
   font-weight: 600;
-  color: #374151;
+  color: var(--color-text-secondary);
 }
 
 .mode-conditions input,
@@ -128,29 +220,29 @@ body {
   margin-top: 4px;
   padding: 6px 10px;
   font-size: 14px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  background: #fff;
+  border: 1px solid var(--color-border-input);
+  border-radius: var(--radius-input);
+  background: var(--color-bg-input);
   width: fit-content;
 }
 
 .mode-conditions input:disabled,
 .mode-conditions select:disabled,
 .mode-conditions fieldset:disabled {
-  background: #e5e7eb;
+  background: var(--color-bg-disabled);
   cursor: not-allowed;
 }
 
-/* ------------------------------
+/* ============================================================
    除外市場・商品区分
------------------------------- */
+   ============================================================ */
 .exclude-markets-fieldset {
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
+  border: 1px solid var(--color-border-input);
+  border-radius: var(--radius-fieldset);
   padding: 6px 12px 10px;
   margin: 4px 0 0;
   box-sizing: border-box;
-  background-color: #fff;
+  background-color: var(--color-bg-input);
 }
 
 /* チェックボックスを横並び・折り返し */
@@ -160,7 +252,7 @@ body {
   gap: 4px;
   font-size: 13px;
   font-weight: normal;
-  color: #374151;
+  color: var(--color-text-secondary);
   white-space: nowrap;
   margin-right: 20px;
   margin-top: 6px;
@@ -177,9 +269,9 @@ body {
   opacity: 0.5;
 }
 
-/* ------------------------------
+/* ============================================================
    ボタン
------------------------------- */
+   ============================================================ */
 .buttons-row {
   margin-top: 16px;
   display: flex;
@@ -198,7 +290,7 @@ button:disabled {
 
 .btn {
   padding: 10px 16px;
-  border-radius: 8px;
+  border-radius: var(--radius-btn);
   border: none;
   font-size: 15px;
   font-weight: 600;
@@ -210,12 +302,12 @@ button:disabled {
 }
 
 .btn.primary {
-  background: #2563eb;
-  color: white;
+  background: var(--color-accent-primary);
+  color: var(--color-text-white);
 }
 
 .btn.secondary {
-  background: #e5e7eb;
+  background: var(--color-bg-disabled);
 }
 
 .btn.ghost {
@@ -224,19 +316,19 @@ button:disabled {
   font-size: 20px;
 }
 
-/* ------------------------------
+/* ============================================================
    経過時間
------------------------------- */
+   ============================================================ */
 .elapsed-time {
   font-size: 14px;
   font-weight: 600;
-  color: #2563eb;
+  color: var(--color-accent-elapsed);
   white-space: nowrap;
 }
 
-/* ------------------------------
+/* ============================================================
    テーブル（固定ヘッダ方式）
------------------------------- */
+   ============================================================ */
 .table-card {
   position: relative;
 }
@@ -251,41 +343,41 @@ button:disabled {
 .result-table td {
   box-sizing: border-box;
   padding: 8px 6px;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--color-border);
   font-size: 14px;
   white-space: nowrap;
   text-align: center;
 }
 
 .result-table th, .result-table td {
-  border-right: 1px solid #e5e7eb;
+  border-right: 1px solid var(--color-border);
 }
 
 /* 左固定カラム */
 .fixed-col {
   position: sticky;
-  z-index: 45;
+  z-index: var(--z-fixed-col);
   background-color: inherit;
 }
 
-/* ------------------------------
+/* ============================================================
    固定ヘッダテーブル
------------------------------- */
+   ============================================================ */
 .table-header-sticky {
   position: sticky;
   top: 0;
-  z-index: 50;
-  overflow-x: auto;
+  z-index: var(--z-table-header);
+  overflow-x: hidden; /* scrollLeft 同期は screening.js に委ねる */
 }
 
 .th-bg-trend-either {
-   background: linear-gradient(to bottom right, #FBE1E7 45%, #E9F9F0 55%) !important;
+   background: linear-gradient(to bottom right, var(--color-trend-up-bg) 45%, var(--color-trend-down-bg) 55%) !important;
 }
 .th-bg-trend-up {
-   background-color: #FBE1E7 !important;
+   background-color: var(--color-trend-up-bg) !important;
 }
 .th-bg-trend-down {
-   background-color: #E9F9F0 !important;
+   background-color: var(--color-trend-down-bg) !important;
 }
 
 /* 2段ヘッダ */
@@ -296,38 +388,38 @@ button:disabled {
 
 /* 2段ヘッダ：上段 */
 .result-table thead tr:first-child th {
-  background: #f3f4f6;
+  background: var(--color-bg-table-header1);
   font-weight: 600;
 }
 
 /* 2段ヘッダ：下段 */
 .result-table thead tr:nth-child(2) th {
-  background: #fafafa;
+  background: var(--color-bg-table-header2);
   font-weight: 500;
 }
 
 /* 固定列 */
 .table-header-sticky .fixed-col {
-  background: #e5e7eb !important;
-  z-index: 70;
+  background: var(--color-bg-table-fixed) !important;
+  z-index: var(--z-table-header-fixed);
 }
 
-/* ------------------------------
+/* ============================================================
    本体テーブル
------------------------------- */
+   ============================================================ */
 .tr-error {
-  background: #e5e7eb !important;
-  color: #555;
+  background: var(--color-bg-table-error) !important;
+  color: var(--color-text-error-row);
 }
 
 .tr-trend-up .fixed-col,
 .tr-trend-up .td-heuristics-applied {
-    background-color: #FBE1E7 !important;
+    background-color: var(--color-trend-up-bg) !important;
 }
 
 .tr-trend-down .fixed-col,
 .tr-trend-down .td-heuristics-applied {
-    background-color: #E9F9F0 !important;
+    background-color: var(--color-trend-down-bg) !important;
 }
 
 .table-scroll-outer {
@@ -365,51 +457,51 @@ button:disabled {
 }
 
 #resultTable tr {
-  background-color: #fff;
+  background-color: var(--color-bg-table-row);
 }
 
 #resultTable tr:hover,
 #resultTable tr:hover .fixed-col {
-  background: #FFEFA3 !important;
+  background: var(--color-bg-table-hover) !important;
   cursor: pointer;
 }
 
-/* ------------------------------
+/* ============================================================
    ○ / × の視認性向上
------------------------------- */
+   ============================================================ */
 .tech-true {
-  color: #059669;
+  color: var(--color-tech-true);
   font-weight: bold;
 }
 
 .tech-false {
-  color: #dc2626;
+  color: var(--color-tech-false);
   font-weight: bold;
 }
 
-/* ------------------------------
+/* ============================================================
    スクリーニング結果件数
------------------------------- */
+   ============================================================ */
 .result-count {
   font-size: 0.9rem;
-  color: #666;
+  color: var(--color-text-muted);
   margin-left: 10px;
   vertical-align: middle;
 }
 
-/* ------------------------------
+/* ============================================================
    ローディングオーバーレイ
------------------------------- */
+   ============================================================ */
 .loading-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(0,0,0,0.4);
+  background: var(--color-bg-overlay);
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  z-index: 9999;
-  color: white;
+  z-index: var(--z-loading-overlay);
+  color: var(--color-text-white);
   font-size: 1.2rem;
   border-radius: inherit;
 }
@@ -418,34 +510,34 @@ button:disabled {
   display: none;
 }
 
-/* ------------------------------
+/* ============================================================
    モーダル
------------------------------- */
+   ============================================================ */
 .modal {
   position: fixed;
   inset: 0;
   display: none;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: var(--z-modal);
 }
 
 .modal .modal-backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(0,0,0,0.4);
+  background: var(--color-bg-overlay);
 }
 
 .modal .modal-content {
   position: relative;
-  background: white;
-  border-radius: 12px;
+  background: var(--color-bg-card);
+  border-radius: var(--radius-modal);
   padding: 12px;
   height: calc(var(--vh, 1vh) * 90);
   width: 95vw;
   display: flex;
   flex-direction: column;
-  z-index: 10;
+  z-index: var(--z-modal-content);
 }
 
 /* モーダルヘッダー */
@@ -477,16 +569,16 @@ button:disabled {
   margin-left: 8px;
 }
 
-/* ------------------------------
+/* ============================================================
    足種切替
------------------------------- */
+   ============================================================ */
 .timeframe-selector {
   display: flex;
   align-items: center;
   gap: 10px;
   padding: 0 6px;
-  background: rgba(255, 255, 255, 0.7);
-  border-radius: 6px;
+  background: var(--color-bg-timeframe);
+  border-radius: var(--radius-input);
   font-size: 13px;
   white-space: nowrap;
 }
@@ -503,9 +595,9 @@ button:disabled {
   cursor: pointer;
 }
 
-/* ------------------------------
+/* ============================================================
    モーダル本体
------------------------------- */
+   ============================================================ */
 .modal .modal-body {
   flex: 1;
   min-height: 0;
@@ -524,30 +616,30 @@ button:disabled {
 #rciContainer,
 #macdContainer {
   width: 100%;
-  height: 160px;
+  height: var(--rci-macd-height);
 }
 
-/* ------------------------------
+/* ============================================================
    チャート設定
------------------------------- */
+   ============================================================ */
 .chart-settings-btn {
   position: absolute;
   right: 10px;
   bottom: -5px;
   font-size: 22px;
   cursor: pointer;
-  z-index: 2000;
+  z-index: var(--z-chart-settings-btn);
 }
 
 .chart-settings-modal {
   position: absolute;
   right: 10px;
   bottom: 45px;
-  background: #ffffff;
-  border-radius: 8px;
+  background: var(--color-bg-settings);
+  border-radius: var(--radius-settings);
   padding: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-  z-index: 3000;
+  box-shadow: var(--shadow-settings);
+  z-index: var(--z-chart-settings-modal);
 }
 
 .chart-settings-modal.hidden {
@@ -566,21 +658,21 @@ button:disabled {
   gap: 6px;
   font-size: 14px;
   font-weight: 600;
-  color: #111827;
+  color: var(--color-text-primary);
 }
 
-/* ------------------------------
+/* ============================================================
    チャートローディング
------------------------------- */
+   ============================================================ */
 .modal #chartLoadingOverlay {
   position: absolute;
   inset: 0;
-  background: rgba(0,0,0,0.45);
+  background: var(--color-bg-chart-loading);
   display: none;
   justify-content: center;
   align-items: center;
-  z-index: 3000;
-  color: white;
+  z-index: var(--z-chart-loading);
+  color: var(--color-text-white);
   font-size: 1.2rem;
   flex-direction: column;
   border-radius: inherit;
@@ -589,7 +681,7 @@ button:disabled {
 .spinner {
   width: 48px;
   height: 48px;
-  border: 6px solid #fff;
+  border: 6px solid var(--color-text-white);
   border-top-color: transparent;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
@@ -600,13 +692,50 @@ button:disabled {
   to { transform: rotate(360deg); }
 }
 
-/* ------------------------------
-   スマホ対応
------------------------------- */
+/* ============================================================
+   チャート凡例
+   ============================================================ */
+.chart-legend {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  background: var(--color-bg-legend);
+  padding: 6px 10px;
+  border-radius: var(--radius-legend);
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--color-text-legend);
+  z-index: var(--z-chart-legend);
+  pointer-events: none;
+  box-shadow: var(--shadow-legend);
+  white-space: nowrap;
+}
+
+#chartContainer,
+#rciContainer,
+#macdContainer {
+  position: relative;
+}
+
+/* ============================================================
+   スマホ対応（--bp-mobile: 600px）
+   ・PC 表示への影響ゼロを保証するため、変更はすべてこのブロックに集約する
+   ・値の変更時は :root のコメント（--bp-mobile）と同時に修正すること
+   ============================================================ */
 @media (max-width: 600px) {
+
+  /* ----------------------------------------
+     条件設定：グリッド・ブロック
+  ---------------------------------------- */
   .controls-grid {
     flex-direction: column;
     padding-left: 8px;
+  }
+
+  /* モードブロックはフル幅に（PC の min-width: 260px を解除） */
+  .mode-block {
+    min-width: 0;
+    width: 100%;
   }
 
   .mode-conditions {
@@ -615,16 +744,27 @@ button:disabled {
     padding-left: 0;
   }
 
-  #resultTable th:nth-child(2),
-  #resultTable td:nth-child(2) {
-    min-width: 200px;
+  /* ----------------------------------------
+     条件設定：除外市場チェックボックス
+  ---------------------------------------- */
+  .exclude-markets-fieldset {
+    /* 横スクロールではなく折り返し表示 */
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 0;
+    padding: 6px 8px 10px;
   }
 
-  .modal .modal-content {
-    width: 95vw;
-    height: calc(var(--vh, 1vh) * 90);
+  .exclude-markets-fieldset label {
+    /* PC の white-space: nowrap を解除して折り返し許可 */
+    white-space: normal;
+    margin-right: 10px;
+    font-size: 12px;
   }
 
+  /* ----------------------------------------
+     ボタン行・経過時間
+  ---------------------------------------- */
   .buttons-row {
     flex-wrap: wrap;
     align-items: center;
@@ -636,11 +776,21 @@ button:disabled {
     margin-top: 4px;
   }
 
-  .timeframe-selector {
-    gap: 6px;
-    font-size: 12px;
+  /* ----------------------------------------
+     結果セクションヘッダ
+  ---------------------------------------- */
+  .result-section-header {
+    flex-wrap: wrap;
+    gap: 4px;
   }
 
+  .result-count {
+    font-size: 0.8rem;
+  }
+
+  /* ----------------------------------------
+     テーブル：固定ヘッダ
+  ---------------------------------------- */
   .table-header-sticky th {
     font-size: 10px;
     padding: 4px 3px;
@@ -651,10 +801,18 @@ button:disabled {
     padding: 3px 2px;
   }
 
+  /* ----------------------------------------
+     テーブル：本体・固定列
+  ---------------------------------------- */
   .fixed-col {
-    background: #f0f0f0 !important;
+    background: var(--color-bg-table-fixed-mobile) !important;
     font-weight: 600;
     font-size: 11px;
+  }
+
+  #resultTable th:nth-child(2),
+  #resultTable td:nth-child(2) {
+    min-width: 200px;
   }
 
   #resultTable td {
@@ -666,33 +824,77 @@ button:disabled {
     height: 22px;
   }
 
-  .exclude-markets-fieldset label {
-    margin-right: 10px;
-    font-size: 12px;
+  /* ----------------------------------------
+     チャートモーダル：全体
+  ---------------------------------------- */
+  .modal .modal-content {
+    width: 100vw;                          /* 横余白をなくす */
+    height: calc(var(--vh, 1vh) * 100);    /* 全高を活用 */
+    border-radius: 0;                      /* 角丸を解除して画面端にフィット */
+    padding: 8px;
   }
-}
 
-/* ------------------------------
-   チャート凡例
------------------------------- */
-.chart-legend {
-  position: absolute;
-  top: 6px;
-  left: 6px;
-  background: rgba(255, 255, 255, 0.85);
-  padding: 6px 10px;
-  border-radius: 4px;
-  font-size: 12px;
-  line-height: 1.4;
-  color: #333;
-  z-index: 3000;
-  pointer-events: none;
-  box-shadow: 0 0 4px rgba(0,0,0,0.15);
-  white-space: nowrap;
-}
+  /* ----------------------------------------
+     チャートモーダル：ヘッダ
+  ---------------------------------------- */
+  .modal .modal-header {
+    flex-wrap: wrap;        /* 銘柄名・ナビを2行に折り返し可能にする */
+    gap: 6px;
+    align-items: flex-start;
+  }
 
-#chartContainer,
-#rciContainer,
-#macdContainer {
-  position: relative;
+  /* 銘柄名エリアは1行目・フル幅 */
+  .modal #chartHeaderLeft {
+    flex: 1 1 100%;
+    font-size: 14px;
+    white-space: normal;    /* 長い銘柄名は折り返す */
+  }
+
+  /* ナビゲーション（足種＋前へ次へ）は2行目・右寄せ */
+  .modal #chartHeaderNav {
+    flex: 1 1 auto;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: flex-end;
+  }
+
+  /* 足種セレクタ：コンパクト化 */
+  .timeframe-selector {
+    gap: 6px;
+    font-size: 12px;
+    padding: 0 4px;
+  }
+
+  /* ✕ボタン：タップしやすいサイズに縮小 */
+  .modal #closeChartBtn {
+    font-size: 16px;
+    padding: 4px 8px;
+    flex: 0 0 auto;
+  }
+
+  /* ----------------------------------------
+     チャートモーダル：本体・サブチャート
+  ---------------------------------------- */
+  #rciContainer,
+  #macdContainer {
+    /* PC の 160px より縮小して縦スペースを確保する */
+    height: var(--rci-macd-height-mobile);
+  }
+
+  /* ----------------------------------------
+     チャート凡例：スマホでは非表示
+     （チャート領域が狭くデータが隠れるため）
+  ---------------------------------------- */
+  .chart-legend {
+    display: none;
+  }
+
+  /* ----------------------------------------
+     歯車（設定）ボタン：タップしやすいサイズに
+  ---------------------------------------- */
+  .chart-settings-btn {
+    font-size: 20px;
+    bottom: 0;
+    right: 6px;
+  }
 }
