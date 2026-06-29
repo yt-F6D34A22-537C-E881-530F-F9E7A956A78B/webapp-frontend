@@ -329,8 +329,9 @@ button:disabled {
 /* ============================================================
    テーブル（固定ヘッダ方式）
    ============================================================ */
-.table-card {
-  position: relative;
+.table-card,
+.controls-card {
+  position: relative;   /* ローディングオーバーレイの基準位置 */
 }
 
 .result-table {
