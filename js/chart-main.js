@@ -3,7 +3,7 @@
 // モーダル制御・チャート描画の司令塔
 // --------------------------------------
 
-// ★ チャート同期用フラグ（chart-sync.js から参照される）
+// チャート同期用フラグ（chart-sync.js から参照される）
 let isSyncing = false;
 
 // iPhone Safari の余白対策
@@ -57,7 +57,7 @@ window.setScreeningResults = function(results) {
 function closeModal() {
   modal.style.display = "none";
 
-  // ★ ここで一度だけ remove し、必ず null にする（再度 remove されないように）
+  // ここで一度だけ remove し、必ず null にする（再度 remove されないように）
   if (priceChart) {
     priceChart.remove();
     priceChart = null;
@@ -97,7 +97,7 @@ window.openChartModal = function(ticker, name, index) {
   `;
 
   modal.style.display = "flex";
-  chartLoadingOverlay.style.display = "flex";
+  // オーバーレイ制御は drawChart() で一元化
 
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
@@ -184,113 +184,118 @@ timeframeRadios.forEach(radio => {
 // ------------------------------
 async function drawChart(ticker, name) {
 
-  // 足種をバックエンドへ渡す
-  const data = await fetchChartData(ticker, currentTimeframe);
+  // サーバ通信前に必ずオーバーレイを表示する（共通仕様）
+  chartLoadingOverlay.style.display = "flex";
 
-  if (!data) {
-    alert("チャートデータが取得できませんでした。");
+  try {
+    // 足種をバックエンドへ渡す
+    const data = await fetchChartData(ticker, currentTimeframe);
+
+    if (!data) {
+      alert("チャートデータが取得できませんでした。");
+      return;
+    }
+
+    const tradingData = data;
+
+    if (tradingData.length === 0) {
+      alert("有効なチャートデータがありません。");
+      return;
+    }
+
+    // 既存チャート破棄（closeModal で null にしているので二重 remove は起きない）
+    if (priceChart) priceChart.remove();
+    if (rciChart) rciChart.remove();
+    if (macdChart) macdChart.remove();
+
+    chartContainer.innerHTML = "";
+    rciContainer.innerHTML = "";
+    macdContainer.innerHTML = "";
+
+    // ① 価格チャート
+    const rect = chartContainer.getBoundingClientRect();
+    priceChart = LightweightCharts.createChart(chartContainer, {
+      width: rect.width,
+      height: rect.height,
+      layout: {
+        background: { color: '#fff' },
+        textColor: '#333',
+      },
+      rightPriceScale: { visible: true, borderVisible: true },
+      timeScale: {
+        borderVisible: true,
+        timeVisible: false,
+        secondsVisible: false,
+        fixLeftEdge: true,
+        fixRightEdge: true,
+        tickMarkSpacing: 50,
+      },
+      grid: {
+        vertLines: { color: '#eee' },
+        horzLines: { color: '#eee' },
+      },
+      crosshair: {
+        mode: LightweightCharts.CrosshairMode.Normal,
+      },
+    });
+
+    priceChart.applyOptions({
+      localization: {
+        locale: 'ja-JP',
+        dateFormat: 'yyyy/MM/dd',
+      },
+    });
+
+    priceChart.timeScale().applyOptions({
+      tickMarkFormatter: (time) => {
+        const date = new Date(time * 1000);
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const d = String(date.getDate()).padStart(2, '0');
+        return `${m}/${d}`;
+      },
+    });
+
+    // ② 価格チャートシリーズ生成
+    createPriceChart(priceChart, tradingData);
+
+    const price = { chart: priceChart };
+
+    // ③ RCI / MACD チャート生成
+    const rci = createRciChart(tradingData);
+    const macd = createMacdChart(tradingData);
+
+    // ④ 同期処理
+    bindTimeSync(price.chart, [rci.chart, macd.chart]);
+    bindTimeSync(rci.chart, [price.chart, macd.chart]);
+    bindTimeSync(macd.chart, [price.chart, rci.chart]);
+
+    // ⑤ リサイズ処理
+    setupResize(price.chart, rci.chart, macd.chart);
+
+    // ⑥ デフォルト表示期間（あなたの既存ロジック）
+    applyDefaultRange(price.chart, rci.chart, macd.chart, tradingData);
+
+    // ⑦ 直近80本だけ表示（論理バー番号ベース）
+    const total = tradingData.length;
+    const visibleCount = 80;
+    const fromIndex = Math.max(0, total - visibleCount);
+    const toIndex = total - 1;
+
+    price.chart.timeScale().setVisibleLogicalRange({
+      from: fromIndex,
+      to: toIndex
+    });
+    rci.chart.timeScale().setVisibleLogicalRange({
+      from: fromIndex,
+      to: toIndex
+    });
+    macd.chart.timeScale().setVisibleLogicalRange({
+      from: fromIndex,
+      to: toIndex
+    });
+
+  } finally {
+    // 必ずオーバーレイを非表示にする（共通仕様）
     chartLoadingOverlay.style.display = "none";
-    return;
   }
-
-  const tradingData = data;
-
-  if (tradingData.length === 0) {
-    alert("有効なチャートデータがありません。");
-    chartLoadingOverlay.style.display = "none";
-    return;
-  }
-
-  // 既存チャート破棄（closeModal で null にしているので二重 remove は起きない）
-  if (priceChart) priceChart.remove();
-  if (rciChart) rciChart.remove();
-  if (macdChart) macdChart.remove();
-
-  chartContainer.innerHTML = "";
-  rciContainer.innerHTML = "";
-  macdContainer.innerHTML = "";
-
-  // ① 価格チャート
-  const rect = chartContainer.getBoundingClientRect();
-  priceChart = LightweightCharts.createChart(chartContainer, {
-    width: rect.width,
-    height: rect.height,
-    layout: {
-      background: { color: '#fff' },
-      textColor: '#333',
-    },
-    rightPriceScale: { visible: true, borderVisible: true },
-    timeScale: {
-      borderVisible: true,
-      timeVisible: false,
-      secondsVisible: false,
-      fixLeftEdge: true,
-      fixRightEdge: true,
-      tickMarkSpacing: 50,
-    },
-    grid: {
-      vertLines: { color: '#eee' },
-      horzLines: { color: '#eee' },
-    },
-    crosshair: {
-      mode: LightweightCharts.CrosshairMode.Normal,
-    },
-  });
-
-  priceChart.applyOptions({
-    localization: {
-      locale: 'ja-JP',
-      dateFormat: 'yyyy/MM/dd',
-    },
-  });
-
-  priceChart.timeScale().applyOptions({
-    tickMarkFormatter: (time) => {
-      const date = new Date(time * 1000);
-      const m = String(date.getMonth() + 1).padStart(2, '0');
-      const d = String(date.getDate()).padStart(2, '0');
-      return `${m}/${d}`;
-    },
-  });
-
-  // ② 価格チャートシリーズ生成
-  createPriceChart(priceChart, tradingData);
-
-  const price = { chart: priceChart };
-
-  // ③ RCI / MACD チャート生成
-  const rci = createRciChart(tradingData);
-  const macd = createMacdChart(tradingData);
-
-  // ④ 同期処理
-  bindTimeSync(price.chart, [rci.chart, macd.chart]);
-  bindTimeSync(rci.chart, [price.chart, macd.chart]);
-  bindTimeSync(macd.chart, [price.chart, rci.chart]);
-
-  // ⑤ リサイズ処理
-  setupResize(price.chart, rci.chart, macd.chart);
-
-  // ⑥ デフォルト表示期間（あなたの既存ロジック）
-  applyDefaultRange(price.chart, rci.chart, macd.chart, tradingData);
-
-  // ⑦ 直近80本だけ表示（論理バー番号ベース）
-  const total = tradingData.length;
-  const visibleCount = 80;
-  const fromIndex = Math.max(0, total - visibleCount);
-  const toIndex = total - 1;
-
-  price.chart.timeScale().setVisibleLogicalRange({
-    from: fromIndex,
-    to: toIndex
-  });
-  rci.chart.timeScale().setVisibleLogicalRange({
-    from: fromIndex,
-    to: toIndex
-  });
-  macd.chart.timeScale().setVisibleLogicalRange({
-    from: fromIndex,
-    to: toIndex
-  });
-
-  chartLoadingOverlay.style.display = "none";
 }
