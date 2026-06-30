@@ -894,13 +894,14 @@ button:disabled {
   /* ----------------------------------------
      条件設定：CSV・証券コード比較
   ---------------------------------------- */
-  .compare-source-option {
-    flex-wrap: wrap;
+  .compare-source-fieldset .compare-source-option {
+    grid-template-columns: auto 1fr;
+    row-gap: 4px;
   }
 
   .compare-source-option input[type="text"],
   .compare-source-option input[type="file"] {
-    flex-basis: 100%;
+    grid-column: 1 / -1;
     width: 100%;
     box-sizing: border-box;
   }
