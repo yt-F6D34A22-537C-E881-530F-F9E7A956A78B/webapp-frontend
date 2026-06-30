@@ -461,8 +461,7 @@ function initSearchMode() {
   const dateInputs = document.querySelectorAll("#dateConditions select");
   const heuristicsInputs = document.querySelectorAll("#heuristicsConditions select, #heuristicsConditions input[type='text']");
   const heuristicsFieldset = document.querySelectorAll("#heuristicsConditions fieldset");
-  const compareInputs = document.querySelectorAll("#compareConditions select");
-  const compareToDateSelect = document.getElementById("compareToDateSelect");
+  const compareFieldsets = document.querySelectorAll("#compareConditions fieldset");
 
   function updateMode() {
     const mode = document.querySelector('input[name="searchMode"]:checked').value;
@@ -471,8 +470,7 @@ function initSearchMode() {
     dateInputs.forEach(i => i.disabled = (mode !== "date"));
     heuristicsInputs.forEach(i => i.disabled = (mode !== "heuristics"));
     heuristicsFieldset.forEach(i => i.disabled = (mode !== "heuristics"));
-    compareInputs.forEach(i => i.disabled = (mode !== "compare"));
-    if (compareToDateSelect) compareToDateSelect.disabled = (mode !== "compare");
+    compareFieldsets.forEach(i => i.disabled = (mode !== "compare"));
 
     updateCompareSourceInputs();
   }
