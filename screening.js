@@ -327,6 +327,10 @@ function buildCsvHeaders(mode, label) {
     return headers;
   }
 
+  if (mode === "compare") {
+    return ["コード", "銘柄名", "比較元終値", "比較先終値", "増減（円）", "増減（％）", "上昇/下降の予測"];
+  }
+
   return [];
 }
 
@@ -374,6 +378,13 @@ function buildCsvRow(r, mode) {
     }
 
     return cells;
+  }
+
+  if (mode === "compare") {
+    return [
+      r.コード, r.銘柄名, r.比較元終値, r.比較先終値,
+      r.増減円, `${r.増減率}%`, formatDirectionMark(r.予測)
+    ].map(String);
   }
 
   return [];
@@ -450,6 +461,8 @@ function initSearchMode() {
   const dateInputs = document.querySelectorAll("#dateConditions select");
   const heuristicsInputs = document.querySelectorAll("#heuristicsConditions select");
   const heuristicsFieldset = document.querySelectorAll("#heuristicsConditions fieldset");
+  const compareInputs = document.querySelectorAll("#compareConditions select");
+  const compareToDateSelect = document.getElementById("compareToDateSelect");
 
   function updateMode() {
     const mode = document.querySelector('input[name="searchMode"]:checked').value;
@@ -458,10 +471,116 @@ function initSearchMode() {
     dateInputs.forEach(i => i.disabled = (mode !== "date"));
     heuristicsInputs.forEach(i => i.disabled = (mode !== "heuristics"));
     heuristicsFieldset.forEach(i => i.disabled = (mode !== "heuristics"));
+    compareInputs.forEach(i => i.disabled = (mode !== "compare"));
+    if (compareToDateSelect) compareToDateSelect.disabled = (mode !== "compare");
+
+    updateCompareSourceInputs();
   }
 
   radios.forEach(r => r.addEventListener("change", updateMode));
   updateMode();
+
+  // compare モード内の入力方法（CSV/証券コード）切替
+  document.querySelectorAll('input[name="compareSource"]').forEach(r => {
+    r.addEventListener("change", updateCompareSourceInputs);
+  });
+}
+
+/**
+ * compare モードの入力方法（CSV/証券コード）に応じて
+ * #compareCsvFile / #compareCodes の有効・無効を切り替える
+ */
+function updateCompareSourceInputs() {
+  const mode = document.querySelector('input[name="searchMode"]:checked').value;
+  const source = document.querySelector('input[name="compareSource"]:checked')?.value;
+
+  const csvFileInput = document.getElementById("compareCsvFile");
+  const codesInput = document.getElementById("compareCodes");
+  if (!csvFileInput || !codesInput) return;
+
+  csvFileInput.disabled = (mode !== "compare" || source !== "csv");
+  codesInput.disabled   = (mode !== "compare" || source !== "code");
+}
+
+/* ============================
+   compare モード：CSVアップロード処理
+============================ */
+const compareCsvFileInput = document.getElementById("compareCsvFile");
+const compareFromDateInput = document.getElementById("compareFromDate");
+
+// CSVファイル名（screening_<mode>_<YYYYMMDD>.csv）から日付と元モードを抽出する
+// 元モード（出来高×上髭／値上がり率ランキング／heuristics）は
+// アップロードcsvの予測列（上昇/下降の予測）切り替えに使用する
+let uploadedCsvSourceMode = null;
+let uploadedCsvCodes = [];
+
+if (compareCsvFileInput) {
+  compareCsvFileInput.addEventListener("change", async () => {
+    const file = compareCsvFileInput.files[0];
+    if (!file) return;
+
+    // ファイル名: screening_<mode>_<YYYYMMDD>.csv からモードと日付を抽出
+    const m = file.name.match(/^screening_(ratio|date|heuristics)_(\d{8})\.csv$/);
+    if (!m) {
+      alert("ファイル名がスクリーニング結果のCSV形式（screening_<mode>_<YYYYMMDD>.csv）と一致しません。");
+      compareCsvFileInput.value = "";
+      return;
+    }
+
+    uploadedCsvSourceMode = m[1];
+    // 比較元日付の自動設定（ラジオ切替時の再設定はしない仕様のため、ここで一度だけ設定）
+    compareFromDateInput.value = m[2];
+
+    uploadedCsvCodes = await extractCodesFromCsv(file);
+  });
+}
+
+/**
+ * アップロードされたCSVファイルからコード列の値一覧を抽出する
+ * @param {File} file
+ * @returns {Promise<string[]>}
+ */
+async function extractCodesFromCsv(file) {
+  const text = await file.text();
+  // BOM除去
+  const cleaned = text.replace(/^\uFEFF/, "");
+  const lines = cleaned.split(/\r\n|\n/).filter(l => l.length > 0);
+  if (lines.length < 2) return [];
+
+  // 1行目（ヘッダ）の「コード」列インデックスを特定
+  const headerCells = parseCsvLine(lines[0]);
+  const codeIdx = headerCells.indexOf("コード");
+  if (codeIdx === -1) return [];
+
+  return lines.slice(1)
+    .map(line => parseCsvLine(line)[codeIdx])
+    .filter(Boolean);
+}
+
+/**
+ * RFC 4180 準拠の簡易CSV1行パーサ（ダブルクォート対応）
+ * @param {string} line
+ * @returns {string[]}
+ */
+function parseCsvLine(line) {
+  const cells = [];
+  let cur = "";
+  let inQuotes = false;
+
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (inQuotes) {
+      if (ch === '"' && line[i + 1] === '"') { cur += '"'; i++; }
+      else if (ch === '"') { inQuotes = false; }
+      else { cur += ch; }
+    } else {
+      if (ch === '"') inQuotes = true;
+      else if (ch === ',') { cells.push(cur); cur = ""; }
+      else cur += ch;
+    }
+  }
+  cells.push(cur);
+  return cells;
 }
 
 /* ============================
@@ -501,6 +620,13 @@ async function loadDates() {
     if (dates.length >= 2) {
       const ratioDates = dates.slice(0, dates.length - 1); // 最古日を除外
       ratioDates.forEach(d => ratioDateSelect.appendChild(makeOption(d)));
+    }
+
+    // compare モード用：比較先日付（デフォルト＝最新の市場開場日）
+    const compareToDateSelect = document.getElementById("compareToDateSelect");
+    if (compareToDateSelect) {
+      compareToDateSelect.innerHTML = "";
+      dates.forEach(d => compareToDateSelect.appendChild(makeOption(d)));
     }
 
   } catch (e) {
@@ -640,6 +766,24 @@ function updateTableHeader(mode, label = "") {
     stickyThead.innerHTML = row1 + row2;
     bodyThead.innerHTML   = row1 + row2;
   }
+
+  // compare（CSV/証券コード比較）
+  if (mode === "compare") {
+    const html = `
+      <tr>
+        <th class="fixed-col">コード</th>
+        <th class="fixed-col">銘柄名</th>
+        <th>比較元終値</th>
+        <th>比較先終値</th>
+        <th>増減（円）</th>
+        <th>増減（％）</th>
+        <th>上昇/下降の予測</th>
+      </tr>
+    `;
+    stickyThead.innerHTML = html;
+    bodyThead.innerHTML   = html;
+    return;
+  }
 }
 
 /* ============================
@@ -653,6 +797,10 @@ async function startScreening() {
   const targetDateRanking = dateSelect.value;
   const targetDateRatio = ratioDateSelect.value;
   const targetDateHeuristics = heuristicsDateSelect.value;
+  const source = document.querySelector('input[name="compareSource"]:checked').value;
+  const fromDate = compareFromDateInput.value;
+  const toDate = document.getElementById("compareToDateSelect").value;
+  const codes = document.getElementById("compareCodes").value.trim();
 
   if (mode === "ratio" && !targetDateRatio) {
     alert("日付を選択してください。");
@@ -667,6 +815,26 @@ async function startScreening() {
   if (mode === "heuristics" && !targetDateHeuristics) {
     alert("日付を選択してください。");
     return;
+  }
+
+  if (mode === "compare") {
+
+    if (!fromDate || !toDate) {
+      alert("比較元日付・比較先日付を確認してください。");
+      return;
+    }
+
+    if (source === "csv") {
+      if (uploadedCsvCodes.length === 0) {
+        alert("CSVファイルをアップロードしてください。");
+        return;
+      }
+    } else {
+      if (!codes) {
+        alert("証券コードを入力してください。");
+        return;
+      }
+    }
   }
 
   let label = "";
@@ -716,6 +884,17 @@ async function startScreening() {
       const excludeMarkets = getExcludeMarkets();
       if (excludeMarkets) {
         url.searchParams.set("exclude_markets", excludeMarkets);
+      }
+    } else if (mode === "compare") {
+      url.searchParams.set("mode", "compare");
+      url.searchParams.set("from_date", fromDate);
+      url.searchParams.set("to_date", toDate);
+      url.searchParams.set("source_mode", source === "csv" ? (uploadedCsvSourceMode || "") : "");
+
+      if (source === "csv") {
+        url.searchParams.set("codes", uploadedCsvCodes.join(","));
+      } else {
+        url.searchParams.set("codes", codes);
       }
     }
 
@@ -948,6 +1127,21 @@ function showResults(results, mode) {
               td.classList.add("td-heuristics-applied");
           }
       });
+    }
+
+    /* ------------------------------
+       compare モード
+    ------------------------------ */
+    else if (mode === "compare") {
+      tr.innerHTML = `
+        <td class="fixed-col">${r.コード}</td>
+        <td class="fixed-col">${r.銘柄名}</td>
+        <td>${r.比較元終値}</td>
+        <td>${r.比較先終値}</td>
+        <td>${r.増減円 > 0 ? "+" : ""}${r.増減円}</td>
+        <td>${r.増減率 > 0 ? "+" : ""}${r.増減率}%</td>
+        <td>${formatDirectionMark(r.予測) || "-"}</td>
+      `;
     }
 
     tr.addEventListener("click", () => {
