@@ -108,14 +108,16 @@
 
             <fieldset class="compare-source-fieldset" disabled>
               <legend>入力方法</legend>
-
+            
               <label class="compare-source-option">
-                <input type="radio" name="compareSource" value="csv" checked> CSVアップロード
+                <input type="radio" name="compareSource" value="csv" checked>
+                <span class="compare-source-label">CSVアップロード</span>
                 <input type="file" id="compareCsvFile" accept=".csv">
               </label>
-
+            
               <label class="compare-source-option">
-                <input type="radio" name="compareSource" value="code"> 証券コード指定
+                <input type="radio" name="compareSource" value="code">
+                <span class="compare-source-label">証券コード指定</span>
                 <input type="text" id="compareCodes" placeholder="例: 7203,9984">
               </label>
             </fieldset>
