@@ -913,6 +913,9 @@ button:disabled {
   .compare-date-arrow {
     align-self: center;
     padding-bottom: 0;
+    /* 比較期間が縦積みレイアウトになるため、矢印も縦向きに回転させる */
+    display: inline-block;
+    transform: rotate(90deg);
   }
 
   #compareFromDate,
