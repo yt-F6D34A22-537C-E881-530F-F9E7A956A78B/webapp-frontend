@@ -528,7 +528,8 @@ if (compareCsvFileInput) {
 
     uploadedCsvSourceMode = m[1];
     // 比較元日付の自動設定（ラジオ切替時の再設定はしない仕様のため、ここで一度だけ設定）
-    compareFromDateInput.value = m[2];
+    // 選択肢に存在しない日付（3か月超）の場合は option を動的追加してから選択する
+    setCompareFromDate(m[2]);
 
     uploadedCsvCodes = await extractCodesFromCsv(file);
   });
@@ -728,6 +729,24 @@ function makeOption(d) {
   const day = d.substring(6,8);
   const w = ["日","月","火","水","木","金","土"][new Date(`${y}-${m}-${day}`).getDay()];
   return new Option(`${y}/${m}/${day}（${w}）`, d);
+}
+
+/**
+ * 比較元日付セレクタ（#compareFromDate）に指定日付を選択状態にする。
+ * 選択肢一覧（/trading_dates＝直近3か月）に存在しない日付の場合は、
+ * option を動的追加してから選択する（3か月超のCSVアップロード対応）。
+ * @param {string} dateStr - YYYYMMDD
+ */
+function setCompareFromDate(dateStr) {
+  const select = document.getElementById("compareFromDate");
+  if (!select || !dateStr) return;
+
+  const exists = Array.from(select.options).some(opt => opt.value === dateStr);
+  if (!exists) {
+    select.appendChild(makeOption(dateStr));
+  }
+
+  select.value = dateStr;
 }
 
 /* ============================
