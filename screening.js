@@ -412,11 +412,16 @@ function downloadCsv() {
   const blob = new Blob([bom + csvLines], { type: "text/csv;charset=utf-8;" });
 
   // ファイル名: screening_<mode>_<YYYYMMDD>.csv
-  const today = new Date();
-  const dateStr = today.getFullYear().toString()
-    + String(today.getMonth() + 1).padStart(2, "0")
-    + String(today.getDate()).padStart(2, "0");
-  const fileName = `screening_${mode}_${dateStr}.csv`;
+  // YYYYMMDD はスクリーニングへ指定した日付（モードごとの日付セレクタ値）
+  const targetDateMap = {
+    ratio:      ratioDateSelect.value,
+    date:       dateSelect.value,
+    heuristics: heuristicsDateSelect.value,
+  };
+  const dateStr = targetDateMap[mode] || "";
+  const fileName = dateStr
+    ? `screening_${mode}_${dateStr}.csv`
+    : `screening_${mode}.csv`;
 
   // <a> 要素でダウンロードをトリガー
   const url = URL.createObjectURL(blob);
