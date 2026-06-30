@@ -449,6 +449,7 @@ function downloadCsv() {
 window.onload = () => {
   initSearchMode();
   loadDates();
+  loadTradingDates();
   loadHeuristicsDates();
 };
 
@@ -620,15 +621,57 @@ async function loadDates() {
       ratioDates.forEach(d => ratioDateSelect.appendChild(makeOption(d)));
     }
 
-    // compare モード用：比較先日付（デフォルト＝最新の市場開場日）
-    const compareToDateSelect = document.getElementById("compareToDateSelect");
-    if (compareToDateSelect) {
-      compareToDateSelect.innerHTML = "";
-      dates.forEach(d => compareToDateSelect.appendChild(makeOption(d)));
-    }
-
   } catch (e) {
     console.error("日付取得エラー:", e);
+  } finally {
+    // 必ずオーバーレイを非表示にする（共通仕様）
+    controlsOverlay.classList.add("hidden");
+  }
+}
+
+/* ============================
+   /trading_dates のロード
+   （compare モード：比較元日付・比較先日付の共通データソース）
+============================ */
+async function loadTradingDates() {
+  const compareFromDateSelect = document.getElementById("compareFromDate");
+  const compareToDateSelect = document.getElementById("compareToDateSelect");
+  if (!compareFromDateSelect || !compareToDateSelect) return;
+
+  const controlsOverlay = document.getElementById("controlsLoadingOverlay");
+
+  // サーバ通信前にオーバーレイを表示する（共通仕様）
+  controlsOverlay.classList.remove("hidden");
+
+  try {
+    compareFromDateSelect.innerHTML = "";
+    compareFromDateSelect.appendChild(new Option("読み込み中...", ""));
+
+    compareToDateSelect.innerHTML = "";
+    compareToDateSelect.appendChild(new Option("読み込み中...", ""));
+
+    const res = await fetch(`${API_BASE_URL}/trading_dates`);
+    const data = await res.json();
+
+    if (!data.status || data.status !== "ok") {
+      console.error("trading_dates API error:", { httpStatus: res.status, body: data });
+      compareFromDateSelect.innerHTML = `<option value="">取得失敗</option>`;
+      compareToDateSelect.innerHTML = `<option value="">取得失敗</option>`;
+      return;
+    }
+
+    const dates = data.dates; // 直近3か月の市場開場日（降順）
+
+    // 比較元日付（デフォルト＝先頭＝最新の市場開場日）
+    compareFromDateSelect.innerHTML = "";
+    dates.forEach(d => compareFromDateSelect.appendChild(makeOption(d)));
+
+    // 比較先日付（デフォルト＝先頭＝最新の市場開場日）
+    compareToDateSelect.innerHTML = "";
+    dates.forEach(d => compareToDateSelect.appendChild(makeOption(d)));
+
+  } catch (e) {
+    console.error("trading_dates 取得エラー:", e);
   } finally {
     // 必ずオーバーレイを非表示にする（共通仕様）
     controlsOverlay.classList.add("hidden");
