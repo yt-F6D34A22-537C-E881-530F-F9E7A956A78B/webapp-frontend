@@ -233,6 +233,42 @@ body {
 }
 
 /* ============================================================
+   CSV・証券コード比較：入力方法ラジオ
+   ============================================================ */
+.compare-source-radio {
+  display: flex;
+  flex-direction: row;
+  gap: 16px;
+  margin-top: 4px;
+}
+
+.compare-source-radio label {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+  font-weight: normal;
+  white-space: nowrap;
+}
+
+/* ============================================================
+   heuristics：証券コード入力欄
+   ============================================================ */
+#heuristicsConditions label:has(#heuristicsCodes) {
+  flex: 0 0 auto;
+  min-width: 200px;
+}
+
+#heuristicsCodes {
+  width: 180px;
+}
+
+#heuristicsConditions label:has(.exclude-markets-fieldset) {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* ============================================================
    除外市場・商品区分
    ============================================================ */
 .exclude-markets-fieldset {
@@ -242,6 +278,7 @@ body {
   margin: 4px 0 0;
   box-sizing: border-box;
   background-color: var(--color-bg-input);
+  width: 100%;
 }
 
 /* チェックボックスを横並び・折り返し */
@@ -760,6 +797,38 @@ button:disabled {
     white-space: normal;
     margin-right: 10px;
     font-size: 12px;
+  }
+
+  /* ----------------------------------------
+     条件設定：heuristics 証券コード入力欄
+  ---------------------------------------- */
+  #heuristicsConditions label:has(#heuristicsCodes) {
+    min-width: 0;
+    width: 100%;
+  }
+
+  #heuristicsCodes {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* ----------------------------------------
+     条件設定：CSV・証券コード比較
+  ---------------------------------------- */
+  .compare-source-radio {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  #compareCsvFile,
+  #compareCodes,
+  #compareFromDate {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  #compareToDateSelect {
+    width: 100%;
   }
 
   /* ----------------------------------------
