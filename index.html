@@ -97,6 +97,41 @@
           </div>
         </div>
 
+        <!-- モード D：CSV/証券コード比較 -->
+        <div class="mode-block">
+          <label class="mode-title">
+            <input type="radio" name="searchMode" value="compare">
+            CSV・証券コード比較
+          </label>
+
+          <div class="mode-conditions" id="compareConditions">
+
+            <label>入力方法
+              <span class="compare-source-radio">
+                <label><input type="radio" name="compareSource" value="csv" checked> CSVアップロード</label>
+                <label><input type="radio" name="compareSource" value="code"> 証券コード指定</label>
+              </span>
+            </label>
+
+            <label>CSVファイル
+              <input type="file" id="compareCsvFile" accept=".csv" disabled>
+            </label>
+
+            <label>証券コード（4桁・カンマ区切りで複数可）
+              <input type="text" id="compareCodes" placeholder="例: 7203,9984" disabled>
+            </label>
+
+            <label>比較元日付
+              <input type="text" id="compareFromDate" placeholder="YYYYMMDD" readonly>
+            </label>
+
+            <label>比較先日付
+              <select id="compareToDateSelect" disabled></select>
+            </label>
+
+          </div>
+        </div>
+
       </div>
 
       <!-- 下段：heuristics（単独・全幅） -->
