@@ -272,14 +272,8 @@ body {
   font-size: 13px;
   font-weight: normal;
   color: var(--color-text-secondary);
-  /* input[type="file"] はネイティブ実装の都合上、
-     min-width: 0 / width: 100% を指定しても自身の最小幅まで
-     縮小してくれないため、行単位でクリップしてはみ出しを防ぐ。
-     クリップ境界が入力欄の右ボーダーと重なりボーダーごと
-     消えてしまうため、右側に数pxの余白を設けて回避する */
-  overflow: hidden;
-  padding-right: 4px;
 }
+
 .compare-source-label {
   white-space: nowrap;
 }
@@ -289,7 +283,10 @@ body {
   margin-top: 0;
   min-width: 0;
   width: 100%;
-  overflow: hidden;
+  /* .mode-conditions input は box-sizing 未指定（content-box）のため、
+     width:100% が padding/border 分だけはみ出してしまう。
+     border-box にして track 幅にぴったり収める */
+  box-sizing: border-box;
 }
 
 /* ============================================================
