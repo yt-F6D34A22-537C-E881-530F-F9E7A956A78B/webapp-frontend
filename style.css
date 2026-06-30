@@ -274,8 +274,11 @@ body {
   color: var(--color-text-secondary);
   /* input[type="file"] はネイティブ実装の都合上、
      min-width: 0 / width: 100% を指定しても自身の最小幅まで
-     縮小してくれないため、行単位でクリップしてはみ出しを防ぐ */
+     縮小してくれないため、行単位でクリップしてはみ出しを防ぐ。
+     クリップ境界が入力欄の右ボーダーと重なりボーダーごと
+     消えてしまうため、右側に数pxの余白を設けて回避する */
   overflow: hidden;
+  padding-right: 4px;
 }
 .compare-source-label {
   white-space: nowrap;
