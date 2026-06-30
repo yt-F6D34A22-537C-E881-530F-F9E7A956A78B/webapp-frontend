@@ -459,7 +459,7 @@ function initSearchMode() {
   const radios = document.querySelectorAll('input[name="searchMode"]');
   const ratioInputs = document.querySelectorAll("#ratioConditions input, #ratioConditions select");
   const dateInputs = document.querySelectorAll("#dateConditions select");
-  const heuristicsInputs = document.querySelectorAll("#heuristicsConditions select");
+  const heuristicsInputs = document.querySelectorAll("#heuristicsConditions select, #heuristicsConditions input[type='text']");
   const heuristicsFieldset = document.querySelectorAll("#heuristicsConditions fieldset");
   const compareInputs = document.querySelectorAll("#compareConditions select");
   const compareToDateSelect = document.getElementById("compareToDateSelect");
@@ -884,6 +884,12 @@ async function startScreening() {
       const excludeMarkets = getExcludeMarkets();
       if (excludeMarkets) {
         url.searchParams.set("exclude_markets", excludeMarkets);
+      }
+
+      // 証券コードによる絞り込み（未入力時は従来通り全件対象）
+      const heuristicsCodes = document.getElementById("heuristicsCodes").value.trim();
+      if (heuristicsCodes) {
+        url.searchParams.set("codes", heuristicsCodes);
       }
     } else if (mode === "compare") {
       url.searchParams.set("mode", "compare");
