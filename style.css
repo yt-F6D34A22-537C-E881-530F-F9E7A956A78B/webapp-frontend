@@ -265,8 +265,10 @@ body {
 }
 
 /* ラジオ／ラベル文言／対象入力欄をグリッドで揃え、
-   複数行で入力欄の開始位置を縦に揃える */
-.compare-source-option {
+   複数行で入力欄の開始位置を縦に揃える
+   ※ .mode-conditions label（クラス1+要素1）より詳細度を上げるため
+      親フィールドセットのクラスと連結している */
+.compare-source-fieldset .compare-source-option {
   display: grid;
   grid-template-columns: auto 120px 1fr;
   align-items: center;
