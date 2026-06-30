@@ -187,9 +187,8 @@ body {
   box-sizing: border-box;
 }
 
-/* heuristics ブロックは全幅 */
 .mode-block-heuristics {
-  flex: 1 1 100%;
+  flex-shrink: 1;
 }
 
 .mode-title {
