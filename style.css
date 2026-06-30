@@ -812,7 +812,10 @@ button:disabled {
 
   #resultTable th:nth-child(2),
   #resultTable td:nth-child(2) {
-    min-width: 200px;
+    min-width: 110px;
+    max-width: 110px;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   #resultTable td {
@@ -822,6 +825,11 @@ button:disabled {
 
   #resultTable tr {
     height: 22px;
+  }
+
+  #resultTable td:not(.fixed-col),
+  .table-header-sticky th:not(.fixed-col) {
+    min-width: 60px;
   }
 
   /* ----------------------------------------
@@ -893,8 +901,16 @@ button:disabled {
      歯車（設定）ボタン：タップしやすいサイズに
   ---------------------------------------- */
   .chart-settings-btn {
-    font-size: 20px;
-    bottom: 0;
-    right: 6px;
+    font-size: 24px;
+    bottom: 12px;
+    right: 12px;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-bg-settings);
+    border-radius: 50%;
+    box-shadow: var(--shadow-settings);
   }
 }
