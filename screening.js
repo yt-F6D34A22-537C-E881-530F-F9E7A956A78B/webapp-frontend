@@ -328,7 +328,8 @@ function buildCsvHeaders(mode, label) {
   }
 
   if (mode === "compare") {
-    return ["コード", "銘柄名", "比較元終値", "比較先終値", "増減（円）", "増減（％）", "上昇/下降の予測"];
+    // 画面表示と同一の列順に合わせる
+    return ["コード", "銘柄名", "スコア", "上昇/下降の予測", "上昇/下降の結果", "比較元終値", "比較先終値", "増減（円）", "増減（％）"];
   }
 
   return [];
@@ -381,9 +382,20 @@ function buildCsvRow(r, mode) {
   }
 
   if (mode === "compare") {
+    const compareResult = (!r.error && r.比較元終値 != null && r.比較先終値 != null)
+      ? calcCompareResult(r.比較元終値, r.比較先終値)
+      : "";
+    const score = uploadedCsvScoreMap[r.コード] ?? "-";
     return [
-      r.コード, r.銘柄名, r.比較元終値, r.比較先終値,
-      r.増減円, `${r.増減率}%`, formatDirectionMark(r.予測)
+      r.コード,
+      r.銘柄名,
+      score,
+      formatDirectionMark(r.予測) || "-",
+      compareResult,
+      r.比較元終値 ?? "",
+      r.比較先終値 ?? "",
+      r.増減円  != null ? (r.増減円  > 0 ? "+" : "") + r.増減円  : "",
+      r.増減率 != null ? (r.増減率 > 0 ? "+" : "") + r.増減率 + "%" : ""
     ].map(String);
   }
 
@@ -512,6 +524,7 @@ const compareFromDateInput = document.getElementById("compareFromDate");
 // アップロードcsvの予測列（上昇/下降の予測）切り替えに使用する
 let uploadedCsvSourceMode = null;
 let uploadedCsvCodes = [];
+let uploadedCsvScoreMap = {}; // コード→スコアのマップ（CSVアップロード時のみ使用）
 
 if (compareCsvFileInput) {
   compareCsvFileInput.addEventListener("change", async () => {
@@ -523,6 +536,7 @@ if (compareCsvFileInput) {
     if (!m) {
       alert("ファイル名がスクリーニング結果のCSV形式（screening_<mode>_<YYYYMMDD>.csv）と一致しません。");
       compareCsvFileInput.value = "";
+      uploadedCsvScoreMap = {};  // スコアマップをリセット
       return;
     }
 
@@ -547,14 +561,28 @@ async function extractCodesFromCsv(file) {
   const lines = cleaned.split(/\r\n|\n/).filter(l => l.length > 0);
   if (lines.length < 2) return [];
 
-  // 1行目（ヘッダ）の「コード」列インデックスを特定
+  // 1行目（ヘッダ）の「コード」列・「スコア」列インデックスを特定
   const headerCells = parseCsvLine(lines[0]);
-  const codeIdx = headerCells.indexOf("コード");
+  const codeIdx  = headerCells.indexOf("コード");
   if (codeIdx === -1) return [];
 
-  return lines.slice(1)
-    .map(line => parseCsvLine(line)[codeIdx])
-    .filter(Boolean);
+  const scoreIdx = headerCells.indexOf("スコア");  // heuristics CSV のみ存在
+
+  // スコアマップを初期化（前回の CSV アップロード内容をクリア）
+  uploadedCsvScoreMap = {};
+
+  const codes = [];
+  lines.slice(1).forEach(line => {
+    const cells = parseCsvLine(line);
+    const code  = cells[codeIdx];
+    if (!code) return;
+    codes.push(code);
+    if (scoreIdx !== -1 && cells[scoreIdx] != null) {
+      uploadedCsvScoreMap[code] = cells[scoreIdx];
+    }
+  });
+
+  return codes;
 }
 
 /**
@@ -732,6 +760,32 @@ function makeOption(d) {
 }
 
 /**
+ * YYYYMMDD 形式の日付文字列を「YYYY/MM/DD（曜）」形式に変換する
+ * compare モードのテーブルヘッダ日付表示に使用する
+ * @param {string} d - YYYYMMDD
+ * @returns {string}
+ */
+function makeDateLabel(d) {
+  if (!d) return "";
+  const y   = d.substring(0, 4);
+  const m   = d.substring(4, 6);
+  const day = d.substring(6, 8);
+  const w   = ["日","月","火","水","木","金","土"][new Date(`${y}-${m}-${day}`).getDay()];
+  return `${y}/${m}/${day}（${w}）`;
+}
+
+/**
+ * 比較元・比較先終値から上昇/下降の結果を算出する
+ * @param {number} fromClose - 比較元終値
+ * @param {number} toClose   - 比較先終値
+ * @returns {string} "↗" | "横ばい" | "↘"
+ */
+function calcCompareResult(fromClose, toClose) {
+  if (toClose === fromClose) return "横ばい";
+  return toClose > fromClose ? "↗" : "↘";
+}
+
+/**
  * 比較元日付セレクタ（#compareFromDate）に指定日付を選択状態にする。
  * 選択肢一覧（/trading_dates＝直近3か月）に存在しない日付の場合は、
  * option を動的追加してから選択する（3か月超のCSVアップロード対応）。
@@ -752,7 +806,7 @@ function setCompareFromDate(dateStr) {
 /* ============================
    テーブルヘッダ更新
 ============================ */
-function updateTableHeader(mode, label = "") {
+function updateTableHeader(mode, label = "", compareFromLabel = "", compareToLabel = "") {
   const stickyThead = document.getElementById("resultHeaderSticky");
   const bodyThead   = document.getElementById("resultHeaderBody");
 
@@ -829,15 +883,19 @@ function updateTableHeader(mode, label = "") {
 
   // compare（CSV/証券コード比較）
   if (mode === "compare") {
+    const fromHeader = compareFromLabel ? `比較元 ${compareFromLabel}終値` : "比較元終値";
+    const toHeader   = compareToLabel   ? `比較先 ${compareToLabel}終値`   : "比較先終値";
     const html = `
       <tr>
         <th class="fixed-col">コード</th>
         <th class="fixed-col">銘柄名</th>
-        <th>比較元終値</th>
-        <th>比較先終値</th>
+        <th>スコア</th>
+        <th>上昇/下降の予測</th>
+        <th>上昇/下降の結果</th>
+        <th>${fromHeader}</th>
+        <th>${toHeader}</th>
         <th>増減（円）</th>
         <th>増減（％）</th>
-        <th>上昇/下降の予測</th>
       </tr>
     `;
     stickyThead.innerHTML = html;
@@ -907,7 +965,18 @@ async function startScreening() {
     label = `${y}/${m}/${day}（${w}）`;
   }
 
-  updateTableHeader(mode, label);
+  // compare モード：ヘッダ用日付ラベルを組み立て、証券コード直接入力時はスコアマップをリセット
+  let compareFromLabel = "";
+  let compareToLabel   = "";
+  if (mode === "compare") {
+    compareFromLabel = makeDateLabel(fromDate);
+    compareToLabel   = makeDateLabel(toDate);
+    if (source !== "csv") {
+      uploadedCsvScoreMap = {};  // 証券コード直接入力時はスコアマップをクリア
+    }
+  }
+
+  updateTableHeader(mode, label, compareFromLabel, compareToLabel);
 
   startBtn.disabled = true;
   cancelBtn.disabled = false;
@@ -1199,14 +1268,36 @@ function showResults(results, mode) {
        compare モード
     ------------------------------ */
     else if (mode === "compare") {
+      // 上昇/下降の結果（比較先 vs 比較元）
+      const compareResult = (!r.error && r.比較元終値 != null && r.比較先終値 != null)
+        ? calcCompareResult(r.比較元終値, r.比較先終値)
+        : "";
+
+      // 行の背景色：予測に基づく（heuristics モードと同様の CSS クラスを流用）
+      if (r.予測 === "up") {
+        tr.classList.add("tr-trend-up");
+      } else if (r.予測 === "down") {
+        tr.classList.add("tr-trend-down");
+      }
+
+      // 結果グループのセル背景色：上昇/下降の結果に基づく
+      const resultBg = compareResult === "↗" ? "var(--color-trend-up-bg)"
+                     : compareResult === "↘" ? "var(--color-trend-down-bg)"
+                     : "var(--color-bg-table-row)";
+
+      // スコア：CSVアップロード時に抽出したマップから取得（存在しない場合は "-"）
+      const score = uploadedCsvScoreMap[r.コード] ?? "-";
+
       tr.innerHTML = `
         <td class="fixed-col">${r.コード}</td>
         <td class="fixed-col">${r.銘柄名}</td>
-        <td>${r.比較元終値}</td>
-        <td>${r.比較先終値}</td>
-        <td>${r.増減円 > 0 ? "+" : ""}${r.増減円}</td>
-        <td>${r.増減率 > 0 ? "+" : ""}${r.増減率}%</td>
+        <td>${score}</td>
         <td>${formatDirectionMark(r.予測) || "-"}</td>
+        <td style="background-color:${resultBg}">${compareResult}</td>
+        <td style="background-color:${resultBg}">${r.比較元終値 ?? ""}</td>
+        <td style="background-color:${resultBg}">${r.比較先終値 ?? ""}</td>
+        <td style="background-color:${resultBg}">${r.増減円 > 0 ? "+" : ""}${r.増減円 ?? ""}</td>
+        <td style="background-color:${resultBg}">${r.増減率 > 0 ? "+" : ""}${r.増減率 != null ? r.増減率 + "%" : ""}</td>
       `;
     }
 
