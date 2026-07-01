@@ -455,6 +455,46 @@ function downloadCsv() {
   URL.revokeObjectURL(url);
 }
 
+/**
+ * compare モードの予測合致率を算出する
+ * 予測が null の行（date / 証券コード直接入力）は集計対象外
+ * @param {object[]} results - currentResults
+ * @returns {{ up: {matched,total}, down: {matched,total}, all: {matched,total} } | null}
+ *          予測あり行が0件の場合は null
+ */
+function calcMatchRate(results) {
+  const predictable = results.filter(
+    r => !r.error && r.予測 != null && r.比較元終値 != null && r.比較先終値 != null
+  );
+  if (predictable.length === 0) return null;
+
+  let upMatched = 0, upTotal = 0;
+  let downMatched = 0, downTotal = 0;
+
+  predictable.forEach(r => {
+    const actual = calcCompareResult(r.比較元終値, r.比較先終値);
+    const predicted = formatDirectionMark(r.予測); // "↗" | "↘"
+
+    if (predicted === "↗") {
+      upTotal++;
+      if (actual === "↗") upMatched++;
+    } else if (predicted === "↘") {
+      downTotal++;
+      if (actual === "↘") downMatched++;
+    }
+  });
+
+  const allMatched = upMatched + downMatched;
+  const allTotal   = upTotal  + downTotal;
+
+  return {
+    up:   { matched: upMatched,   total: upTotal },
+    down: { matched: downMatched, total: downTotal },
+    all:  { matched: allMatched,  total: allTotal,
+            rate: Math.round(allMatched / allTotal * 100) }
+  };
+}
+
 /* ============================================================
    初期化処理
 ============================================================ */
@@ -1321,6 +1361,28 @@ function showResults(results, mode) {
   const csvBtn = document.getElementById("csvDownloadBtn");
   if (csvBtn) {
     csvBtn.disabled = results.length === 0;
+  }
+
+  const matchRateEl = document.getElementById("compareMatchRate");
+  if (matchRateEl) {
+    if (mode === "compare") {
+      const mr = calcMatchRate(results);
+      if (mr) {
+        const upText   = mr.up.total   > 0 ? `↗ ${mr.up.matched}/${mr.up.total}件` : null;
+        const downText = mr.down.total > 0 ? `↘ ${mr.down.matched}/${mr.down.total}件` : null;
+        const detail   = [upText, downText].filter(Boolean).join("　");
+        matchRateEl.textContent =
+          `合致率：${mr.all.matched}/${mr.all.total}件（${mr.all.rate}%）　${detail}`;
+        matchRateEl.classList.remove("hidden");
+      } else {
+        // 予測なし（date / 証券コード直接入力）
+        matchRateEl.textContent = "";
+        matchRateEl.classList.add("hidden");
+      }
+    } else {
+      matchRateEl.textContent = "";
+      matchRateEl.classList.add("hidden");
+    }
   }
 
   // テーブル描画後に列幅＋固定列を同期（2段階遅延）
