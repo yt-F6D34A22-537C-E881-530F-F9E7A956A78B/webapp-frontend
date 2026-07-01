@@ -1288,11 +1288,16 @@ function showResults(results, mode) {
       // スコア：CSVアップロード時に抽出したマップから取得（存在しない場合は "-"）
       const score = uploadedCsvScoreMap[r.コード] ?? "-";
 
+      // 予測グループのセル背景色：上昇/下降の予測に基づく
+      const predictBg = r.予測 === "up"   ? "var(--color-trend-up-bg)"
+                      : r.予測 === "down" ? "var(--color-trend-down-bg)"
+                      : "";
+
       tr.innerHTML = `
         <td class="fixed-col">${r.コード}</td>
         <td class="fixed-col">${r.銘柄名}</td>
-        <td>${score}</td>
-        <td>${formatDirectionMark(r.予測) || "-"}</td>
+        <td${predictBg ? ` style="background-color:${predictBg}"` : ""}>${score}</td>
+        <td${predictBg ? ` style="background-color:${predictBg}"` : ""}>${formatDirectionMark(r.予測) || "-"}</td>
         <td style="background-color:${resultBg}">${compareResult}</td>
         <td style="background-color:${resultBg}">${r.比較元終値 ?? ""}</td>
         <td style="background-color:${resultBg}">${r.比較先終値 ?? ""}</td>
