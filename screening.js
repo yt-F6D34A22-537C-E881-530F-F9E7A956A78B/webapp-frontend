@@ -1108,6 +1108,12 @@ async function startScreening() {
       url.searchParams.set("shadow_ratio", shadowRatio);
       url.searchParams.set("target_date", targetDateRatio);
 
+      // 除外市場をパラメータに追加（1件以上チェックされている場合のみ）
+      const excludeMarkets = getExcludeMarkets("ratioConditions");
+      if (excludeMarkets) {
+        url.searchParams.set("exclude_markets", excludeMarkets);
+      }
+
     } else if (mode === "date") {
       url.searchParams.set("mode", "date_ranking");
       url.searchParams.set("target_date", targetDateRanking);
@@ -1117,7 +1123,7 @@ async function startScreening() {
       url.searchParams.set("target_date", targetDateHeuristics);
 
       // 除外市場をパラメータに追加（1件以上チェックされている場合のみ）
-      const excludeMarkets = getExcludeMarkets();
+      const excludeMarkets = getExcludeMarkets("heuristicsConditions");
       if (excludeMarkets) {
         url.searchParams.set("exclude_markets", excludeMarkets);
       }
