@@ -1202,8 +1202,14 @@ async function startScreening() {
 /* ============================
    除外市場の収集
 ============================ */
-function getExcludeMarkets() {
-  const checked = document.querySelectorAll(".exclude-market-checkbox:checked");
+/**
+ * 指定した条件設定コンテナ（scopeId）配下でチェックされている
+ * 除外市場チェックボックスの値をカンマ区切りで返す。
+ * ratio / heuristics で同じクラス名（.exclude-market-checkbox）を共有しているため、
+ * DOM 全体ではなくコンテナ単位でスコープして集計する。
+ */
+function getExcludeMarkets(scopeId) {
+  const checked = document.querySelectorAll(`#${scopeId} .exclude-market-checkbox:checked`);
   return Array.from(checked).map(cb => cb.value).join(",");
 }
 
