@@ -212,6 +212,18 @@ body {
   align-items: flex-start;
 }
 
+/* ============================================================
+   ratio：除外市場・商品区分（volumeRatio 等と同じ行に詰め込まず、
+   フィールドセットのみ折り返して次行に表示する）
+   ============================================================ */
+#ratioConditions {
+  flex-wrap: wrap;
+}
+
+#ratioConditions label:has(.exclude-markets-fieldset) {
+  flex: 1 1 100%;
+}
+
 .mode-conditions label {
   display: flex;
   flex-direction: column;
