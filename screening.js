@@ -498,7 +498,72 @@ function calcMatchRate(results) {
 /* ============================================================
    初期化処理
 ============================================================ */
+/* ----------------------------------------------------------
+   除外市場・商品区分：共通定義（ratio / heuristics で共有）
+   選択肢・デフォルト値の変更はここ1箇所を編集すれば
+   両モードに反映される。
+---------------------------------------------------------- */
+const EXCLUDE_MARKET_OPTIONS = [
+  "ETF・ETN",
+  "PRO Market",
+  "REIT・ベンチャーファンド・カントリーファンド・インフラファンド",
+  "出資証券",
+  "グロース（内国株式）",
+  "グロース（外国株式）",
+  "スタンダード（内国株式）",
+  "スタンダード（外国株式）",
+  "プライム（内国株式）",
+  "プライム（外国株式）",
+];
+
+const EXCLUDE_MARKET_DEFAULT_CHECKED = ["ETF・ETN"];
+
+/**
+ * 除外市場・商品区分のチェックボックス fieldset を EXCLUDE_MARKET_OPTIONS から
+ * 動的生成し、指定コンテナ（containerId）内の [data-exclude-markets-slot] へ挿入する。
+ * 生成直後は disabled（モード切替時に initSearchMode() が有効・無効を制御する）。
+ */
+function renderExcludeMarketsFieldset(containerId) {
+  const slot = document.querySelector(`#${containerId} [data-exclude-markets-slot]`);
+  if (!slot) return;
+
+  const fieldset = document.createElement("fieldset");
+  fieldset.className = "exclude-markets-fieldset";
+  fieldset.disabled = true;
+
+  EXCLUDE_MARKET_OPTIONS.forEach((value, index) => {
+    // 元の静的マークアップと同じ位置（4件目の後）で改行する
+    if (index === 4) {
+      fieldset.appendChild(document.createElement("br"));
+    }
+
+    const label = document.createElement("label");
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.className = "exclude-market-checkbox";
+    checkbox.value = value;
+    checkbox.checked = EXCLUDE_MARKET_DEFAULT_CHECKED.includes(value);
+
+    label.appendChild(checkbox);
+    label.appendChild(document.createTextNode(` ${value}`));
+    fieldset.appendChild(label);
+  });
+
+  slot.appendChild(fieldset);
+}
+
+/**
+ * ratio / heuristics 両モードの除外市場フィールドセットをまとめて生成する。
+ * initSearchMode() が fieldset の有効/無効を切り替える前に、
+ * 必ず window.onload の先頭で呼び出すこと。
+ */
+function renderExcludeMarketsFieldsets() {
+  renderExcludeMarketsFieldset("ratioConditions");
+  renderExcludeMarketsFieldset("heuristicsConditions");
+}
+
 window.onload = () => {
+  renderExcludeMarketsFieldsets();
   initSearchMode();
   loadDates();
   loadTradingDates();
@@ -510,7 +575,8 @@ window.onload = () => {
 ============================ */
 function initSearchMode() {
   const radios = document.querySelectorAll('input[name="searchMode"]');
-  const ratioInputs = document.querySelectorAll("#ratioConditions input, #ratioConditions select");
+  const ratioInputs = document.querySelectorAll("#ratioConditions input:not([type='checkbox']), #ratioConditions select");
+  const ratioFieldset = document.querySelectorAll("#ratioConditions fieldset");
   const dateInputs = document.querySelectorAll("#dateConditions select");
   const heuristicsInputs = document.querySelectorAll("#heuristicsConditions select, #heuristicsConditions input[type='text']");
   const heuristicsFieldset = document.querySelectorAll("#heuristicsConditions fieldset");
@@ -520,6 +586,7 @@ function initSearchMode() {
     const mode = document.querySelector('input[name="searchMode"]:checked').value;
 
     ratioInputs.forEach(i => i.disabled = (mode !== "ratio"));
+    ratioFieldset.forEach(i => i.disabled = (mode !== "ratio"));
     dateInputs.forEach(i => i.disabled = (mode !== "date"));
     heuristicsInputs.forEach(i => i.disabled = (mode !== "heuristics"));
     heuristicsFieldset.forEach(i => i.disabled = (mode !== "heuristics"));
