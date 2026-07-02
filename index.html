@@ -80,6 +80,10 @@
             <label>日付
               <select id="ratioDateSelect"></select>
             </label>
+
+            <label>除外する市場・商品区分
+              <div data-exclude-markets-slot></div>
+            </label>
           </div>
         </div>
 
@@ -158,19 +162,9 @@
               <input id="heuristicsCodes" type="text" placeholder="例: 7203,9984" disabled>
             </label>
             <label>除外する市場・商品区分
-              <fieldset class="exclude-markets-fieldset" disabled>
-                <label><input type="checkbox" class="exclude-market-checkbox" value="ETF・ETN" checked> ETF・ETN</label>
-                <label><input type="checkbox" class="exclude-market-checkbox" value="PRO Market"> PRO Market</label>
-                <label><input type="checkbox" class="exclude-market-checkbox" value="REIT・ベンチャーファンド・カントリーファンド・インフラファンド"> REIT・ベンチャーファンド・カントリーファンド・インフラファンド</label>
-                <label><input type="checkbox" class="exclude-market-checkbox" value="出資証券"> 出資証券</label>
-                <br>
-                <label><input type="checkbox" class="exclude-market-checkbox" value="グロース（内国株式）"> グロース（内国株式）</label>
-                <label><input type="checkbox" class="exclude-market-checkbox" value="グロース（外国株式）"> グロース（外国株式）</label>
-                <label><input type="checkbox" class="exclude-market-checkbox" value="スタンダード（内国株式）"> スタンダード（内国株式）</label>
-                <label><input type="checkbox" class="exclude-market-checkbox" value="スタンダード（外国株式）"> スタンダード（外国株式）</label>
-                <label><input type="checkbox" class="exclude-market-checkbox" value="プライム（内国株式）"> プライム（内国株式）</label>
-                <label><input type="checkbox" class="exclude-market-checkbox" value="プライム（外国株式）"> プライム（外国株式）</label>
-              </fieldset>
+              <!-- 選択肢は screening.js の EXCLUDE_MARKET_OPTIONS から
+                   renderExcludeMarketsFieldset() が動的に生成して挿入する（ratio モードと共通） -->
+              <div data-exclude-markets-slot></div>
             </label>
           </div>
         </div>
