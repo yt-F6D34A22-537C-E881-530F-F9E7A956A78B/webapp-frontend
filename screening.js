@@ -531,6 +531,14 @@ function renderExcludeMarketsFieldset(containerId) {
   fieldset.className = "exclude-markets-fieldset";
   fieldset.disabled = true;
 
+  // fieldset のアクセシブルな名前として legend を設定する
+  // （<label> でチェックボックス群をまとめて囲むと「単一のフォームフィールドに
+  //   紐付かない label」としてアクセシビリティ監査で警告されるため、
+  //   フィールドセットの見出しには legend を用いる）
+  const legend = document.createElement("legend");
+  legend.textContent = "除外する市場・商品区分";
+  fieldset.appendChild(legend);
+
   EXCLUDE_MARKET_OPTIONS.forEach((value, index) => {
     // 元の静的マークアップと同じ位置（4件目の後）で改行する
     if (index === 4) {
