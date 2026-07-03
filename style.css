@@ -241,7 +241,7 @@ body {
   flex-wrap: wrap;
 }
 
-#ratioConditions label:has(.exclude-markets-fieldset) {
+#ratioConditions [data-exclude-markets-slot] {
   flex: 1 1 100%;
 }
 
@@ -375,7 +375,7 @@ body {
   width: 180px;
 }
 
-#heuristicsConditions label:has(.exclude-markets-fieldset) {
+#heuristicsConditions [data-exclude-markets-slot] {
   flex: 1 1 auto;
   min-width: 0;
 }
@@ -415,6 +415,13 @@ body {
 .exclude-markets-fieldset input[type="checkbox"]:disabled {
   cursor: not-allowed;
   opacity: 0.5;
+}
+
+.exclude-markets-fieldset legend {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  padding: 0 4px;
 }
 
 /* ============================================================
