@@ -158,52 +158,73 @@ body {
 }
 
 /* ============================================================
-   条件設定グリッド
+   条件設定：モード切替タブ ＋ 条件パネル
    ============================================================ */
 
-/* 上段グリッド（出来高・値上がり率）*/
-.controls-grid {
+/* ---- モード切替タブ ---- */
+.mode-tabs {
   display: flex;
   flex-wrap: wrap;
-  gap: 16px;
+  gap: 4px;
+  padding-left: 16px;
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: 16px;
+}
+
+.mode-tab {
+  position: relative;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px; /* .mode-tabs の border-bottom に重ねて表示する */
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+/* ネイティブのラジオボタンは非表示にし、label 全体をタップ領域にする */
+.mode-tab input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.mode-tab:hover {
+  color: var(--color-text-secondary);
+}
+
+.mode-tab:has(input:checked) {
+  color: var(--color-accent-primary);
+  border-bottom-color: var(--color-accent-primary);
+}
+
+.mode-tab:has(input:focus-visible) {
+  outline: 2px solid var(--color-accent-primary);
+  outline-offset: 2px;
+}
+
+/* ---- 条件パネル（選択中のモードのみ表示） ---- */
+.mode-panels {
   padding-left: 16px;
   margin-bottom: 12px;
 }
 
-/* 下段グリッド（heuristics・全幅）*/
-.controls-grid-heuristics {
-  margin-bottom: 0;
+.mode-panel {
+  display: none;
 }
 
-.mode-block {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 12px 16px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-mode-block);
-  background: var(--color-bg-mode-block);
-  min-width: var(--mode-block-min-width);
-  box-sizing: border-box;
-}
-
-.mode-block-heuristics {
-  flex-shrink: 1;
-}
-
-.mode-title {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--color-text-primary);
-  display: flex;
-  align-items: center;
-  gap: 6px;
+.mode-tabs:has(input[value="ratio"]:checked) ~ .mode-panels .mode-panel[data-mode="ratio"],
+.mode-tabs:has(input[value="date"]:checked) ~ .mode-panels .mode-panel[data-mode="date"],
+.mode-tabs:has(input[value="compare"]:checked) ~ .mode-panels .mode-panel[data-mode="compare"],
+.mode-tabs:has(input[value="heuristics"]:checked) ~ .mode-panels .mode-panel[data-mode="heuristics"] {
+  display: block;
 }
 
 .mode-conditions {
   display: flex;
   gap: 16px;
-  padding-left: 24px;
 }
 
 /* CSV・証券コード比較：入力方法／比較期間の高さが異なる場合に
@@ -858,23 +879,22 @@ button:disabled {
 @media (max-width: 600px) {
 
   /* ----------------------------------------
-     条件設定：グリッド・ブロック
+     条件設定：モード切替タブ・条件パネル
   ---------------------------------------- */
-  .controls-grid {
-    flex-direction: column;
+  .mode-tabs {
     padding-left: 8px;
+    flex-wrap: nowrap;
+    overflow-x: auto;         /* タブ数が多い場合は横スクロールで対応 */
+    -webkit-overflow-scrolling: touch;
   }
 
-  /* モードブロックはフル幅に（PC の min-width: 260px を解除） */
-  .mode-block {
-    min-width: 0;
-    width: 100%;
+  .mode-panels {
+    padding-left: 8px;
   }
 
   .mode-conditions {
     flex-direction: column;
     gap: 12px;
-    padding-left: 0;
   }
 
   /* ----------------------------------------
