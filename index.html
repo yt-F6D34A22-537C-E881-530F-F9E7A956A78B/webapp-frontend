@@ -58,16 +58,37 @@
         <p>日付データ取得中…</p>
       </div>
 
-      <!-- 上段：出来高 × 上髭 ／ 値上がり率ランキング -->
-      <div class="controls-grid">
+      <!-- ============================
+           モード切替タブ
+      ============================ -->
+      <div class="mode-tabs" role="tablist">
+        <label class="mode-tab">
+          <input type="radio" name="searchMode" value="ratio" checked>
+          <span>出来高 × 上髭スクリーニング</span>
+        </label>
+        <label class="mode-tab">
+          <input type="radio" name="searchMode" value="date">
+          <span>値上がり率ランキング</span>
+        </label>
+        <label class="mode-tab">
+          <input type="radio" name="searchMode" value="compare">
+          <span>CSV・証券コード比較</span>
+        </label>
+        <label class="mode-tab">
+          <input type="radio" name="searchMode" value="heuristics">
+          <span>経験則判定（heuristics）</span>
+        </label>
+      </div>
+
+      <!-- ============================
+           モードごとの条件パネル
+           表示・非表示は style.css の .mode-panel（:has() セレクタ）で切り替える。
+           JS 側の状態管理（initSearchMode）は変更していない。
+      ============================ -->
+      <div class="mode-panels">
 
         <!-- モード A：出来高 × 上髭 -->
-        <div class="mode-block">
-          <label class="mode-title">
-            <input type="radio" name="searchMode" value="ratio" checked>
-            出来高 × 上髭スクリーニング
-          </label>
-
+        <div class="mode-panel" data-mode="ratio">
           <div class="mode-conditions" id="ratioConditions">
             <label>出来高倍率以上
               <input id="volumeRatio" type="number" value="5" step="0.5">
@@ -88,12 +109,7 @@
         </div>
 
         <!-- モード B：値上がり率ランキング -->
-        <div class="mode-block">
-          <label class="mode-title">
-            <input type="radio" name="searchMode" value="date">
-            値上がり率ランキング
-          </label>
-
+        <div class="mode-panel" data-mode="date">
           <div class="mode-conditions" id="dateConditions">
             <label>日付
               <select id="dateSelect" disabled></select>
@@ -102,12 +118,7 @@
         </div>
 
         <!-- モード D：CSV/証券コード比較 -->
-        <div class="mode-block">
-          <label class="mode-title">
-            <input type="radio" name="searchMode" value="compare">
-            CSV・証券コード比較
-          </label>
-
+        <div class="mode-panel" data-mode="compare">
           <div class="mode-conditions" id="compareConditions">
 
             <fieldset class="compare-source-fieldset" disabled>
@@ -143,17 +154,8 @@
           </div>
         </div>
 
-      </div>
-
-      <!-- 下段：heuristics（単独・全幅） -->
-      <div class="controls-grid controls-grid-heuristics">
-
-        <div class="mode-block mode-block-heuristics">
-          <label class="mode-title">
-            <input type="radio" name="searchMode" value="heuristics">
-            経験則判定（heuristics）
-          </label>
-
+        <!-- モード：経験則判定 -->
+        <div class="mode-panel" data-mode="heuristics">
           <div class="mode-conditions" id="heuristicsConditions">
             <label>日付
               <select id="heuristicsDateSelect" disabled></select>
@@ -162,15 +164,13 @@
               <input id="heuristicsCodes" type="text" placeholder="例: 7203,9984" disabled>
             </label>
             <label>除外する市場・商品区分
-              <!-- 選択肢は screening.js の EXCLUDE_MARKET_OPTIONS から
-                   renderExcludeMarketsFieldset() が動的に生成して挿入する（ratio モードと共通） -->
               <div data-exclude-markets-slot></div>
             </label>
           </div>
         </div>
 
       </div>
-
+      
       <div class="buttons-row">
         <button id="startBtn" class="btn primary">スクリーニング開始</button>
         <button id="cancelBtn" class="btn secondary" disabled>キャンセル</button>
