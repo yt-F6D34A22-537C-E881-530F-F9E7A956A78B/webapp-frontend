@@ -7,15 +7,6 @@
 
   <link rel="icon" href="assets/favicon.ico">
   <link rel="apple-touch-icon" href="assets/favicon.ico">
-
-  <!-- ============================
-       Webフォント（Google Fonts）
-       和文: Noto Sans JP / 数値: Inter
-  ============================ -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
-
   <link rel="stylesheet" href="style.css">
 
   <!-- ============================
@@ -213,14 +204,14 @@
       </div>
 
       <!-- 固定ヘッダ専用テーブル -->
-      <div class="table-header-sticky">
+      <div class="table-header-sticky" id="resultTableStickyWrap">
         <table id="resultTableSticky" class="result-table">
           <thead id="resultHeaderSticky"></thead>
         </table>
       </div>
 
       <!-- 本体テーブル（横スクロール） -->
-      <div class="table-scroll-outer">
+      <div class="table-scroll-outer" id="resultTableScrollOuter">
         <table id="resultTable" class="result-table">
           <thead id="resultHeaderBody" aria-hidden="true"></thead>
           <tbody></tbody>
@@ -235,7 +226,7 @@
          チャートモーダル
     ============================ -->
     <div id="chartModal" class="modal">
-      <div class="modal-backdrop"></div>
+      <div class="modal-backdrop" id="chartModalBackdrop"></div>
 
       <div class="modal-content">
 
