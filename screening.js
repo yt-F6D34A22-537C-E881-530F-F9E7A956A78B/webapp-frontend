@@ -1,6 +1,5 @@
 const startBtn = document.getElementById("startBtn");
 const cancelBtn = document.getElementById("cancelBtn");
-const progressText = document.getElementById("progressText");
 const elapsedTimeEl = document.getElementById("elapsedTime");
 const tbody = document.querySelector("#resultTable tbody"); 
 
