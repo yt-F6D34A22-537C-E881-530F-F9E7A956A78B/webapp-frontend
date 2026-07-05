@@ -4,62 +4,85 @@
    ・値を変えるときはここだけ修正すればよい
    ============================================================ */
 :root {
-  /* --- カラーパレット --- */
-  --color-bg-page:          #f5f5f5;
-  --color-bg-card:          #ffffff;
-  --color-bg-input:         #ffffff;
-  --color-bg-mode-block:    #fafafa;
-  --color-bg-table-header1: #f3f4f6;
-  --color-bg-table-header2: #fafafa;
-  --color-bg-table-fixed:   #e5e7eb;
-  --color-bg-table-fixed-mobile: #f0f0f0;
-  --color-bg-table-row:     #ffffff;
-  --color-bg-table-hover:   #FFEFA3;
-  --color-bg-table-error:   #e5e7eb;
-  --color-bg-disabled:      #e5e7eb;
-  --color-bg-overlay:       rgba(0, 0, 0, 0.4);
-  --color-bg-chart-loading: rgba(0, 0, 0, 0.45);
-  --color-bg-legend:        rgba(255, 255, 255, 0.85);
-  --color-bg-settings:      #ffffff;
-  --color-bg-timeframe:     rgba(255, 255, 255, 0.7);
+  /* --- カラーパレット ---
+     デザイン方向性「W案」：クリーム紙 + バーガンディ + カッパー
+     （エディトリアル・マガジン調の配色 × ソフトな凹凸の質感）
+     ページ全体をわずかに沈めた紙色にし、カードを一段明るくして
+     ニューモーフィズム的な浮き上がり感を出す */
+  --color-bg-page:          #F1EBDD;
+  --color-bg-card:          #FBF8F1;
+  --color-bg-input:         #FBF8F1;
+  --color-bg-mode-block:    #F5F0E5;
+  --color-bg-table-header1: #F5F0E5;
+  --color-bg-table-header2: #F9F5EC;
+  --color-bg-table-fixed:   #EDE5D3;
+  --color-bg-table-fixed-mobile: #F0EADC;
+  --color-bg-table-row:     #FBF8F1;
+  --color-bg-table-hover:   #F3DFC9;
+  --color-bg-table-error:   #EDE5D3;
+  --color-bg-disabled:      #E7E0D3;
+  --color-bg-overlay:       rgba(43, 32, 26, 0.45);
+  --color-bg-chart-loading: rgba(43, 32, 26, 0.5);
+  --color-bg-legend:        rgba(251, 248, 241, 0.9);
+  --color-bg-settings:      #FBF8F1;
+  --color-bg-timeframe:     rgba(251, 248, 241, 0.75);
 
-  --color-text-primary:     #111827;
-  --color-text-secondary:   #374151;
-  --color-text-muted:       #666666;
-  --color-text-disabled:    #9ca3af;
-  --color-text-error-row:   #555555;
-  --color-text-white:       #ffffff;
-  --color-text-chart:       #333333;
-  --color-text-legend:      #333333;
+  --color-text-primary:     #2B231D;
+  --color-text-secondary:   #5C5142;
+  --color-text-muted:       #8A7F6C;
+  --color-text-disabled:    #B3A88F;
+  --color-text-error-row:   #6B5F4E;
+  --color-text-white:       #FBF8F1;
+  --color-text-chart:       #2B231D;
+  --color-text-legend:      #2B231D;
 
-  --color-border:           #e5e7eb;
-  --color-border-input:     #d1d5db;
+  --color-border:           #E4DCC9;
+  --color-border-input:     #D8CEB4;
+  --color-border-card:      rgba(122, 46, 58, 0.08);   /* 新規：カードの極薄輪郭線 */
 
-  --color-accent-primary:   #2563eb;
-  --color-accent-primary-bg:#eff6ff;
-  --color-accent-elapsed:   #2563eb;
+  --color-accent-primary:      #7A2E3A; /* バーガンディ：見出し・タブ・罫線に使用 */
+  --color-accent-primary-hover:#5E2129; /* 新規：ホバー／アクティブ時の濃色 */
+  --color-accent-primary-bg:   #F3E3E0; /* バーガンディの薄いティント（選択中タブの背景等） */
+  --color-accent-secondary:    #B5652C; /* 新規：カッパー。主要アクション（ボタン）に使用 */
+  --color-accent-secondary-hover:#9C531F; /* 新規 */
+  --color-accent-elapsed:      #7A2E3A;
 
-  --color-trend-up-bg:      #FBE1E7;
-  --color-trend-down-bg:    #E9F9F0;
+  --color-trend-up-bg:      #F0D9D3;  /* 上昇：ダスティローズ（バーガンディ系） */
+  --color-trend-up-border:  #7A2E3A;  /* 新規：上昇行の左アクセント線 */
+  --color-trend-down-bg:    #DCE8CB;  /* 下降：くすみセージ */
+  --color-trend-down-border:#5B6E52;  /* 新規：下降行の左アクセント線 */
 
-  --color-tech-true:        #059669;
-  --color-tech-false:       #dc2626;
+  --color-tech-true:        #4B7F4F;
+  --color-tech-false:       #A23B3B;
 
-  /* --- シャドウ --- */
-  --shadow-card:            0 4px 10px rgba(0, 0, 0, 0.05);
-  --shadow-legend:          0 0 4px rgba(0, 0, 0, 0.15);
-  --shadow-settings:        0 4px 12px rgba(0, 0, 0, 0.2);
+  /* --- フォント（新規カテゴリ）
+     見出し・テーブルヘッダ: Noto Serif JP（エディトリアルな品格）
+     本文・UI操作系: Noto Sans JP（可読性優先）
+     数値セル: Inter + tabular-nums（桁揃え）
+     index.html で Google Fonts を読み込む。フォールバックは system-ui 系 --- */
+  --font-sans:    "Noto Sans JP", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-serif:   "Noto Serif JP", var(--font-sans);
+  --font-numeric: "Inter", var(--font-sans);
 
-  /* --- ボーダー半径 --- */
-  --radius-card:            12px;
-  --radius-modal:           12px;
-  --radius-btn:             8px;
-  --radius-input:           6px;
-  --radius-mode-block:      8px;
-  --radius-fieldset:        6px;
-  --radius-legend:          4px;
-  --radius-settings:        8px;
-  --radius-csv-btn:         6px;
+  /* --- シャドウ（ニューモーフィズム：明暗2方向のソフトシャドウ） --- */
+  --shadow-card:            2px 2px 8px rgba(122, 46, 58, 0.08), -2px -2px 8px rgba(255, 255, 255, 0.6);
+  --shadow-card-hover:      4px 4px 14px rgba(122, 46, 58, 0.12), -3px -3px 12px rgba(255, 255, 255, 0.7); /* 新規：ホバー／出現時 */
+  --shadow-legend:          0 0 4px rgba(43, 32, 26, 0.15);
+  --shadow-settings:        4px 4px 14px rgba(122, 46, 58, 0.12), -3px -3px 12px rgba(255, 255, 255, 0.7);
+
+  /* --- ボーダー半径（丸みを強めた柔らかい印象） --- */
+  --radius-card:            20px;
+  --radius-modal:           20px;
+  --radius-btn:             14px;
+  --radius-input:           10px;
+  --radius-mode-block:      14px;
+  --radius-fieldset:        10px;
+  --radius-legend:          6px;
+  --radius-settings:        14px;
+  --radius-csv-btn:         10px;
+
+  /* --- トランジション（新規カテゴリ） --- */
+  --transition-base:       0.18s cubic-bezier(0.4, 0, 0.2, 1);
 
   /* --- サイズ・余白 --- */
   --container-max-width:    1500px;
@@ -94,9 +117,11 @@
    ============================================================ */
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: var(--font-sans);
   background: var(--color-bg-page);
   color: var(--color-text-primary);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 .app-container {
@@ -110,19 +135,30 @@ body {
   margin-bottom: 20px;
 }
 
+.app-header h1 {
+  font-family: var(--font-serif);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--color-accent-primary);
+}
+
 .card {
   background: var(--color-bg-card);
   padding: var(--card-padding);
   border-radius: var(--radius-card);
   box-shadow: var(--shadow-card);
+  border: 1px solid var(--color-border-card);
   margin-bottom: 20px;
+  transition: box-shadow var(--transition-base);
 }
 
 .card h2 {
   margin-top: 0;
   margin-bottom: 16px;
   font-size: 20px;
-  font-weight: 600;
+  font-weight: 700;
+  font-family: var(--font-serif);
+  color: var(--color-accent-primary);
 }
 
 /* ============================================================
@@ -178,10 +214,11 @@ body {
   font-weight: 600;
   color: var(--color-text-muted);
   border-bottom: 2px solid transparent;
+  border-radius: var(--radius-input) var(--radius-input) 0 0;
   margin-bottom: -1px; /* .mode-tabs の border-bottom に重ねて表示する */
   cursor: pointer;
   user-select: none;
-  transition: color 0.15s, border-color 0.15s;
+  transition: color var(--transition-base), border-color var(--transition-base), background var(--transition-base);
 }
 
 /* ネイティブのラジオボタンは非表示にし、label 全体をタップ領域にする */
@@ -198,6 +235,7 @@ body {
 .mode-tab:has(input:checked) {
   color: var(--color-accent-primary);
   border-bottom-color: var(--color-accent-primary);
+  background: var(--color-accent-primary-bg);
 }
 
 .mode-tab:has(input:focus-visible) {
@@ -449,6 +487,7 @@ button:disabled {
   border: none;
   font-size: 15px;
   font-weight: 600;
+  transition: transform var(--transition-base), box-shadow var(--transition-base), opacity var(--transition-base);
 }
 
 .btn.small {
@@ -457,8 +496,19 @@ button:disabled {
 }
 
 .btn.primary {
-  background: var(--color-accent-primary);
+  background: linear-gradient(135deg, var(--color-accent-secondary) 0%, var(--color-accent-secondary-hover) 100%);
   color: var(--color-text-white);
+  box-shadow: 0 2px 6px rgba(181, 101, 44, 0.3);
+}
+
+.btn.primary:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(181, 101, 44, 0.35);
+}
+
+.btn.primary:not(:disabled):active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(181, 101, 44, 0.3);
 }
 
 .btn.secondary {
@@ -501,6 +551,8 @@ button:disabled {
   padding: 8px 6px;
   border-bottom: 1px solid var(--color-border);
   font-size: 14px;
+  font-family: var(--font-numeric);
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
   text-align: center;
 }
@@ -540,18 +592,21 @@ button:disabled {
 .result-table thead tr th {
   text-align: center;
   vertical-align: middle;
+  font-family: var(--font-serif);
+  color: var(--color-accent-primary);
 }
 
 /* 2段ヘッダ：上段 */
 .result-table thead tr:first-child th {
   background: var(--color-bg-table-header1);
-  font-weight: 600;
+  font-weight: 700;
+  border-bottom: 2px double var(--color-accent-primary);
 }
 
 /* 2段ヘッダ：下段 */
 .result-table thead tr:nth-child(2) th {
   background: var(--color-bg-table-header2);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 /* 固定列 */
@@ -576,6 +631,16 @@ button:disabled {
 .tr-trend-down .fixed-col,
 .tr-trend-down .td-heuristics-applied {
     background-color: var(--color-trend-down-bg) !important;
+}
+
+/* 色だけに頼らない視認性強化：行の左端にトレンド方向のアクセント線を追加
+   （:first-child による構造的な指定のみで、JS 側の状態管理は変更していない） */
+.tr-trend-up td:first-child {
+    box-shadow: inset 3px 0 0 var(--color-trend-up-border);
+}
+
+.tr-trend-down td:first-child {
+    box-shadow: inset 3px 0 0 var(--color-trend-down-border);
 }
 
 .table-scroll-outer {
@@ -614,6 +679,7 @@ button:disabled {
 
 #resultTable tr {
   background-color: var(--color-bg-table-row);
+  transition: background-color var(--transition-base);
 }
 
 #resultTable tr:hover,
@@ -687,18 +753,26 @@ button:disabled {
   position: absolute;
   inset: 0;
   background: var(--color-bg-overlay);
+  backdrop-filter: blur(3px);
 }
 
 .modal .modal-content {
   position: relative;
   background: var(--color-bg-card);
   border-radius: var(--radius-modal);
+  box-shadow: var(--shadow-card-hover);
   padding: 12px;
   height: calc(var(--vh, 1vh) * 90);
   width: 95vw;
   display: flex;
   flex-direction: column;
   z-index: var(--z-modal-content);
+  animation: modal-in 0.2s ease-out;
+}
+
+@keyframes modal-in {
+  from { opacity: 0; transform: scale(0.98); }
+  to   { opacity: 1; transform: scale(1); }
 }
 
 /* モーダルヘッダー */
@@ -851,6 +925,20 @@ button:disabled {
 
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+/* ============================================================
+   motion 抑制設定を尊重する（アクセシビリティ）
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* ============================================================
