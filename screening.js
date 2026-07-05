@@ -549,6 +549,7 @@ function renderExcludeMarketsFieldset(containerId) {
     const checkbox = document.createElement("input");
     checkbox.type = "checkbox";
     checkbox.className = "exclude-market-checkbox";
+    checkbox.dataset.role = "exclude-market-checkbox";
     checkbox.value = value;
     checkbox.checked = EXCLUDE_MARKET_DEFAULT_CHECKED.includes(value);
 
@@ -929,8 +930,8 @@ function updateTableHeader(mode, label = "", compareFromLabel = "", compareToLab
   if (mode === "ratio") {
     const html = `
       <tr>
-        <th class="fixed-col">コード</th>
-        <th class="fixed-col">銘柄名</th>
+        <th class="fixed-col" data-fixed-col>コード</th>
+        <th class="fixed-col" data-fixed-col>銘柄名</th>
         <th>出来高倍率</th>
         <th>上髭実体比</th>
         <th>出来高</th>
@@ -947,8 +948,8 @@ function updateTableHeader(mode, label = "", compareFromLabel = "", compareToLab
   if (mode === "date") {
     const html = `
       <tr>
-        <th class="fixed-col">コード</th>
-        <th class="fixed-col">銘柄名</th>
+        <th class="fixed-col" data-fixed-col>コード</th>
+        <th class="fixed-col" data-fixed-col>銘柄名</th>
         <th>値上がり率</th>
         <th>${label}終値</th>
         <th>前日終値</th>
@@ -963,10 +964,10 @@ function updateTableHeader(mode, label = "", compareFromLabel = "", compareToLab
   if (mode === "heuristics") {
     let row1 = `
       <tr>
-        <th class="fixed-col" rowspan="2">コード</th>
-        <th class="fixed-col" rowspan="2">銘柄名</th>
-        <th class="fixed-col" rowspan="2">トレンド</th>
-        <th class="fixed-col" rowspan="2">スコア</th>
+        <th class="fixed-col" data-fixed-col rowspan="2">コード</th>
+        <th class="fixed-col" data-fixed-col rowspan="2">銘柄名</th>
+        <th class="fixed-col" data-fixed-col rowspan="2">トレンド</th>
+        <th class="fixed-col" data-fixed-col rowspan="2">スコア</th>
     `;
     let row2 = `<tr>`;
 
@@ -1002,8 +1003,8 @@ function updateTableHeader(mode, label = "", compareFromLabel = "", compareToLab
     const toHeader   = compareToLabel   ? `比較先 ${compareToLabel}終値`   : "比較先終値";
     const html = `
       <tr>
-        <th class="fixed-col">コード</th>
-        <th class="fixed-col">銘柄名</th>
+        <th class="fixed-col" data-fixed-col>コード</th>
+        <th class="fixed-col" data-fixed-col>銘柄名</th>
         <th>スコア</th>
         <th>上昇/下降の予測</th>
         <th>上昇/下降の結果</th>
@@ -1219,11 +1220,11 @@ async function startScreening() {
 /**
  * 指定した条件設定コンテナ（scopeId）配下でチェックされている
  * 除外市場チェックボックスの値をカンマ区切りで返す。
- * ratio / heuristics で同じクラス名（.exclude-market-checkbox）を共有しているため、
+ * ratio / heuristics で同じ data-role（exclude-market-checkbox）を共有しているため、
  * DOM 全体ではなくコンテナ単位でスコープして集計する。
  */
 function getExcludeMarkets(scopeId) {
-  const checked = document.querySelectorAll(`#${scopeId} .exclude-market-checkbox:checked`);
+  const checked = document.querySelectorAll(`#${scopeId} [data-role="exclude-market-checkbox"]:checked`);
   return Array.from(checked).map(cb => cb.value).join(",");
 }
 
@@ -1250,8 +1251,8 @@ function showResults(results, mode) {
     ------------------------------ */
     if (mode === "ratio") {
       tr.innerHTML = `
-        <td class="fixed-col">${r.コード}</td>
-        <td class="fixed-col">${r.銘柄名}</td>
+        <td class="fixed-col" data-fixed-col>${r.コード}</td>
+        <td class="fixed-col" data-fixed-col>${r.銘柄名}</td>
         <td>${r.出来高倍率}</td>
         <td>${r.上髭実体比}</td>
         <td>${r.出来高.toLocaleString()}</td>
@@ -1265,8 +1266,8 @@ function showResults(results, mode) {
     ------------------------------ */
     else if (mode === "date") {
       tr.innerHTML = `
-        <td class="fixed-col">${r.コード}</td>
-        <td class="fixed-col">${r.銘柄名}</td>
+        <td class="fixed-col" data-fixed-col>${r.コード}</td>
+        <td class="fixed-col" data-fixed-col>${r.銘柄名}</td>
         <td>${r.値上がり率}%</td>
         <td>${r.当日終値}</td>
         <td>${r.前日終値}</td>
@@ -1286,10 +1287,10 @@ function showResults(results, mode) {
       }
         
       let html = `
-        <td class="fixed-col">${r.コード}</td>
-        <td class="fixed-col">${r.銘柄名}</td>
-        <td class="fixed-col">${formatDirectionMark(r.トレンド)}</td>
-        <td class="fixed-col">${r.スコア}</td>
+        <td class="fixed-col" data-fixed-col>${r.コード}</td>
+        <td class="fixed-col" data-fixed-col>${r.銘柄名}</td>
+        <td class="fixed-col" data-fixed-col>${formatDirectionMark(r.トレンド)}</td>
+        <td class="fixed-col" data-fixed-col>${r.スコア}</td>
       `;
 
       for (const typeObj of HEURISTICS_TYPES) {
@@ -1421,8 +1422,8 @@ function showResults(results, mode) {
                       : "";
 
       tr.innerHTML = `
-        <td class="fixed-col">${r.コード}</td>
-        <td class="fixed-col">${r.銘柄名}</td>
+        <td class="fixed-col" data-fixed-col>${r.コード}</td>
+        <td class="fixed-col" data-fixed-col>${r.銘柄名}</td>
         <td${predictBg ? ` style="background-color:${predictBg}"` : ""}>${score}</td>
         <td${predictBg ? ` style="background-color:${predictBg}"` : ""}>${formatDirectionMark(r.予測) || "-"}</td>
         <td style="background-color:${resultBg}">${compareResult}</td>
@@ -1480,7 +1481,7 @@ function showResults(results, mode) {
    ソート
 ============================ */
 document.addEventListener("click", e => {
-  const th = e.target.closest(".table-header-sticky th[data-sort-key]");
+  const th = e.target.closest("#resultTableSticky th[data-sort-key]");
   if (!th) return;
 
   const key = th.dataset.sortKey;
@@ -1510,20 +1511,26 @@ function syncColumnWidths() {
   const bodyTable   = document.getElementById("resultTable");
   if (!headerTable || !bodyTable) return;
 
-  if (bodyTable.querySelectorAll("tbody tr").length === 0) return;
+  // querySelectorAll("tbody tr") は本体テーブル全行を走査してからその件数を数えるため、
+  // 空判定のためだけに使うと無駄なDOM走査が発生する。
+  // tBodies[0].rows はライブコレクションで件数取得が O(1) のため、空判定はこちらを使う。
+  const bodyRows = bodyTable.tBodies[0]?.rows;
+  if (!bodyRows || bodyRows.length === 0) return;
 
-  const headerTableTHeadRows = headerTable.querySelectorAll("thead tr");
-  const bodyTableTHeadRows = bodyTable.querySelectorAll("thead tr");
+  // thead 行・セルの取得も querySelectorAll ではなく tHead.rows / row.cells
+  // （どちらもライブコレクションで CSS セレクタ照合を伴わない）に統一する。
+  // thead の行数・列数は数行～数十列程度なので、この時点でのコストは元々小さいが、
+  // syncFixedColumns() と方針を揃えるため同様に軽量な取得方法へ統一する。
+  const headerTheadRows = headerTable.tHead?.rows;
+  const bodyTheadRows   = bodyTable.tHead?.rows;
+  if (!headerTheadRows || !bodyTheadRows) return;
 
-  for (let i = 0; i < bodyTableTHeadRows.length; i++) {
-    const hRow = headerTableTHeadRows[i];
-    const hThs = hRow.querySelectorAll("th");
+  for (let i = 0; i < bodyTheadRows.length; i++) {
+    const hCells = headerTheadRows[i].cells;
+    const bCells = bodyTheadRows[i].cells;
 
-    const bRow = bodyTableTHeadRows[i];
-    const bThs = bRow.querySelectorAll("th");
-
-    for (let j = 0; j < bThs.length; j++) {
-      hThs[j].style.width = bThs[j].getBoundingClientRect().width + "px";
+    for (let j = 0; j < bCells.length; j++) {
+      hCells[j].style.width = bCells[j].getBoundingClientRect().width + "px";
     }
   }
 }
@@ -1532,36 +1539,55 @@ function syncColumnWidths() {
    固定列同期
 ============================ */
 function syncFixedColumns() {
-  const table = document.getElementById("resultTable");
-  if (!table) return;
+  const bodyTable = document.getElementById("resultTable");
+  if (!bodyTable) return;
 
-  const rows = table.querySelectorAll("tbody tr");
-  if (rows.length === 0) return;
+  // tBodies[0].rows はライブコレクション。querySelectorAll("tbody tr") と異なり
+  // CSS セレクタ照合を伴わずに全行へアクセスできる。
+  const rows = bodyTable.tBodies[0]?.rows;
+  if (!rows || rows.length === 0) return;
 
   const firstRow = rows[0];
-  const fixedCols = firstRow.querySelectorAll(".fixed-col");
+  const fixedCols = firstRow.querySelectorAll("[data-fixed-col]");
+  if (fixedCols.length === 0) return;
 
+  // ① 読み取りフェーズ：先頭行だけを見て「固定列の列インデックスと left オフセット」を
+  //    1回だけ算出する（固定列は2〜4個程度のため、ここでの getBoundingClientRect 呼び出しコストは小さい）
+  const offsets = [];
   let left = 0;
-
   fixedCols.forEach(col => {
-    const colIndex = Array.from(firstRow.children).indexOf(col);
-    const width = col.getBoundingClientRect().width;
+    offsets.push({ colIndex: col.cellIndex, left });
+    left += col.getBoundingClientRect().width;
+  });
 
-    document.querySelectorAll(`#resultTable td:nth-child(${colIndex + 1})`)
-      .forEach(td => td.style.left = `${left}px`);
+  // ② 書き込みフェーズ：本体テーブルは行を1回だけ走査し、
+  //    各行の固定列セルへ colIndex で直接アクセスして left を設定する。
+  //    従来は「固定列の数 × 全行」ぶん document.querySelectorAll(":nth-child(...)") を
+  //    テーブル全体に対して呼び出しており、行数が多い場合にコストが線形以上に増加していた。
+  //    row.cells[colIndex] はライブコレクションへの添字アクセスのため、
+  //    行数のぶんだけの O(rows数) で完結する。
+  for (const row of rows) {
+    for (const { colIndex, left } of offsets) {
+      const cell = row.cells[colIndex];
+      if (cell) cell.style.left = `${left}px`;
+    }
+  }
 
-    document.querySelectorAll(`.table-header-sticky th:nth-child(${colIndex + 1})`)
-      .forEach(th => th.style.left = `${left}px`);
-
-    left += width;
+  // ③ 固定ヘッダテーブル側：heuristics モードは rowspan="2" により
+  //    2行目のセル位置が本体テーブルの列インデックスとずれるため、
+  //    nth-child（DOM上の位置）ではなく [data-fixed-col] の出現順
+  //    （本体と同じ左→右の並び）で対応付ける。固定列は少数のため走査コストも小さい。
+  const headerFixedCols = document.querySelectorAll("#resultTableSticky [data-fixed-col]");
+  headerFixedCols.forEach((th, i) => {
+    if (offsets[i]) th.style.left = `${offsets[i].left}px`;
   });
 }
 
 /* ============================
    スクロール同期
 ============================ */
-const stickyHeader = document.querySelector(".table-header-sticky");
-const scrollOuter = document.querySelector(".table-scroll-outer");
+const stickyHeader = document.getElementById("resultTableStickyWrap");
+const scrollOuter = document.getElementById("resultTableScrollOuter");
 
 if (stickyHeader && scrollOuter) {
   stickyHeader.addEventListener("scroll", () => {
