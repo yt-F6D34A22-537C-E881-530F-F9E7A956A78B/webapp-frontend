@@ -34,10 +34,12 @@
 
   --color-border:           #e5e7eb;
   --color-border-input:     #d1d5db;
+  --color-border-card:      rgba(15, 23, 42, 0.06);   /* 新規：カードの極薄輪郭線 */
 
-  --color-accent-primary:   #2563eb;
-  --color-accent-primary-bg:#eff6ff;
-  --color-accent-elapsed:   #2563eb;
+  --color-accent-primary:      #1a3d7c; /* 上品なネイビー。証券アプリらしい信頼感を演出 */
+  --color-accent-primary-hover:#12295a; /* 新規：ホバー／アクティブ時の濃色 */
+  --color-accent-primary-bg:   #eef2fb;
+  --color-accent-elapsed:      #1a3d7c;
 
   --color-trend-up-bg:      #FBE1E7;
   --color-trend-down-bg:    #E9F9F0;
@@ -45,21 +47,31 @@
   --color-tech-true:        #059669;
   --color-tech-false:       #dc2626;
 
+  /* --- フォント（新規カテゴリ）
+     和文: Noto Sans JP／数値主体のセル: Inter（tabular-nums で桁を揃える）
+     index.html で Google Fonts を読み込む。フォールバックは system-ui 系 --- */
+  --font-sans:    "Noto Sans JP", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-numeric: "Inter", var(--font-sans);
+
   /* --- シャドウ --- */
-  --shadow-card:            0 4px 10px rgba(0, 0, 0, 0.05);
+  --shadow-card:            0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px rgba(15, 23, 42, 0.06);
+  --shadow-card-hover:      0 12px 32px rgba(15, 23, 42, 0.10); /* 新規：カード／モーダルのホバー・出現時 */
   --shadow-legend:          0 0 4px rgba(0, 0, 0, 0.15);
   --shadow-settings:        0 4px 12px rgba(0, 0, 0, 0.2);
 
   /* --- ボーダー半径 --- */
-  --radius-card:            12px;
-  --radius-modal:           12px;
-  --radius-btn:             8px;
+  --radius-card:            16px;
+  --radius-modal:           16px;
+  --radius-btn:             10px;
   --radius-input:           6px;
   --radius-mode-block:      8px;
   --radius-fieldset:        6px;
   --radius-legend:          4px;
   --radius-settings:        8px;
   --radius-csv-btn:         6px;
+
+  /* --- トランジション（新規カテゴリ） --- */
+  --transition-base:       0.18s cubic-bezier(0.4, 0, 0.2, 1);
 
   /* --- サイズ・余白 --- */
   --container-max-width:    1500px;
@@ -94,9 +106,11 @@
    ============================================================ */
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: var(--font-sans);
   background: var(--color-bg-page);
   color: var(--color-text-primary);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 .app-container {
@@ -115,7 +129,9 @@ body {
   padding: var(--card-padding);
   border-radius: var(--radius-card);
   box-shadow: var(--shadow-card);
+  border: 1px solid var(--color-border-card);
   margin-bottom: 20px;
+  transition: box-shadow var(--transition-base);
 }
 
 .card h2 {
@@ -178,10 +194,11 @@ body {
   font-weight: 600;
   color: var(--color-text-muted);
   border-bottom: 2px solid transparent;
+  border-radius: var(--radius-input) var(--radius-input) 0 0;
   margin-bottom: -1px; /* .mode-tabs の border-bottom に重ねて表示する */
   cursor: pointer;
   user-select: none;
-  transition: color 0.15s, border-color 0.15s;
+  transition: color var(--transition-base), border-color var(--transition-base), background var(--transition-base);
 }
 
 /* ネイティブのラジオボタンは非表示にし、label 全体をタップ領域にする */
@@ -198,6 +215,7 @@ body {
 .mode-tab:has(input:checked) {
   color: var(--color-accent-primary);
   border-bottom-color: var(--color-accent-primary);
+  background: var(--color-accent-primary-bg);
 }
 
 .mode-tab:has(input:focus-visible) {
@@ -449,6 +467,7 @@ button:disabled {
   border: none;
   font-size: 15px;
   font-weight: 600;
+  transition: transform var(--transition-base), box-shadow var(--transition-base), opacity var(--transition-base);
 }
 
 .btn.small {
@@ -457,8 +476,19 @@ button:disabled {
 }
 
 .btn.primary {
-  background: var(--color-accent-primary);
+  background: linear-gradient(135deg, var(--color-accent-primary) 0%, var(--color-accent-primary-hover) 100%);
   color: var(--color-text-white);
+  box-shadow: 0 2px 6px rgba(26, 61, 124, 0.25);
+}
+
+.btn.primary:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(26, 61, 124, 0.3);
+}
+
+.btn.primary:not(:disabled):active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(26, 61, 124, 0.25);
 }
 
 .btn.secondary {
@@ -501,6 +531,8 @@ button:disabled {
   padding: 8px 6px;
   border-bottom: 1px solid var(--color-border);
   font-size: 14px;
+  font-family: var(--font-numeric);
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
   text-align: center;
 }
@@ -614,6 +646,7 @@ button:disabled {
 
 #resultTable tr {
   background-color: var(--color-bg-table-row);
+  transition: background-color var(--transition-base);
 }
 
 #resultTable tr:hover,
@@ -687,18 +720,26 @@ button:disabled {
   position: absolute;
   inset: 0;
   background: var(--color-bg-overlay);
+  backdrop-filter: blur(3px);
 }
 
 .modal .modal-content {
   position: relative;
   background: var(--color-bg-card);
   border-radius: var(--radius-modal);
+  box-shadow: var(--shadow-card-hover);
   padding: 12px;
   height: calc(var(--vh, 1vh) * 90);
   width: 95vw;
   display: flex;
   flex-direction: column;
   z-index: var(--z-modal-content);
+  animation: modal-in 0.2s ease-out;
+}
+
+@keyframes modal-in {
+  from { opacity: 0; transform: scale(0.98); }
+  to   { opacity: 1; transform: scale(1); }
 }
 
 /* モーダルヘッダー */
@@ -851,6 +892,20 @@ button:disabled {
 
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+/* ============================================================
+   motion 抑制設定を尊重する（アクセシビリティ）
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* ============================================================
