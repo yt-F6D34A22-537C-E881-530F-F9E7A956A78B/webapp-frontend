@@ -77,7 +77,7 @@ function closeModal() {
 }
 
 closeBtn.addEventListener("click", closeModal);
-document.querySelector(".modal-backdrop").addEventListener("click", closeModal);
+document.getElementById("chartModalBackdrop").addEventListener("click", closeModal);
 
 // chartContainer の高さが確定するまで待つ
 function waitForHeight(callback) {
