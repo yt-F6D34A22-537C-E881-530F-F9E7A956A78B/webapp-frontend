@@ -3,10 +3,15 @@
 // チャート同期・リサイズ処理・初期表示範囲
 // --------------------------------------
 
+// 同期用フラグ。旧実装では chart-main.js のトップレベル変数を
+// グローバルスコープ共有で参照していたが、本モジュールでのみ使用するため
+// ここに閉じ込める（ES Modules化に伴う変更）。
+let isSyncing = false;
+
 // ------------------------------
 // チャート同期（スクロール・ズーム）
 // ------------------------------
-function bindTimeSync(srcChart, targetCharts) {
+export function bindTimeSync(srcChart, targetCharts) {
   if (!srcChart) return;
 
   srcChart.timeScale().subscribeVisibleTimeRangeChange((range) => {
@@ -24,7 +29,7 @@ function bindTimeSync(srcChart, targetCharts) {
 // ------------------------------
 // リサイズ処理
 // ------------------------------
-function setupResize(priceChart, rciChart, macdChart) {
+export function setupResize(priceChart, rciChart, macdChart, chartContainer, rciContainer, macdContainer) {
   window.addEventListener('resize', () => {
     if (priceChart) {
       const r = chartContainer.getBoundingClientRect();
@@ -44,7 +49,7 @@ function setupResize(priceChart, rciChart, macdChart) {
 // ------------------------------
 // デフォルト表示期間（直近4ヶ月）
 // ------------------------------
-function applyDefaultRange(priceChart, rciChart, macdChart, candleData) {
+export function applyDefaultRange(priceChart, rciChart, macdChart, candleData) {
   if (!candleData || candleData.length === 0) return;
 
   const lastTime = candleData[candleData.length - 1].time;
