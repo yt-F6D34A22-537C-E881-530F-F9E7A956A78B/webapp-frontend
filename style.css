@@ -587,6 +587,19 @@ button:disabled {
 /* ============================================================
    固定ヘッダテーブル
    ============================================================ */
+/* ============================================================
+   固定ヘッダ＋本体テーブルの共通ラッパー（トレイ表現）
+   overflow: hidden は使わない。table-header-sticky の
+   position: sticky の基準祖先を変えてしまうと固定位置がずれる
+   おそれがあるため、padding のみで凹み背景を見せる
+   ============================================================ */
+.table-well {
+  background: var(--color-bg-mode-block);
+  border-radius: var(--radius-input);
+  box-shadow: var(--shadow-neumo-inset);
+  padding: 6px;
+}
+
 .table-header-sticky {
   position: sticky;
   top: 0;
