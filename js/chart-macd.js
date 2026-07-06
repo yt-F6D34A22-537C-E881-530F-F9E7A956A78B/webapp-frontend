@@ -2,11 +2,12 @@
 // chart-macd.js
 // MACDチャート（MACD・Signal・Histogram）
 // --------------------------------------
+import { calcMACD } from "./chart-indicators.js";
 
-function createMacdChart(candleData) {
+export function createMacdChart(macdContainer, candleData) {
   const mRect = macdContainer.getBoundingClientRect();
 
-  macdChart = LightweightCharts.createChart(macdContainer, {
+  const chart = LightweightCharts.createChart(macdContainer, {
     width: mRect.width || 400,
     height: mRect.height || 160,
     layout: {
@@ -31,14 +32,14 @@ function createMacdChart(candleData) {
     },
   });
 
-  macdChart.applyOptions({
+  chart.applyOptions({
     localization: {
       locale: 'ja-JP',
       dateFormat: 'yyyy/MM/dd',
     },
   });
 
-  macdChart.timeScale().applyOptions({
+  chart.timeScale().applyOptions({
     tickMarkFormatter: (time) => {
       const date = new Date(time * 1000);
       const m = String(date.getMonth() + 1).padStart(2, '0');
@@ -61,26 +62,26 @@ function createMacdChart(candleData) {
 
   const macd = calcMACD(candleData, 12, 26, 9);
 
-  macdLineSeries = macdChart.addSeries(LightweightCharts.LineSeries, {
+  const macdLineSeries = chart.addSeries(LightweightCharts.LineSeries, {
     color: '#0000ff',
     lineWidth: 1,
   });
   macdLineSeries.setData(macd.macdData.filter(p => p.value !== null));
 
-  macdSignalSeries = macdChart.addSeries(LightweightCharts.LineSeries, {
+  const macdSignalSeries = chart.addSeries(LightweightCharts.LineSeries, {
     color: '#ff0000',
     lineWidth: 1,
   });
   macdSignalSeries.setData(macd.signalData.filter(p => p.value !== null));
 
-  macdHistSeries = macdChart.addSeries(LightweightCharts.HistogramSeries, {
+  const macdHistSeries = chart.addSeries(LightweightCharts.HistogramSeries, {
     color: 'rgba(0, 128, 0, 0.6)',
     priceFormat: { type: 'price', precision: 4, minMove: 0.0001 },
     scaleMargins: { top: 0.1, bottom: 0.1 },
   });
   macdHistSeries.setData(macd.histData.filter(p => p.value !== null));
 
-  macdChart.priceScale('right').applyOptions({
+  chart.priceScale('right').applyOptions({
     scaleMargins: { top: 0.1, bottom: 0.1 },
   });
 
@@ -98,7 +99,7 @@ function createMacdChart(candleData) {
   macdContainer.style.position = "relative";
   macdContainer.appendChild(macdTooltip);
 
-  macdChart.subscribeCrosshairMove(param => {
+  chart.subscribeCrosshairMove(param => {
     if (!param.time || !param.point) {
       macdTooltip.style.display = 'none';
       return;
@@ -136,5 +137,5 @@ function createMacdChart(candleData) {
     `;
   });
 
-  return { chart: macdChart };
+  return { chart };
 }
