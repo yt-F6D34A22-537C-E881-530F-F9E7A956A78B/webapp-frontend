@@ -2,9 +2,17 @@
 // chart-main.js
 // モーダル制御・チャート描画の司令塔
 // --------------------------------------
-
-// チャート同期用フラグ（chart-sync.js から参照される）
-let isSyncing = false;
+import { fetchChartData } from "./chart-data.js";
+import {
+  createPriceChart,
+  setShowCandles,
+  setShowMA,
+  setShowBB,
+  setShowIchimoku,
+} from "./chart-price.js";
+import { createRciChart } from "./chart-rci.js";
+import { createMacdChart } from "./chart-macd.js";
+import { bindTimeSync, setupResize, applyDefaultRange } from "./chart-sync.js";
 
 // iPhone Safari の余白対策
 function updateVh() {
@@ -145,26 +153,22 @@ document.addEventListener("click", (e) => {
 
 // ローソク足の見た目切り替え
 toggleCandlesCheckbox.addEventListener("change", (e) => {
-  showCandles = e.target.checked;
-  if (typeof applyCandleVisibility === "function") applyCandleVisibility();
+  setShowCandles(e.target.checked);
 });
 
 // MA の表示/非表示
 toggleMACheckbox.addEventListener("change", (e) => {
-  showMA = e.target.checked;
-  if (typeof applyMAVisibility === "function") applyMAVisibility();
+  setShowMA(e.target.checked);
 });
 
 // BB の表示/非表示
 toggleBBCheckbox.addEventListener("change", (e) => {
-  showBB = e.target.checked;
-  if (typeof applyBBVisibility === "function") applyBBVisibility();
+  setShowBB(e.target.checked);
 });
 
 // 一目均衡表の表示/非表示
 toggleIchimokuCheckbox.addEventListener("change", (e) => {
-  showIchimoku = e.target.checked;
-  if (typeof applyIchimokuVisibility === "function") applyIchimokuVisibility();
+  setShowIchimoku(e.target.checked);
 });
 
 // 足種切替イベント
@@ -256,13 +260,15 @@ async function drawChart(ticker, name) {
     });
 
     // ② 価格チャートシリーズ生成
-    createPriceChart(priceChart, tradingData);
+    createPriceChart(priceChart, chartContainer, tradingData);
 
     const price = { chart: priceChart };
 
     // ③ RCI / MACD チャート生成
-    const rci = createRciChart(tradingData);
-    const macd = createMacdChart(tradingData);
+    const rci = createRciChart(rciContainer, tradingData);
+    rciChart = rci.chart;   // ES Modules化により、旧来の暗黙グローバル代入から明示代入に変更
+    const macd = createMacdChart(macdContainer, tradingData);
+    macdChart = macd.chart; // 同上
 
     // ④ 同期処理
     bindTimeSync(price.chart, [rci.chart, macd.chart]);
@@ -270,7 +276,7 @@ async function drawChart(ticker, name) {
     bindTimeSync(macd.chart, [price.chart, rci.chart]);
 
     // ⑤ リサイズ処理
-    setupResize(price.chart, rci.chart, macd.chart);
+    setupResize(price.chart, rci.chart, macd.chart, chartContainer, rciContainer, macdContainer);
 
     // ⑥ デフォルト表示期間（あなたの既存ロジック）
     applyDefaultRange(price.chart, rci.chart, macd.chart, tradingData);
