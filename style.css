@@ -53,7 +53,6 @@
   --color-trend-down-border:#5B6E52;  /* 新規：下降行の左アクセント線 */
 
   --color-tech-true:        #4B7F4F;
-  --color-tech-false:       #A23B3B;
 
   /* --- フォント（新規カテゴリ）
      見出し・テーブルヘッダ: Noto Serif JP（エディトリアルな品格）
@@ -655,17 +654,6 @@ button:disabled {
   display: none;             /* Chrome / Safari */
 }
 
-.table-scroll-body {
-  overflow-x: auto;
-  overflow-y: hidden;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-}
-
-.table-scroll-body::-webkit-scrollbar {
-  display: none; /* Chrome / Safari */
-}
-
 /* 本体側 thead は完全非表示 */
 #resultHeaderBody {
   visibility: collapse;   /* 幅計算には参加 */
@@ -693,11 +681,6 @@ button:disabled {
    ============================================================ */
 .tech-true {
   color: var(--color-tech-true);
-  font-weight: bold;
-}
-
-.tech-false {
-  color: var(--color-tech-false);
   font-weight: bold;
 }
 
