@@ -26,7 +26,7 @@ function sleep(ms) {
  * @param {string} timeframe  足種（"1d" | "1wk" | "1mo"）
  * @returns {Promise<Array|null>} candleData 配列、取得失敗時は null
  */
-async function fetchChartData(ticker, timeframe = "1d") {
+export async function fetchChartData(ticker, timeframe = "1d") {
   const API_BASE_URL = "https://yfinance-api-fe86988c-d3b4-f1c6-640d.onrender.com";
 
   // ★ timeframe をバックエンドへ渡す
