@@ -29,17 +29,10 @@
   <script defer src="screening.js"></script>
 
   <!-- ============================
-       チャート関連（依存順）
+       チャート関連
+       各chart-*.jsはchart-main.jsからimportされる。
   ============================ -->
-  <script defer src="js/chart-indicators.js"></script>
-  <script defer src="js/chart-data.js"></script>
-  <script defer src="js/chart-price.js"></script>
-  <script defer src="js/chart-rci.js"></script>
-  <script defer src="js/chart-macd.js"></script>
-  <script defer src="js/chart-sync.js"></script>
-
-  <!-- メイン制御 -->
-  <script defer src="js/chart-main.js"></script>
+  <script type="module" src="js/chart-main.js"></script>
 </head>
 
 <body>
