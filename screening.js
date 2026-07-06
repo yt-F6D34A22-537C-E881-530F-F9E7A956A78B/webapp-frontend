@@ -547,7 +547,6 @@ function renderExcludeMarketsFieldset(containerId) {
     const label = document.createElement("label");
     const checkbox = document.createElement("input");
     checkbox.type = "checkbox";
-    checkbox.className = "exclude-market-checkbox";
     checkbox.dataset.role = "exclude-market-checkbox";
     checkbox.value = value;
     checkbox.checked = EXCLUDE_MARKET_DEFAULT_CHECKED.includes(value);
