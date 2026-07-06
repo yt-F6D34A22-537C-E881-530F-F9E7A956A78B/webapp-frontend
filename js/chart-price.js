@@ -1,6 +1,7 @@
 // --------------------------------------
 // chart-price.js（一目均衡表・動的雲：SpanA最背面 × SpanB前面）
 // --------------------------------------
+import { calcMA, calcBB } from "./chart-indicators.js";
 
 let candleSeries;
 let volumeSeries;
@@ -86,6 +87,34 @@ function applyIchimokuVisibility() {
 }
 
 // --------------------------------------
+// 表示状態フラグの外部からの更新口
+// ES Modules化に伴い、chart-main.js から showCandles 等へ直接代入できなくなったため、
+// 「フラグ更新＋再適用」をまとめたセッター関数として公開する。
+// （挙動は従来の chart-main.js 側の
+//   `showCandles = e.target.checked; if (typeof applyCandleVisibility === "function") applyCandleVisibility();`
+//   と等価）
+// --------------------------------------
+export function setShowCandles(value) {
+  showCandles = value;
+  applyCandleVisibility();
+}
+
+export function setShowMA(value) {
+  showMA = value;
+  applyMAVisibility();
+}
+
+export function setShowBB(value) {
+  showBB = value;
+  applyBBVisibility();
+}
+
+export function setShowIchimoku(value) {
+  showIchimoku = value;
+  applyIchimokuVisibility();
+}
+
+// --------------------------------------
 // 一目均衡表の計算
 // --------------------------------------
 function calcIchimoku(candleData) {
@@ -161,7 +190,7 @@ function calcIchimoku(candleData) {
 // --------------------------------------
 // 価格チャート生成（前半）
 // --------------------------------------
-function createPriceChart(priceChart, candleData) {
+export function createPriceChart(priceChart, chartContainer, candleData) {
 
   const candleMap = new Map();
   candleData.forEach(c => candleMap.set(c.time, c));
