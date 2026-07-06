@@ -2,11 +2,12 @@
 // chart-rci.js
 // RCIチャート（短期9・長期26）
 // --------------------------------------
+import { calcRCI } from "./chart-indicators.js";
 
-function createRciChart(candleData) {
+export function createRciChart(rciContainer, candleData) {
   const rRect = rciContainer.getBoundingClientRect();
 
-  rciChart = LightweightCharts.createChart(rciContainer, {
+  const chart = LightweightCharts.createChart(rciContainer, {
     width: rRect.width || 400,
     height: rRect.height || 160,
     layout: {
@@ -31,14 +32,14 @@ function createRciChart(candleData) {
     },
   });
 
-  rciChart.applyOptions({
+  chart.applyOptions({
     localization: {
       locale: 'ja-JP',
       dateFormat: 'yyyy/MM/dd',
     },
   });
 
-  rciChart.timeScale().applyOptions({
+  chart.timeScale().applyOptions({
     tickMarkFormatter: (time) => {
       const date = new Date(time * 1000);
       const m = String(date.getMonth() + 1).padStart(2, '0');
@@ -61,19 +62,19 @@ function createRciChart(candleData) {
   const rciShort = calcRCI(candleData, 9);
   const rciLong  = calcRCI(candleData, 26);
 
-  rciShortSeries = rciChart.addSeries(LightweightCharts.LineSeries, {
+  const rciShortSeries = chart.addSeries(LightweightCharts.LineSeries, {
     color: '#ff1493',
     lineWidth: 1,
   });
   rciShortSeries.setData(rciShort.filter(p => p.value !== null));
 
-  rciLongSeries = rciChart.addSeries(LightweightCharts.LineSeries, {
+  const rciLongSeries = chart.addSeries(LightweightCharts.LineSeries, {
     color: '#1e90ff',
     lineWidth: 1,
   });
   rciLongSeries.setData(rciLong.filter(p => p.value !== null));
 
-  rciChart.priceScale('right').applyOptions({
+  chart.priceScale('right').applyOptions({
     scaleMargins: { top: 0.1, bottom: 0.1 },
   });
 
@@ -91,7 +92,7 @@ function createRciChart(candleData) {
   rciContainer.style.position = "relative";
   rciContainer.appendChild(rciTooltip);
 
-  rciChart.subscribeCrosshairMove(param => {
+  chart.subscribeCrosshairMove(param => {
     if (!param.time || !param.point) {
       rciTooltip.style.display = 'none';
       return;
@@ -127,5 +128,5 @@ function createRciChart(candleData) {
     `;
   });
 
-  return { chart: rciChart };
+  return { chart };
 }
