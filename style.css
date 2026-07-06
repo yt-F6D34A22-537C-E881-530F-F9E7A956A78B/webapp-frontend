@@ -38,7 +38,6 @@
 
   --color-border:           #E4DCC9;
   --color-border-input:     #D8CEB4;
-  --color-border-card:      rgba(122, 46, 58, 0.08);   /* 新規：カードの極薄輪郭線 */
 
   --color-accent-primary:      #7A2E3A; /* バーガンディ：見出し・タブ・罫線に使用 */
   --color-accent-primary-hover:#5E2129; /* 新規：ホバー／アクティブ時の濃色 */
@@ -68,6 +67,8 @@
   --shadow-card-hover:      4px 4px 14px rgba(122, 46, 58, 0.12), -3px -3px 12px rgba(255, 255, 255, 0.7); /* 新規：ホバー／出現時 */
   --shadow-legend:          0 0 4px rgba(43, 32, 26, 0.15);
   --shadow-settings:        4px 4px 14px rgba(122, 46, 58, 0.12), -3px -3px 12px rgba(255, 255, 255, 0.7);
+  --shadow-neumo-inset:     inset 2px 2px 5px rgba(122, 46, 58, 0.12), inset -2px -2px 5px rgba(255, 255, 255, 0.75); /* 新規：凹（押し込まれた）表現 */
+  --shadow-neumo-outset:    3px 3px 7px rgba(122, 46, 58, 0.10), -3px -3px 7px rgba(255, 255, 255, 0.75); /* 新規：凸（浮き出た）表現 */
 
   /* --- ボーダー半径（丸みを強めた柔らかい印象） --- */
   --radius-card:            20px;
@@ -146,9 +147,12 @@ body {
   padding: var(--card-padding);
   border-radius: var(--radius-card);
   box-shadow: var(--shadow-card);
-  border: 1px solid var(--color-border-card);
   margin-bottom: 20px;
   transition: box-shadow var(--transition-base);
+}
+
+.card:hover {
+  box-shadow: var(--shadow-card-hover);
 }
 
 .card h2 {
@@ -234,7 +238,8 @@ body {
 .mode-tab:has(input:checked) {
   color: var(--color-accent-primary);
   border-bottom-color: var(--color-accent-primary);
-  background: var(--color-accent-primary-bg);
+  background: var(--color-bg-card);
+  box-shadow: var(--shadow-neumo-inset);
 }
 
 .mode-tab:has(input:focus-visible) {
@@ -295,9 +300,10 @@ body {
   margin-top: 4px;
   padding: 6px 10px;
   font-size: 14px;
-  border: 1px solid var(--color-border-input);
+  border: none;
   border-radius: var(--radius-input);
   background: var(--color-bg-input);
+  box-shadow: var(--shadow-neumo-inset);
   width: fit-content;
 }
 
@@ -315,11 +321,12 @@ body {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  border: 1px solid var(--color-border-input);
+  border: none;
   border-radius: var(--radius-fieldset);
   padding: 10px 12px;
   margin: 0;
   background-color: var(--color-bg-input);
+  box-shadow: var(--shadow-neumo-inset);
 }
 
 .compare-source-fieldset legend {
@@ -367,11 +374,12 @@ body {
   flex-direction: row;
   align-items: flex-end;
   gap: 10px;
-  border: 1px solid var(--color-border-input);
+  border: none;
   border-radius: var(--radius-fieldset);
   padding: 10px 12px;
   margin: 0;
   background-color: var(--color-bg-input);
+  box-shadow: var(--shadow-neumo-inset);
 }
 
 .compare-date-fieldset legend {
@@ -497,21 +505,30 @@ button:disabled {
 .btn.primary {
   background: linear-gradient(135deg, var(--color-accent-secondary) 0%, var(--color-accent-secondary-hover) 100%);
   color: var(--color-text-white);
-  box-shadow: 0 2px 6px rgba(181, 101, 44, 0.3);
+  box-shadow: 0 2px 6px rgba(181, 101, 44, 0.3), var(--shadow-neumo-outset);
 }
 
 .btn.primary:not(:disabled):hover {
   transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(181, 101, 44, 0.35);
+  box-shadow: 0 6px 16px rgba(181, 101, 44, 0.35), var(--shadow-neumo-outset);
 }
 
 .btn.primary:not(:disabled):active {
   transform: translateY(0);
-  box-shadow: 0 2px 6px rgba(181, 101, 44, 0.3);
+  box-shadow: 0 2px 6px rgba(181, 101, 44, 0.3), var(--shadow-neumo-inset);
 }
 
 .btn.secondary {
   background: var(--color-bg-disabled);
+  box-shadow: var(--shadow-neumo-outset);
+}
+
+.btn.secondary:not(:disabled):hover {
+  box-shadow: var(--shadow-neumo-outset), 0 0 0 1px rgba(122, 46, 58, 0.06);
+}
+
+.btn.secondary:not(:disabled):active {
+  box-shadow: var(--shadow-neumo-inset);
 }
 
 .btn.ghost {
