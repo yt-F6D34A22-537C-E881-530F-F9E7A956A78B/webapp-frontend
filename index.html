@@ -30,7 +30,13 @@
 
   <!-- ============================
        チャート関連
-       各chart-*.jsはchart-main.jsからimportされる。
+       ES Modules化（2026-07）：chart-indicators.js / chart-data.js /
+       chart-price.js / chart-rci.js / chart-macd.js / chart-sync.js は
+       chart-main.js から import され、依存関係はモジュール側で解決される。
+       そのため <script> タグは type="module" のエントリーポイント
+       （chart-main.js）1本のみでよい。
+       type="module" のスクリプトは defer 相当（DOMパース後・文書内の
+       出現順で実行）であり、旧来の defer 構成と読み込みタイミングは変わらない。
   ============================ -->
   <script type="module" src="js/chart-main.js"></script>
 </head>
@@ -200,19 +206,29 @@
         <p>サーバーへリクエスト中…</p>
       </div>
 
-      <!-- 固定ヘッダ専用テーブル -->
-      <div class="table-header-sticky" id="resultTableStickyWrap">
-        <table id="resultTableSticky" class="result-table">
-          <thead id="resultHeaderSticky"></thead>
-        </table>
-      </div>
+      <!-- ============================
+           固定ヘッダ＋本体テーブルを1枚のトレイとして見せるラッパー
+           （凹型のニューモーフィズム表現。内部の #resultTableStickyWrap /
+             #resultTableScrollOuter の id・構造・screening.js からの
+             参照方法は変更していない）
+      ============================ -->
+      <div class="table-well">
 
-      <!-- 本体テーブル（横スクロール） -->
-      <div class="table-scroll-outer" id="resultTableScrollOuter">
-        <table id="resultTable" class="result-table">
-          <thead id="resultHeaderBody" aria-hidden="true"></thead>
-          <tbody></tbody>
-        </table>
+        <!-- 固定ヘッダ専用テーブル -->
+        <div class="table-header-sticky" id="resultTableStickyWrap">
+          <table id="resultTableSticky" class="result-table">
+            <thead id="resultHeaderSticky"></thead>
+          </table>
+        </div>
+
+        <!-- 本体テーブル（横スクロール） -->
+        <div class="table-scroll-outer" id="resultTableScrollOuter">
+          <table id="resultTable" class="result-table">
+            <thead id="resultHeaderBody" aria-hidden="true"></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
       </div>
 
       <p class="hint">行をタップ／クリックするとチャートを表示します。</p>
