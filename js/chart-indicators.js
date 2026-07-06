@@ -6,7 +6,7 @@
 // ------------------------------
 // 移動平均
 // ------------------------------
-function calcMA(data, period) {
+export function calcMA(data, period) {
   const result = [];
   for (let i = 0; i < data.length; i++) {
     if (i < period - 1) {
@@ -24,98 +24,16 @@ function calcMA(data, period) {
 
 // ------------------------------
 // 一目均衡表
+// 実装は js/chart-price.js の calcIchimoku()（内部関数）に一本化。
+// 旧: 本ファイルにも同名関数が存在したが、スクリプト読み込み順により
+//     常に chart-price.js 側の定義で上書きされ、一度も実行されていなかった
+//     デッドコードだったため削除した（2026-07 監査で検出・削除）。
 // ------------------------------
-function calcIchimoku(data) {
-  const len = data.length;
-  const tenkan = [];
-  const kijun = [];
-  const span1 = [];
-  const span2 = [];
-  const chikou = [];
-
-  for (let i = 0; i < len; i++) {
-    // 転換線（9）
-    if (i >= 8) {
-      let high = -Infinity;
-      let low = Infinity;
-      for (let j = i - 8; j <= i; j++) {
-        if (data[j].high > high) high = data[j].high;
-        if (data[j].low < low) low = data[j].low;
-      }
-      tenkan.push({ time: data[i].time, value: (high + low) / 2 });
-    } else {
-      tenkan.push({ time: data[i].time, value: null });
-    }
-
-    // 基準線（26）
-    if (i >= 25) {
-      let high = -Infinity;
-      let low = Infinity;
-      for (let j = i - 25; j <= i; j++) {
-        if (data[j].high > high) high = data[j].high;
-        if (data[j].low < low) low = data[j].low;
-      }
-      kijun.push({ time: data[i].time, value: (high + low) / 2 });
-    } else {
-      kijun.push({ time: data[i].time, value: null });
-    }
-
-    // 遅行スパン（26本前）
-    if (i - 26 >= 0) {
-      chikou.push({ time: data[i - 26].time, value: data[i].close });
-    } else {
-      chikou.push({ time: data[i].time, value: null });
-    }
-  }
-
-  // 先行スパン1・2（26本先）
-  for (let i = 0; i < len; i++) {
-    const targetIndex = i + 26;
-    if (targetIndex >= len) break;
-
-    const t = tenkan[i].value;
-    const k = kijun[i].value;
-
-    // 先行スパン1
-    if (t != null && k != null) {
-      span1.push({
-        time: data[targetIndex].time,
-        value: (t + k) / 2,
-      });
-    } else {
-      span1.push({
-        time: data[targetIndex].time,
-        value: null,
-      });
-    }
-
-    // 先行スパン2（52期間）
-    if (i >= 51) {
-      let high = -Infinity;
-      let low = Infinity;
-      for (let j = i - 51; j <= i; j++) {
-        if (data[j].high > high) high = data[j].high;
-        if (data[j].low < low) low = data[j].low;
-      }
-      span2.push({
-        time: data[targetIndex].time,
-        value: (high + low) / 2,
-      });
-    } else {
-      span2.push({
-        time: data[targetIndex].time,
-        value: null,
-      });
-    }
-  }
-
-  return { tenkan, kijun, span1, span2, chikou };
-}
 
 // ------------------------------
 // ボリンジャーバンド
 // ------------------------------
-function calcBB(data, period = 20, k = 2) {
+export function calcBB(data, period = 20, k = 2) {
   const mid = [];
   const upper = [];
   const lower = [];
@@ -153,7 +71,7 @@ function calcBB(data, period = 20, k = 2) {
 // ------------------------------
 // RCI
 // ------------------------------
-function calcRCI(data, period = 9) {
+export function calcRCI(data, period = 9) {
   const result = [];
   const n = period;
 
@@ -220,7 +138,7 @@ function calcEMA(values, period) {
 // ------------------------------
 // MACD
 // ------------------------------
-function calcMACD(data, shortPeriod = 12, longPeriod = 26, signalPeriod = 9) {
+export function calcMACD(data, shortPeriod = 12, longPeriod = 26, signalPeriod = 9) {
   const closes = data.map(d => d.close);
 
   const emaShort = calcEMA(closes, shortPeriod);
