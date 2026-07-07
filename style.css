@@ -429,12 +429,13 @@ body {
    除外市場・商品区分
    ============================================================ */
 .exclude-markets-fieldset {
-  border: 1px solid var(--color-border-input);
+  border: none;
   border-radius: var(--radius-fieldset);
   padding: 6px 12px 10px;
   margin: 4px 0 0;
   box-sizing: border-box;
   background-color: var(--color-bg-input);
+  box-shadow: var(--shadow-neumo-inset);
   width: 100%;
 }
 
@@ -473,7 +474,7 @@ body {
    ボタン
    ============================================================ */
 .buttons-row {
-  margin-top: 16px;
+  margin-top: 28px;
   display: flex;
   gap: 12px;
   align-items: center;
@@ -1012,6 +1013,14 @@ button:disabled {
     -webkit-overflow-scrolling: touch;
   }
 
+  /* タブを縮小させず等倍のまま横スクロールさせる。
+     flex-shrink の既定値（1）のままだと、コンテナ幅に収めようとして
+     各タブが縮小し、内部の日本語ラベルが折り返されて縦長になっていたため追加。 */
+  .mode-tab {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
   .mode-panels {
     padding-left: 8px;
   }
@@ -1136,8 +1145,9 @@ button:disabled {
 
   #resultTable th:nth-child(2),
   #resultTable td:nth-child(2) {
-    min-width: 110px;
-    max-width: 110px;
+    /* 110px→76px：固定列（銘柄名）の専有幅を抑え、横スクロール領域を広げる */
+    min-width: 76px;
+    max-width: 76px;
     overflow: hidden;
     text-overflow: ellipsis;
   }
@@ -1153,7 +1163,8 @@ button:disabled {
 
   #resultTable td:not(.fixed-col),
   .table-header-sticky th:not(.fixed-col) {
-    min-width: 60px;
+    /* 60px→48px：固定列縮小とあわせてスクロール可能な列の視認数を増やす */
+    min-width: 48px;
   }
 
   /* ----------------------------------------
