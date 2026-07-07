@@ -1645,6 +1645,25 @@ if (document.fonts && document.fonts.ready) {
 }
 
 /* ------------------------------
+   結果テーブルの想定外レイアウト変化に対する保険的な再同期
+   Webフォントの遅延読込・ページのスクロールバー出現など、原因を問わず
+   #resultTable のボックスサイズが変化した場合に列幅同期をやり直す。
+   afterTableRendered() / document.fonts.ready による既存の同期処理は
+   変更せず、あくまで追加の安全網として動作する。
+   syncColumnWidths / syncFixedColumns は style.width・style.left の
+   設定のみで #resultTable 自体の border-box サイズを変えないため、
+   ResizeObserver の無限ループは発生しない。
+------------------------------ */
+const resultTableEl = document.getElementById("resultTable");
+if (resultTableEl && typeof ResizeObserver !== "undefined") {
+  const resultTableResizeObserver = new ResizeObserver(() => {
+    syncColumnWidths();
+    syncFixedColumns();
+  });
+  resultTableResizeObserver.observe(resultTableEl);
+}
+
+/* ------------------------------
    showResults パッチ（同期保証）
 ------------------------------ */
 (function patchShowResults() {
