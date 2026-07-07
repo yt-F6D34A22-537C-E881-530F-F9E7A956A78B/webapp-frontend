@@ -672,6 +672,21 @@ button:disabled {
     box-shadow: inset 3px 0 0 var(--color-trend-down-border);
 }
 
+/* heuristics：固定列群（コード/銘柄名/トレンド/スコア）の末尾＝スコア列の右端に
+   トレンド方向のアクセント線を追加する。スコア列は position: sticky の fixed-col
+   のため、box-shadow: inset はスコア td 自身のボックス内に描画され、
+   横スクロールで本体テーブルがどれだけ動いてもスコア列は左側に固定表示され続ける
+   ＝アクセント線も常に視認できる。data-fixed-col-last は screening.js が
+   固定列群の末尾セル（heuristics モードのスコア th/td）にのみ付与する
+   値なしフラグ属性（conventions.domHookAttributes の data-fixed-col と同種のパターン） */
+.tr-trend-up [data-fixed-col-last] {
+    box-shadow: inset -3px 0 0 var(--color-trend-up-border);
+}
+
+.tr-trend-down [data-fixed-col-last] {
+    box-shadow: inset -3px 0 0 var(--color-trend-down-border);
+}
+
 .table-scroll-outer {
   overflow-x: auto;
   overflow-y: hidden;
@@ -701,7 +716,8 @@ button:disabled {
 }
 
 #resultTable tr:hover,
-#resultTable tr:hover .fixed-col {
+#resultTable tr:hover .fixed-col,
+#resultTable tr:hover .td-heuristics-applied {
   background: var(--color-bg-table-hover) !important;
   cursor: pointer;
 }
