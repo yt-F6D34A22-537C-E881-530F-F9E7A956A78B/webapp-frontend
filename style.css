@@ -67,7 +67,7 @@
   --shadow-card-hover:      5px 5px 18px rgba(122, 46, 58, 0.20), -4px -4px 16px rgba(255, 255, 255, 0.9); /* 新規：ホバー／出現時 */
   --shadow-legend:          0 0 4px rgba(43, 32, 26, 0.15);
   --shadow-settings:        5px 5px 18px rgba(122, 46, 58, 0.20), -4px -4px 16px rgba(255, 255, 255, 0.9);
-  --shadow-neumo-inset:     inset 3px 3px 7px rgba(122, 46, 58, 0.22), inset -3px -3px 7px rgba(255, 255, 255, 0.95); /* 新規：凹（押し込まれた）表現 */
+  --shadow-neumo-inset:     inset 4px 4px 9px rgba(122, 46, 58, 0.42), inset -4px -4px 9px rgba(255, 255, 255, 0.88); /* 新規：凹（押し込まれた）表現 */
   --shadow-neumo-outset:    4px 4px 10px rgba(122, 46, 58, 0.18), -4px -4px 10px rgba(255, 255, 255, 0.95); /* 新規：凸（浮き出た）表現 */
   /* 新規：選択中モードタブ専用の凹表現（アクセントカラー濃色トーン）。
      --shadow-neumo-inset と同じ凹方向・同じ距離/ぼかしだが、影の不透明度を
