@@ -69,6 +69,13 @@
   --shadow-settings:        5px 5px 18px rgba(122, 46, 58, 0.20), -4px -4px 16px rgba(255, 255, 255, 0.9);
   --shadow-neumo-inset:     inset 3px 3px 7px rgba(122, 46, 58, 0.22), inset -3px -3px 7px rgba(255, 255, 255, 0.95); /* 新規：凹（押し込まれた）表現 */
   --shadow-neumo-outset:    4px 4px 10px rgba(122, 46, 58, 0.18), -4px -4px 10px rgba(255, 255, 255, 0.95); /* 新規：凸（浮き出た）表現 */
+  /* 新規：選択中モードタブ専用の凹表現（アクセントカラー濃色トーン）。
+     --shadow-neumo-inset と同じ凹方向・同じ距離/ぼかしだが、影の不透明度を
+     0.22→0.35、ハイライトを0.95→0.9に強めることで、入力欄等の一般的な
+     凹表現より一段濃く見せ、選択中タブであることを差別化する。
+     濃さを調整したい場合はこのrgba値のアルファ（0.35 / 0.9）のみを
+     変更すればよい（他ファイルへの影響なし）。 */
+  --shadow-neumo-inset-tab: inset 3px 3px 7px rgba(122, 46, 58, 0.35), inset -3px -3px 7px rgba(255, 255, 255, 0.9);
 
   /* --- ボーダー半径（丸みを強めた柔らかい印象） --- */
   --radius-card:            20px;
@@ -236,10 +243,10 @@ body {
 }
 
 .mode-tab:has(input:checked) {
-  color: var(--color-accent-primary);
+  color: var(--color-accent-primary-hover);
   border-bottom-color: var(--color-accent-primary);
-  background: var(--color-bg-card);
-  box-shadow: var(--shadow-neumo-inset);
+  background: var(--color-accent-primary-bg);
+  box-shadow: var(--shadow-neumo-inset-tab);
 }
 
 .mode-tab:has(input:focus-visible) {
@@ -295,7 +302,7 @@ body {
   color: var(--color-text-secondary);
 }
 
-.mode-conditions input,
+.mode-conditions input:not([type="radio"]),
 .mode-conditions select {
   margin-top: 4px;
   padding: 6px 10px;
@@ -307,7 +314,7 @@ body {
   width: fit-content;
 }
 
-.mode-conditions input:disabled,
+.mode-conditions input:disabled:not([type="radio"]),
 .mode-conditions select:disabled,
 .mode-conditions fieldset:disabled {
   background: var(--color-bg-disabled);
