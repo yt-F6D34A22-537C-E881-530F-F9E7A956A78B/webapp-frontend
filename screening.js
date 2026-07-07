@@ -965,7 +965,7 @@ function updateTableHeader(mode, label = "", compareFromLabel = "", compareToLab
         <th class="fixed-col" data-fixed-col rowspan="2">コード</th>
         <th class="fixed-col" data-fixed-col rowspan="2">銘柄名</th>
         <th class="fixed-col" data-fixed-col rowspan="2">トレンド</th>
-        <th class="fixed-col" data-fixed-col rowspan="2">スコア</th>
+        <th class="fixed-col" data-fixed-col data-fixed-col-last rowspan="2">スコア</th>
     `;
     let row2 = `<tr>`;
 
@@ -1288,7 +1288,7 @@ function showResults(results, mode) {
         <td class="fixed-col" data-fixed-col>${r.コード}</td>
         <td class="fixed-col" data-fixed-col>${r.銘柄名}</td>
         <td class="fixed-col" data-fixed-col>${formatDirectionMark(r.トレンド)}</td>
-        <td class="fixed-col" data-fixed-col>${r.スコア}</td>
+        <td class="fixed-col" data-fixed-col data-fixed-col-last>${r.スコア}</td>
       `;
 
       for (const typeObj of HEURISTICS_TYPES) {
@@ -1627,6 +1627,22 @@ window.addEventListener("resize", () => {
   syncColumnWidths();
   syncFixedColumns();
 });
+
+/* ------------------------------
+   Webフォント読み込み完了時にも同期
+   afterTableRendered() の同期は setTimeout(0) 二段構えで実行されるため、
+   自前ホストの Webフォント（assets/fonts/fonts.css）の読み込みがそれより
+   遅れて完了した場合、フォントスワップ後の文字幅変化で
+   ヘッダー列とデータ列の幅がズレて残ることがあった。
+   document.fonts.ready 解決後に再同期することで、フォント読み込み
+   タイミングに依存せず最終的な列幅を一致させる。
+------------------------------ */
+if (document.fonts && document.fonts.ready) {
+  document.fonts.ready.then(() => {
+    syncColumnWidths();
+    syncFixedColumns();
+  });
+}
 
 /* ------------------------------
    showResults パッチ（同期保証）
