@@ -67,7 +67,7 @@
   --shadow-card-hover:      5px 5px 18px rgba(122, 46, 58, 0.20), -4px -4px 16px rgba(255, 255, 255, 0.9); /* 新規：ホバー／出現時 */
   --shadow-legend:          0 0 4px rgba(43, 32, 26, 0.15);
   --shadow-settings:        5px 5px 18px rgba(122, 46, 58, 0.20), -4px -4px 16px rgba(255, 255, 255, 0.9);
-  --shadow-neumo-inset:     inset 4px 4px 9px rgba(122, 46, 58, 0.42), inset -4px -4px 9px rgba(255, 255, 255, 0.88); /* 新規：凹（押し込まれた）表現 */
+  --shadow-neumo-inset:     inset 3px 3px 7px rgba(122, 46, 58, 0.22), inset -3px -3px 7px rgba(255, 255, 255, 0.95); /* 新規：凹（押し込まれた）表現 */
   --shadow-neumo-outset:    4px 4px 10px rgba(122, 46, 58, 0.18), -4px -4px 10px rgba(255, 255, 255, 0.95); /* 新規：凸（浮き出た）表現 */
   /* 新規：選択中モードタブ専用の凹表現（アクセントカラー濃色トーン）。
      --shadow-neumo-inset と同じ凹方向・同じ距離/ぼかしだが、影の不透明度を
@@ -75,7 +75,7 @@
      凹表現より一段濃く見せ、選択中タブであることを差別化する。
      濃さを調整したい場合はこのrgba値のアルファ（0.35 / 0.9）のみを
      変更すればよい（他ファイルへの影響なし）。 */
-  --shadow-neumo-inset-tab: inset 3px 3px 7px rgba(122, 46, 58, 0.35), inset -3px -3px 7px rgba(255, 255, 255, 0.9);
+  --shadow-neumo-inset-tab: inset 4px 4px 9px rgba(122, 46, 58, 0.42), inset -4px -4px 9px rgba(255, 255, 255, 0.88);
 
   /* --- ボーダー半径（丸みを強めた柔らかい印象） --- */
   --radius-card:            20px;
@@ -444,6 +444,17 @@ body {
   background-color: var(--color-bg-input);
   box-shadow: var(--shadow-neumo-inset);
   width: 100%;
+  /* <fieldset> は中身（チェックボックス群）を1行に並べた場合の幅を
+     自身の最小幅として持とうとする性質があり、親の flex アイテムに
+     min-width: 0 を指定しても fieldset 自身がそれを上書きしてしまう。
+     display: flex; flex-wrap: wrap を明示することでこの性質を解除し、
+     横向きスマホ（600px超）やウィンドウ幅を狭めたデスクトップブラウザでも
+     右側にはみ出さないようにする（従来はモバイル専用メディアクエリ内でのみ
+     指定しており、600px以下でしか効かなかった）。 */
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 0;
+  min-width: 0;
 }
 
 /* チェックボックスを横並び・折り返し */
@@ -613,6 +624,8 @@ button:disabled {
   top: 0;
   z-index: var(--z-table-header);
   overflow-x: auto;
+  overflow-y: hidden;   /* border-radius によるクリップを効かせるため明示（.table-scroll-outer と同様） */
+  border-radius: var(--radius-input) var(--radius-input) 0 0;
 }
 
 .th-bg-trend-either {
@@ -701,6 +714,7 @@ button:disabled {
   position: relative;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
+  border-radius: 0 0 var(--radius-input) var(--radius-input);
 }
 
 .table-scroll-outer::-webkit-scrollbar {
@@ -1172,6 +1186,24 @@ button:disabled {
   .table-header-sticky th:not(.fixed-col) {
     /* 60px→48px：固定列縮小とあわせてスクロール可能な列の視認数を増やす */
     min-width: 48px;
+  }
+
+  /* heuristicsモードのトレンド・スコア列（他モードの3/4列目は .fixed-col を
+     持たないため、この2つのセレクタでは巻き込まれない）。
+     データはトレンド＝矢印1文字（↗/↘）、スコア＝数値のみで、
+     ヘッダ文言（「トレンド」4文字／「スコア」3文字）の方が横幅を要求していたため、
+     ヘッダをrowspan=2の高さを使って2行折り返しさせる前提で列幅を絞る。 */
+  #resultTable th.fixed-col:nth-child(3),
+  #resultTable td.fixed-col:nth-child(3) {
+    min-width: 34px;
+    max-width: 34px;
+  }
+
+  #resultTable th.fixed-col:nth-child(4),
+  #resultTable td.fixed-col:nth-child(4) {
+    /* スコアの実際の桁数を確認できていないため、データ切れを避けて
+       max-widthは指定せず、min-widthのみ絞る（桁数が多い場合は自然に広がる） */
+    min-width: 40px;
   }
 
   /* ----------------------------------------
