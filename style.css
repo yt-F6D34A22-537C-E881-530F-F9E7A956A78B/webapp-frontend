@@ -314,6 +314,23 @@ body {
   width: fit-content;
 }
 
+/* <select> はモバイルブラウザ（特にiOS Safari）がOS標準の見た目を強く保持し、
+   appearance:none を明示しない限りカスタムのbox-shadow/backgroundが
+   実質的に無視されてしまう（<input>は同じCSSで問題なく表示されるため
+   <select>固有の挙動）。2026-07 修正：appearance:none で解除した上で、
+   標準の▼アイコンが消える代わりにCSSのみで矢印を描画し、
+   ドロップダウンであることが分かるようにする。 */
+.mode-conditions select {
+  -webkit-appearance: none;
+  appearance: none;
+  padding-right: 26px;
+  background-image: linear-gradient(45deg, transparent 50%, var(--color-accent-primary) 50%),
+                     linear-gradient(135deg, var(--color-accent-primary) 50%, transparent 50%);
+  background-position: right 12px center, right 8px center;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+}
+
 .mode-conditions input:disabled:not([type="radio"]),
 .mode-conditions select:disabled,
 .mode-conditions fieldset:disabled {
@@ -427,8 +444,20 @@ body {
   width: 180px;
 }
 
+/* ratioConditions と同様、除外市場・商品区分は日付・証券コードと同じ行に
+   詰め込まず、専用の行として折り返す（2026-07 修正。従来は flex-wrap を
+   指定しておらず既定の nowrap のままだったため、日付・証券コード・除外市場の
+   3要素が横並びで1行に押し込まれ、除外市場スロットが狭く圧縮された結果、
+   ラベルテキスト（white-space: nowrapのため折り返されない）が
+   欄外へはみ出していた。600px以下のポートレート表示では
+   .mode-conditionsがflex-direction:columnになるため問題が顕在化せず、
+   横向き（600px超）でのみ発生していた） */
+#heuristicsConditions {
+  flex-wrap: wrap;
+}
+
 #heuristicsConditions [data-exclude-markets-slot] {
-  flex: 1 1 auto;
+  flex: 1 1 100%;
   min-width: 0;
 }
 
@@ -1195,8 +1224,11 @@ button:disabled {
      ヘッダをrowspan=2の高さを使って2行折り返しさせる前提で列幅を絞る。 */
   #resultTable th.fixed-col:nth-child(3),
   #resultTable td.fixed-col:nth-child(3) {
-    min-width: 34px;
-    max-width: 34px;
+    /* 2026-07 修正：34px（2行折り返し前提）だと、スクロール位置によって
+       行の高さが変動するタイミングで折り返し2行目（「ド」）が見切れる
+       ことがあったため、「トレンド」4文字が1行に収まる46pxに戻した */
+    min-width: 46px;
+    max-width: 46px;
   }
 
   #resultTable th.fixed-col:nth-child(4),
@@ -1204,6 +1236,14 @@ button:disabled {
     /* スコアの実際の桁数を確認できていないため、データ切れを避けて
        max-widthは指定せず、min-widthのみ絞る（桁数が多い場合は自然に広がる） */
     min-width: 40px;
+  }
+
+  /* heuristicsモードの技術指標セル（○/×/空欄のみ。data-rule-key属性は
+     heuristicsモードの技術指標セルにのみ付与されるため、他モードの
+     数値列（出来高・終値・増減額等、実際に48px程度必要な列）を
+     巻き込まずに縮小できる）。2026-07 追加。 */
+  #resultTable td[data-rule-key] {
+    min-width: 30px;
   }
 
   /* ----------------------------------------
