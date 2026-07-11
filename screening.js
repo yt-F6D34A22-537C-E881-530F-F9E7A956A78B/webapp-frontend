@@ -1528,7 +1528,13 @@ function syncColumnWidths() {
     const bCells = bodyTheadRows[i].cells;
 
     for (let j = 0; j < bCells.length; j++) {
-      hCells[j].style.width = bCells[j].getBoundingClientRect().width + "px";
+      // getBoundingClientRect().width は小数px値を返すことがあり、
+      // 小数のまま2つの独立したテーブル（body側とsticky側）にそれぞれ
+      // 適用すると、ブラウザ内部の描画上の丸め処理がテーブルごとに
+      // 独立して働き、列数が多い場合にわずかなズレが蓄積して
+      // ヘッダ列とボディ列の境界が視覚的にずれることがあったため、
+      // 整数pxに丸めてから設定する（2026-07 修正）。
+      hCells[j].style.width = Math.round(bCells[j].getBoundingClientRect().width) + "px";
     }
   }
 }
@@ -1555,7 +1561,8 @@ function syncFixedColumns() {
   let left = 0;
   fixedCols.forEach(col => {
     offsets.push({ colIndex: col.cellIndex, left });
-    left += col.getBoundingClientRect().width;
+    // syncColumnWidths と同様の理由で整数pxに丸めてから加算する（2026-07 修正）
+    left += Math.round(col.getBoundingClientRect().width);
   });
 
   // ② 書き込みフェーズ：本体テーブルは行を1回だけ走査し、
