@@ -323,6 +323,7 @@ body {
 .mode-conditions select {
   -webkit-appearance: none;
   appearance: none;
+  color: var(--color-text-primary);
   padding-right: 26px;
   background-image: linear-gradient(45deg, transparent 50%, var(--color-accent-primary) 50%),
                      linear-gradient(135deg, var(--color-accent-primary) 50%, transparent 50%);
@@ -682,10 +683,15 @@ button:disabled {
   border-bottom: 2px double var(--color-accent-primary);
 }
 
-/* 2段ヘッダ：下段 */
+/* 2段ヘッダ：下段（2026-07 修正：border-bottomが未指定のため、
+   共通ルール .result-table th, .result-table td の
+   border-bottom: 1px solid var(--color-border) にフォールバックし、
+   上段の装飾border（2px double）との見た目の不統一があったため、
+   上段と同じ装飾を適用して統一した） */
 .result-table thead tr:nth-child(2) th {
   background: var(--color-bg-table-header2);
   font-weight: 600;
+  border-bottom: 2px double var(--color-accent-primary);
 }
 
 /* 固定列 */
@@ -1207,7 +1213,11 @@ button:disabled {
     padding: 4px 3px;
   }
 
-  #resultTable tr {
+  #resultTable tbody tr {
+    /* 2026-07 修正：#resultTable tr（tbody/theadを問わず全tr）のままだと、
+       heuristicsモードのヘッダ（rowspan=2、2行折り返しあり）にもこの高さが
+       適用されてしまい、折り返した2行目の文字が見切れる原因になっていたため、
+       データ行（tbody）のみに限定した */
     height: 22px;
   }
 
@@ -1224,11 +1234,11 @@ button:disabled {
      ヘッダをrowspan=2の高さを使って2行折り返しさせる前提で列幅を絞る。 */
   #resultTable th.fixed-col:nth-child(3),
   #resultTable td.fixed-col:nth-child(3) {
-    /* 2026-07 修正：34px（2行折り返し前提）だと、スクロール位置によって
-       行の高さが変動するタイミングで折り返し2行目（「ド」）が見切れる
-       ことがあったため、「トレンド」4文字が1行に収まる46pxに戻した */
-    min-width: 46px;
-    max-width: 46px;
+    /* 2026-07 再修正：tr高さの適用範囲をtbodyのみに限定したことで、
+       ヘッダ行（thead）が2行折り返しの高さまで自然に伸びるようになったため、
+       「トレ」「ンド」の2行折り返しを前提に30pxへ再度縮小した */
+    min-width: 30px;
+    max-width: 30px;
   }
 
   #resultTable th.fixed-col:nth-child(4),
