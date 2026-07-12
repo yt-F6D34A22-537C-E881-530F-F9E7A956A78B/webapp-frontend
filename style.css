@@ -1269,9 +1269,25 @@ button:disabled {
 
   #resultTable th.fixed-col:nth-child(4),
   #resultTable td.fixed-col:nth-child(4) {
-    /* スコアの実際の桁数を確認できていないため、データ切れを避けて
-       max-widthは指定せず、min-widthのみ絞る（桁数が多い場合は自然に広がる） */
-    min-width: 40px;
+    /* 2026-07 修正：ヘッダ「スコア」を縦書き化した分、列幅の必要量が
+       文字数（3文字）ではなく1文字分の幅で済むようになったため、
+       40px→26pxへ再縮小し、横スクロール領域をさらに広げた。
+       データ（数値）側は max-width を指定していないため、
+       桁数が多い場合は自然に広がる余地を残している。 */
+    min-width: 26px;
+  }
+
+  /* スコアヘッダのみ縦書き化する（データ側のtdは対象外。数値は横書きのまま
+     読みやすさを優先する）。table-layout: auto では、横書きの「スコア」
+     （3文字）がヘッダの必要幅を押し上げていたため、rowspan="2" で
+     確保されている縦方向の余裕を活かして縦書きに変更し、
+     横方向の必要幅を1文字分まで縮小した。 */
+  #resultTable th.fixed-col:nth-child(4) {
+    writing-mode: vertical-rl;
+    text-orientation: upright;
+    font-size: 9px;
+    letter-spacing: 1px;
+    padding: 4px 2px;
   }
 
   /* heuristicsモードの技術指標セル（○/×/空欄のみ。data-rule-key属性は
