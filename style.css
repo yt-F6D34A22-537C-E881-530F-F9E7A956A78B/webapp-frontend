@@ -1256,9 +1256,19 @@ button:disabled {
     height: 22px;
   }
 
+  #resultTable th:not(.fixed-col),
   #resultTable td:not(.fixed-col),
   .table-header-sticky th:not(.fixed-col) {
-    /* 60px→48px：固定列縮小とあわせてスクロール可能な列の視認数を増やす */
+    /* 60px→48px：固定列縮小とあわせてスクロール可能な列の視認数を増やす。
+       2026-07 修正：#resultTable th（非表示ヘッダ #resultHeaderBody、
+       JSの幅計測元）にはこの min-width が適用されておらず、
+       #resultTable td（データ行）・.table-header-sticky th（表示ヘッダ）
+       にのみ適用されていた。この非対称により、JSが非表示ヘッダから
+       48px未満の実測値（例：30px）を計測してsticky側へコピーしようとしても、
+       sticky側は自身の min-width: 48px によって強制的に48pxへ張り付けられ、
+       コピーされた小さい値が事実上無視されるという食い違いが生じていた
+       （実機のDevToolsでの実測により特定）。#resultTable th にも同じ
+       min-width を適用し、3箇所を対称にすることで解消する。 */
     min-width: 48px;
   }
 
