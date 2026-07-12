@@ -964,7 +964,7 @@ function updateTableHeader(mode, label = "", compareFromLabel = "", compareToLab
       <tr>
         <th class="fixed-col" data-fixed-col rowspan="2">コード</th>
         <th class="fixed-col" data-fixed-col rowspan="2">銘柄名</th>
-        <th class="fixed-col" data-fixed-col rowspan="2">トレンド</th>
+        <th class="fixed-col" data-fixed-col rowspan="2">トレ<br class="mobile-line-break">ンド</th>
         <th class="fixed-col" data-fixed-col data-fixed-col-last rowspan="2">スコア</th>
     `;
     let row2 = `<tr>`;
