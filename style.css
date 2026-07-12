@@ -681,15 +681,19 @@ button:disabled {
   vertical-align: middle;
   font-family: var(--font-serif);
   color: var(--color-accent-primary);
-  /* 2026-07 追加：overflow:hiddenが無いと、table-layout:auto の既定挙動により
-     max-width（トレンド列等）が「弱い目安」として無視され、見出しテキストが
-     収まるよう列が広がってしまう。さらに #resultTable（本体）と
-     #resultTableSticky（固定ヘッダ）は別々の<table>のため、それぞれが
-     独立して「無視して広げる」判断をした結果、2テーブル間で実際の列幅が
-     微妙に食い違い、スクロール時にヘッダとボディがずれる原因にもなっていた。
-     .result-table（両テーブル共通）に指定することで、body側のCSS指定幅・
-     sticky側のJS指定幅（inline style）の両方を確実に有効化する。 */
-  overflow: hidden;
+}
+
+/* トレンドヘッダの改行制御（2026-07 修正）：
+   table-layout: auto かつテーブル自体の幅が制約されていない（横スクロール
+   前提で .table-scroll-outer が overflow-x: auto のため、テーブルは
+   好きなだけ広がれる）状況では、そもそも各列は「コンテンツが必要とする幅
+   （preferred width）」で描画され、CSSのmax-widthは実質的に無視される
+   （overflow: hiddenを追加しても、箱自体が縮められていないため無効だった）。
+   そのため、CSSのmax-width頼みではなく、見出しテキスト自体に <br> を
+   仕込んで「必要とする幅」自体を物理的に短くする方式に変更した。
+   スマホ（600px以下）でのみ改行を有効にし、PC幅では1行表示のままにする。 */
+.mobile-line-break {
+  display: none;
 }
 
 /* 2段ヘッダ：上段 */
@@ -1250,12 +1254,17 @@ button:disabled {
      ヘッダをrowspan=2の高さを使って2行折り返しさせる前提で列幅を絞る。 */
   #resultTable th.fixed-col:nth-child(3),
   #resultTable td.fixed-col:nth-child(3) {
-    /* 2026-07 再修正：tr高さの適用範囲をtbodyのみに限定したことで、
-       ヘッダ行（thead）が2行折り返しの高さまで自然に伸びるようになったため、
-       「トレ」「ンド」の2行折り返しを前提に30pxへ再度縮小した */
+    /* 2026-07 再修正：min-width/max-widthはtable-layout: autoでは
+       「弱い目安」に過ぎず単独では効かないため、<br class="mobile-line-break">
+       による強制改行（本ファイル内 .mobile-line-break を参照）と併用する。
+       このmin-width/max-widthはあくまで最終的な描画幅の目安・下限として残す。 */
     min-width: 30px;
     max-width: 30px;
-    overflow: hidden;
+  }
+
+  /* トレンドヘッダの強制改行はスマホ幅でのみ有効にする（PC幅では1行表示のまま） */
+  .mobile-line-break {
+    display: inline;
   }
 
   #resultTable th.fixed-col:nth-child(4),
