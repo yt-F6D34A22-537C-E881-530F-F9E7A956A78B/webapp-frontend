@@ -1228,6 +1228,21 @@ button:disabled {
     text-overflow: ellipsis;
   }
 
+  #resultTable th {
+    /* 2026-07 追加：#resultTable td（データ行）は既にスマホ用に縮小されて
+       いたが、同じ #resultTable 内の非表示ヘッダ行（#resultHeaderBody、
+       列幅計算専用）にはスマホ用の縮小が適用されておらず、デスクトップ
+       サイズ（padding: 8px 6px 等）のまま列幅計算に参加していた。
+       table-layout: auto は「同じ列のヘッダ行・データ行のうち最も広い幅を
+       必要とするもの」で列幅を決めるため、この不一致がヘッダ側の大きめの
+       要求に列幅を引っ張られる原因になり、JSがコピーする幅が
+       sticky側テーブルと食い違う一因になっていた。td と条件を揃える。
+       nth-child を伴うより具体的なルール（トレンド・スコア列等）は
+       詳細度が高いため、こちらでは上書きされず個別の指定が優先される。 */
+    font-size: 10px;
+    padding: 4px 3px;
+  }
+
   #resultTable td {
     font-size: 10px;
     padding: 4px 3px;
