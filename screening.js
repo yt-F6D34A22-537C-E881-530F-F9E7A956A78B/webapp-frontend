@@ -1528,13 +1528,25 @@ function syncColumnWidths() {
     const bCells = bodyTheadRows[i].cells;
 
     for (let j = 0; j < bCells.length; j++) {
+      const bCell = bCells[j];
+
+      // colspanを持つセル（グループヘッダ）は、自身の幅を個別に測定して
+      // 設定しない。配下の列（例：日足/週足/月足）の幅は別途個別に設定
+      // されるため、グループヘッダ側も独立して丸めた値を設定すると、
+      // 「グループヘッダの幅」と「配下列の幅の合計」が丸め誤差により
+      // 1px単位で食い違うことがあり、これがヘッダ・ボディのズレの原因に
+      // なっていた（2026-07 修正）。colspanセルには幅を設定せず、
+      // HTMLテーブルの標準機能（colspanセルの幅は自動的に配下列幅の
+      // 合計になる）に任せることで、この種の丸め誤差を構造的に排除する。
+      if (bCell.colSpan > 1) continue;
+
       // getBoundingClientRect().width は小数px値を返すことがあり、
       // 小数のまま2つの独立したテーブル（body側とsticky側）にそれぞれ
       // 適用すると、ブラウザ内部の描画上の丸め処理がテーブルごとに
       // 独立して働き、列数が多い場合にわずかなズレが蓄積して
       // ヘッダ列とボディ列の境界が視覚的にずれることがあったため、
       // 整数pxに丸めてから設定する（2026-07 修正）。
-      hCells[j].style.width = Math.round(bCells[j].getBoundingClientRect().width) + "px";
+      hCells[j].style.width = Math.round(bCell.getBoundingClientRect().width) + "px";
     }
   }
 }
