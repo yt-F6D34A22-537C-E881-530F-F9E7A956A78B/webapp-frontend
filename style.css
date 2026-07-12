@@ -674,6 +674,15 @@ button:disabled {
   vertical-align: middle;
   font-family: var(--font-serif);
   color: var(--color-accent-primary);
+  /* 2026-07 追加：overflow:hiddenが無いと、table-layout:auto の既定挙動により
+     max-width（トレンド列等）が「弱い目安」として無視され、見出しテキストが
+     収まるよう列が広がってしまう。さらに #resultTable（本体）と
+     #resultTableSticky（固定ヘッダ）は別々の<table>のため、それぞれが
+     独立して「無視して広げる」判断をした結果、2テーブル間で実際の列幅が
+     微妙に食い違い、スクロール時にヘッダとボディがずれる原因にもなっていた。
+     .result-table（両テーブル共通）に指定することで、body側のCSS指定幅・
+     sticky側のJS指定幅（inline style）の両方を確実に有効化する。 */
+  overflow: hidden;
 }
 
 /* 2段ヘッダ：上段 */
@@ -1239,6 +1248,7 @@ button:disabled {
        「トレ」「ンド」の2行折り返しを前提に30pxへ再度縮小した */
     min-width: 30px;
     max-width: 30px;
+    overflow: hidden;
   }
 
   #resultTable th.fixed-col:nth-child(4),
