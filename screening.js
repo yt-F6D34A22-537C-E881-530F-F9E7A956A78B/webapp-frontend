@@ -1540,13 +1540,18 @@ function syncColumnWidths() {
       // 合計になる）に任せることで、この種の丸め誤差を構造的に排除する。
       if (bCell.colSpan > 1) continue;
 
-      // getBoundingClientRect().width は小数px値を返すことがあり、
-      // 小数のまま2つの独立したテーブル（body側とsticky側）にそれぞれ
-      // 適用すると、ブラウザ内部の描画上の丸め処理がテーブルごとに
-      // 独立して働き、列数が多い場合にわずかなズレが蓄積して
-      // ヘッダ列とボディ列の境界が視覚的にずれることがあったため、
-      // 整数pxに丸めてから設定する（2026-07 修正）。
-      hCells[j].style.width = Math.round(bCell.getBoundingClientRect().width) + "px";
+      // 2026-07 再修正：Math.round() による整数px丸めを廃止し、実測値を
+      // 小数のままコピーする。以前は「2つの独立したテーブルでの
+      // ブラウザ内部の丸め処理の違い」を懸念して整数化していたが、
+      // 実機のDevTools実測により、真因は #resultTable th:not(.fixed-col)
+      // の min-width 適用漏れ（別途修正済み）であったと判明した。
+      // この状態でなお Math.round() を使うと、colspanセル（行0）は
+      // 「配下の行1サブ列（丸め済み整数）の合計」になる一方、body側は
+      // 丸めていない小数のままの自然な合計であるため、丸め処理自体が
+      // 新たな数px単位のズレの原因になっていた（例："酒田五法"列で2px）。
+      // 小数のままコピーすることで、sticky側とbody側の実測値が
+      // 完全に一致し、colspanセルの合計値も自然に一致する。
+      hCells[j].style.width = bCell.getBoundingClientRect().width + "px";
     }
   }
 }
@@ -1573,8 +1578,9 @@ function syncFixedColumns() {
   let left = 0;
   fixedCols.forEach(col => {
     offsets.push({ colIndex: col.cellIndex, left });
-    // syncColumnWidths と同様の理由で整数pxに丸めてから加算する（2026-07 修正）
-    left += Math.round(col.getBoundingClientRect().width);
+    // 2026-07 再修正：syncColumnWidths と同様の理由で Math.round() による
+    // 整数px丸めを廃止し、実測値を小数のまま累積する。
+    left += col.getBoundingClientRect().width;
   });
 
   // ② 書き込みフェーズ：本体テーブルは行を1回だけ走査し、
