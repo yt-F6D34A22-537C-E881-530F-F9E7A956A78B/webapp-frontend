@@ -1281,8 +1281,19 @@ button:disabled {
      読みやすさを優先する）。table-layout: auto では、横書きの「スコア」
      （3文字）がヘッダの必要幅を押し上げていたため、rowspan="2" で
      確保されている縦方向の余裕を活かして縦書きに変更し、
-     横方向の必要幅を1文字分まで縮小した。 */
-  #resultTable th.fixed-col:nth-child(4) {
+     横方向の必要幅を1文字分まで縮小した。
+     2026-07 修正：#resultTable th.fixed-col:nth-child(4) のみに指定して
+     いたが、これは列幅計算専用の非表示ヘッダ（#resultHeaderBody、
+     aria-hidden="true"）にしか適用されず、実際に画面へ表示される
+     sticky側ヘッダ（#resultTableSticky／.table-header-sticky）には
+     適用されていなかった。width/left はJS（syncColumnWidths等）が
+     computed値をコピーするが、writing-mode等の見た目のプロパティは
+     コピーされないため、両テーブルに個別の指定が必要。
+     表示側が横書きのまま・非表示側の幅計算だけが縦書き前提で縮小されて
+     いたことで、ヘッダとボディの幅の不整合が発生していたため、
+     .table-header-sticky th.fixed-col:nth-child(4) を追加して統一した。 */
+  #resultTable th.fixed-col:nth-child(4),
+  .table-header-sticky th.fixed-col:nth-child(4) {
     writing-mode: vertical-rl;
     text-orientation: upright;
     font-size: 9px;
