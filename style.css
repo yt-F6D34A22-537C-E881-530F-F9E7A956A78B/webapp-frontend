@@ -129,6 +129,13 @@ body {
   color: var(--color-text-primary);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  /* 2026-07 追加：チェックボックス・ラジオボタンのチェックマーク/ドット色は
+     accent-colorを指定しない場合ブラウザ既定の青色になる。exclude-markets-fieldset
+     のチェックボックスやcompare-source-optionのラジオボタン等、他の装飾要素と
+     色調を揃えるため、アクセントカラーをbodyに指定し全体へ継承させる
+     （.mode-tab / .timeframe-selector のラジオボタンは opacity: 0 で非表示の
+     ため実害はないが、こちらにも一貫して適用される）。 */
+  accent-color: var(--color-accent-primary);
 }
 
 .app-container {
