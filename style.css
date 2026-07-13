@@ -440,6 +440,17 @@ body {
   color: var(--color-text-secondary);
 }
 
+/* CSV・証券コード比較：全営業日比較トグル —　比較元日付・比較先日付と同じ flex 行内に並べる */
+.compare-all-market-days-option {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  padding-bottom: 8px; /* 他の label 直下の select と下端を揃える */
+}
+
 /* ============================================================
    heuristics：証券コード入力欄
    ============================================================ */
