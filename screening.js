@@ -920,7 +920,7 @@ function setCompareFromDate(dateStr) {
 /* ============================
    テーブルヘッダ更新
 ============================ */
-function updateTableHeader(mode, label = "", compareFromLabel = "", compareToLabel = "") {
+function updateTableHeader(mode, label = "", compareFromLabel = "", compareToLabel = "", compareAllMarketDays = false) {
   const stickyThead = document.getElementById("resultHeaderSticky");
   const bodyThead   = document.getElementById("resultHeaderBody");
 
@@ -998,7 +998,13 @@ function updateTableHeader(mode, label = "", compareFromLabel = "", compareToLab
   // compare（CSV/証券コード比較）
   if (mode === "compare") {
     const fromHeader = compareFromLabel ? `比較元 ${compareFromLabel}終値` : "比較元終値";
-    const toHeader   = compareToLabel   ? `比較先 ${compareToLabel}終値`   : "比較先終値";
+    // 全営業日比較時は比較先日付が行ごとに変わるため、ヘッダに日付を埋め込まず
+    // 「比較先日付」列を別途設ける。単一比較時は従来通り日付を埋め込む。
+    const toHeader = compareAllMarketDays
+      ? "比較先終値"
+      : (compareToLabel ? `比較先 ${compareToLabel}終値` : "比較先終値");
+    const toDateColumnHeader = compareAllMarketDays ? `<th>比較先日付</th>` : "";
+
     const html = `
       <tr>
         <th class="fixed-col" data-fixed-col>コード</th>
@@ -1006,6 +1012,7 @@ function updateTableHeader(mode, label = "", compareFromLabel = "", compareToLab
         <th>スコア</th>
         <th>上昇/下降の予測</th>
         <th>上昇/下降の結果</th>
+        ${toDateColumnHeader}
         <th>${fromHeader}</th>
         <th>${toHeader}</th>
         <th>増減（円）</th>
@@ -1033,6 +1040,7 @@ async function startScreening() {
   const fromDate = compareFromDateInput.value;
   const toDate = document.getElementById("compareToDateSelect").value;
   const codes = document.getElementById("compareCodes").value.trim();
+  const allMarketDays = document.getElementById("compareAllMarketDays")?.checked ?? false;
 
   if (mode === "ratio" && !targetDateRatio) {
     alert("日付を選択してください。");
@@ -1090,7 +1098,7 @@ async function startScreening() {
     }
   }
 
-  updateTableHeader(mode, label, compareFromLabel, compareToLabel);
+  updateTableHeader(mode, label, compareFromLabel, compareToLabel, mode === "compare" && allMarketDays);
 
   startBtn.disabled = true;
   cancelBtn.disabled = false;
@@ -1150,6 +1158,11 @@ async function startScreening() {
         url.searchParams.set("codes", uploadedCsvCodes.join(","));
       } else {
         url.searchParams.set("codes", codes);
+      }
+
+      // 全営業日比較（未チェック時は送信しない＝従来の2点比較のまま）
+      if (allMarketDays) {
+        url.searchParams.set("all_market_days", "1");
       }
     }
 
@@ -1419,12 +1432,19 @@ function showResults(results, mode) {
                       : r.予測 === "down" ? "var(--color-trend-down-bg)"
                       : "";
 
+      // 全営業日比較モードでは行データに「比較先日付」が含まれる。
+      // 単一比較モードでは undefined のため、列自体を出力しない。
+      const toDateCell = r.比較先日付 != null
+        ? `<td style="background-color:${resultBg}">${makeDateLabel(r.比較先日付)}</td>`
+        : "";
+
       tr.innerHTML = `
         <td class="fixed-col" data-fixed-col>${r.コード}</td>
         <td class="fixed-col" data-fixed-col>${r.銘柄名}</td>
         <td${predictBg ? ` style="background-color:${predictBg}"` : ""}>${score}</td>
         <td${predictBg ? ` style="background-color:${predictBg}"` : ""}>${formatDirectionMark(r.予測) || "-"}</td>
         <td style="background-color:${resultBg}">${compareResult}</td>
+        ${toDateCell}
         <td style="background-color:${resultBg}">${r.比較元終値 ?? ""}</td>
         <td style="background-color:${resultBg}">${r.比較先終値 ?? ""}</td>
         <td style="background-color:${resultBg}">${r.増減円 > 0 ? "+" : ""}${r.増減円 ?? ""}</td>
