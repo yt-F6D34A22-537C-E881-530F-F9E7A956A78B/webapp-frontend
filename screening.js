@@ -12,6 +12,10 @@ const loadingOverlay = document.getElementById("loadingOverlay");
 let abortController = null;
 let currentResults = [];
 let sortState = {};
+// compare モードで直近に描画した比較先日付一覧（YYYYMMDD昇順）。
+// showResults() の再描画（ソート等）時に updateTableHeader と同じ列構成を
+// 再現するため、startScreening() が設定する（2026-07 追加）。
+let currentCompareDateList = [];
 let elapsedSeconds = 0;
 let timerId = null;
 
@@ -900,6 +904,49 @@ function calcCompareResult(fromClose, toClose) {
 }
 
 /**
+ * compare モードの結果（1銘柄×比較先日付の組ごとに1要素、縦持ち）を
+ * 1銘柄1行の横持ち（比較先日付ごとに列展開）へ変換する。
+ * @param {object[]} results - /screening?mode=compare のレスポンス data（縦持ち）
+ * @param {string[]} dateList - 比較先日付一覧（YYYYMMDD昇順。all_market_days=false 時は [to_date] の1件）
+ * @returns {{コード, 銘柄名, 予測, 比較元終値, dates: Object<string, {比較先終値, 増減円, 増減率}>}[]}
+ *          コードの初出順を維持した配列
+ */
+function buildCompareWideRows(results, dateList) {
+  // all_market_days=false 時、結果要素は比較先日付を持たないため、
+  // dateList の唯一の要素（to_date）へ紐付ける
+  const fallbackDate = dateList.length === 1 ? dateList[0] : null;
+
+  const rows = [];
+  const rowByCode = new Map();
+
+  for (const r of results) {
+    let row = rowByCode.get(r.コード);
+    if (!row) {
+      row = { コード: r.コード, 銘柄名: r.銘柄名, 予測: null, 比較元終値: null, dates: {} };
+      rowByCode.set(r.コード, row);
+      rows.push(row);
+    }
+
+    // 比較元終値・予測はコードごとに一定のため、取得できている要素から一度だけ反映する
+    if (r.比較元終値 != null) {
+      row.比較元終値 = r.比較元終値;
+      row.予測 = r.予測;
+    }
+
+    const dateKey = r.比較先日付 ?? fallbackDate;
+    if (dateKey != null) {
+      row.dates[dateKey] = {
+        比較先終値: r.比較先終値 ?? null,
+        増減円: r.増減円 ?? null,
+        増減率: r.増減率 ?? null,
+      };
+    }
+  }
+
+  return rows;
+}
+
+/**
  * 比較元日付セレクタ（#compareFromDate）に指定日付を選択状態にする。
  * 選択肢一覧（/trading_dates＝直近3か月）に存在しない日付の場合は、
  * option を動的追加してから選択する（3か月超のCSVアップロード対応）。
@@ -920,7 +967,7 @@ function setCompareFromDate(dateStr) {
 /* ============================
    テーブルヘッダ更新
 ============================ */
-function updateTableHeader(mode, label = "", compareFromLabel = "", compareToLabel = "", compareAllMarketDays = false) {
+function updateTableHeader(mode, label = "", compareFromLabel = "", compareDateList = []) {
   const stickyThead = document.getElementById("resultHeaderSticky");
   const bodyThead   = document.getElementById("resultHeaderBody");
 
@@ -996,31 +1043,46 @@ function updateTableHeader(mode, label = "", compareFromLabel = "", compareToLab
   }
 
   // compare（CSV/証券コード比較）
+  // compare（CSV/証券コード比較）：横持ち表示。
+  // 固定列（コード・銘柄名・スコア・上昇/下降の予測・比較元終値）＋
+  // 比較先日付ごとに横展開した列グループ（終値・増減（円）・増減（％））の2行ヘッダ。
   if (mode === "compare") {
-    const fromHeader = compareFromLabel ? `比較元 ${compareFromLabel}終値` : "比較元終値";
-    // 全営業日比較時は比較先日付が行ごとに変わるため、ヘッダに日付を埋め込まず
-    // 「比較先日付」列を別途設ける。単一比較時は従来通り日付を埋め込む。
-    const toHeader = compareAllMarketDays
-      ? "比較先終値"
-      : (compareToLabel ? `比較先 ${compareToLabel}終値` : "比較先終値");
-    const toDateColumnHeader = compareAllMarketDays ? `<th>比較先日付</th>` : "";
+    const fromHeaderLine1 = compareFromLabel ? `比較元 ${compareFromLabel}` : "比較元";
 
-    const html = `
+    let dateGroupHeaders = "";   // 1行目：比較先日付（3列分の colspan）
+    let dateSubHeaders   = "";   // 2行目：終値・増減（円）・増減（％）
+    for (const targetDate of compareDateList) {
+      dateGroupHeaders += `<th colspan="3">${makeDateLabel(targetDate)}</th>`;
+      dateSubHeaders   += `<th>終値</th><th>増減（円）</th><th>増減（％）</th>`;
+    }
+
+    // 比較元終値は固定列群の最右に配置し、2行ヘッダ（1行目に日付、2行目に「終値」）にする。
+    // rowspan では表現できない（1行目のテキストが他の固定列（rowspan=2）と異なり
+    // 空ではないため）ため、比較先日付の列グループと同じ「1行目・2行目に分割」する
+    // パターンで統一する。1つの固定列がヘッダ側で2セルに分かれるため、
+    // [data-fixed-col] の出現順による本体列との対応付け（syncFixedColumns）が
+    // 崩れないよう、1行目セルには data-fixed-col ではなく data-fixed-col-group="4"
+    // （本体側の5番目＝インデックス4の固定列であることの明示）を用いる
+    // （詳細は screening.js の syncFixedColumns を参照。2026-07 追加）。
+    const row1 = `
       <tr>
-        <th class="fixed-col" data-fixed-col>コード</th>
-        <th class="fixed-col" data-fixed-col>銘柄名</th>
-        <th>スコア</th>
-        <th>上昇/下降の予測</th>
-        <th>上昇/下降の結果</th>
-        ${toDateColumnHeader}
-        <th>${fromHeader}</th>
-        <th>${toHeader}</th>
-        <th>増減（円）</th>
-        <th>増減（％）</th>
+        <th class="fixed-col" data-fixed-col rowspan="2">コード</th>
+        <th class="fixed-col" data-fixed-col rowspan="2">銘柄名</th>
+        <th class="fixed-col" data-fixed-col rowspan="2">スコア</th>
+        <th class="fixed-col" data-fixed-col rowspan="2">上昇/下降の予測</th>
+        <th class="fixed-col" data-fixed-col-group="4">${fromHeaderLine1}</th>
+        ${dateGroupHeaders}
       </tr>
     `;
-    stickyThead.innerHTML = html;
-    bodyThead.innerHTML   = html;
+    const row2 = `
+      <tr>
+        <th class="fixed-col" data-fixed-col data-fixed-col-last>終値</th>
+        ${dateSubHeaders}
+      </tr>
+    `;
+
+    stickyThead.innerHTML = row1 + row2;
+    bodyThead.innerHTML   = row1 + row2;
     return;
   }
 }
@@ -1087,18 +1149,33 @@ async function startScreening() {
     label = `${y}/${m}/${day}（${w}）`;
   }
 
-  // compare モード：ヘッダ用日付ラベルを組み立て、証券コード直接入力時はスコアマップをリセット
+  // compare モード：ヘッダ用日付ラベル・横持ち列展開用の比較先日付一覧を組み立て、
+  // 証券コード直接入力時はスコアマップをリセット
   let compareFromLabel = "";
-  let compareToLabel   = "";
+  let compareDateList  = [];
   if (mode === "compare") {
     compareFromLabel = makeDateLabel(fromDate);
-    compareToLabel   = makeDateLabel(toDate);
+
+    if (allMarketDays) {
+      // #compareFromDate・#compareToDateSelect は共通データソース（/trading_dates・
+      // 直近3か月の市場開場日）から構築されているため、選択肢（option）の値を
+      // そのままフィルタすれば、API応答を待たずにバックエンド（trading_dates_cache）と
+      // 同じ対象日一覧を算出できる（値は文字列 YYYYMMDD のため文字列比較で時系列順）。
+      compareDateList = Array.from(document.getElementById("compareToDateSelect").options)
+        .map(opt => opt.value)
+        .filter(d => d > fromDate && d <= toDate)
+        .sort();
+    } else {
+      compareDateList = [toDate];
+    }
+
     if (source !== "csv") {
       uploadedCsvScoreMap = {};  // 証券コード直接入力時はスコアマップをクリア
     }
   }
+  currentCompareDateList = compareDateList;
 
-  updateTableHeader(mode, label, compareFromLabel, compareToLabel, mode === "compare" && allMarketDays);
+  updateTableHeader(mode, label, compareFromLabel, compareDateList);
 
   startBtn.disabled = true;
   cancelBtn.disabled = false;
@@ -1196,7 +1273,7 @@ async function startScreening() {
     }
 
     currentResults = results;
-    showResults(results, mode);
+    showResults(results, mode, compareDateList);
 
     const countLabel = document.getElementById("resultCount");
     if (countLabel) {
@@ -1251,10 +1328,16 @@ function cancelScreening() {
 /* ============================
    結果表示
 ============================ */
-function showResults(results, mode) {
+function showResults(results, mode, compareDateList = currentCompareDateList) {
   tbody.innerHTML = "";
 
-  results.forEach((r, index) => {
+  // compare モードのみ、縦持ちの results を1銘柄1行の横持ちへ変換してから描画する。
+  // それ以外のモードは従来通り results をそのまま1要素=1行として描画する。
+  const renderRows = mode === "compare"
+    ? buildCompareWideRows(results, compareDateList)
+    : results;
+
+  renderRows.forEach((r, index) => {
     const tr = document.createElement("tr");
 
     /* ------------------------------
@@ -1404,51 +1487,59 @@ function showResults(results, mode) {
     }
 
     /* ------------------------------
-       compare モード
+       compare モード（横持ち：r は buildCompareWideRows() が生成した
+       1銘柄1行のオブジェクト。r.dates が比較先日付ごとの終値等を保持する）
     ------------------------------ */
     else if (mode === "compare") {
-      // 上昇/下降の結果（比較先 vs 比較元）
-      const compareResult = (!r.error && r.比較元終値 != null && r.比較先終値 != null)
-        ? calcCompareResult(r.比較元終値, r.比較先終値)
-        : "";
-
-      // 行の背景色：予測に基づく（heuristics モードと同様の CSS クラスを流用）
+      // 行全体の背景色（固定列群）は予測（r.予測）に基づき tr-trend-up/down クラスで
+      // 付与する。CSS側で .tr-trend-up .fixed-col が固定列（コード・銘柄名・スコア・
+      // 上昇/下降の予測・比較元終値）すべてに背景色を適用し、ホバー時は
+      // #resultTable tr:hover .fixed-col が同じ !important・より後方の定義により
+      // 上書きされる（heuristics/ratio モードと共通の既存の仕組みをそのまま流用）。
       if (r.予測 === "up") {
         tr.classList.add("tr-trend-up");
       } else if (r.予測 === "down") {
         tr.classList.add("tr-trend-down");
       }
 
-      // 結果グループのセル背景色：上昇/下降の結果に基づく
-      const resultBg = compareResult === "↗" ? "var(--color-trend-up-bg)"
-                     : compareResult === "↘" ? "var(--color-trend-down-bg)"
-                     : "var(--color-bg-table-row)";
-
       // スコア：CSVアップロード時に抽出したマップから取得（存在しない場合は "-"）
       const score = uploadedCsvScoreMap[r.コード] ?? "-";
 
-      // 予測グループのセル背景色：上昇/下降の予測に基づく
-      const predictBg = r.予測 === "up"   ? "var(--color-trend-up-bg)"
-                      : r.予測 === "down" ? "var(--color-trend-down-bg)"
-                      : "";
+      // 比較先日付ごとの列グループ（終値・増減（円）・増減（％））を
+      // compareDateList の順（1行目ヘッダの日付順）にそのまま展開する。
+      let dateCellsHtml = "";
+      for (const targetDate of compareDateList) {
+        const cell = r.dates[targetDate];
+        const toClose = cell?.比較先終値 ?? null;
+        const diffYen = cell?.増減円 ?? null;
+        const diffPct = cell?.増減率 ?? null;
 
-      // 全営業日比較モードでは行データに「比較先日付」が含まれる。
-      // 単一比較モードでは undefined のため、列自体を出力しない。
-      const toDateCell = r.比較先日付 != null
-        ? `<td style="background-color:${resultBg}">${makeDateLabel(r.比較先日付)}</td>`
-        : "";
+        // 背景色：比較元終値との比較結果に基づく。増減無し（横ばい）は設定しない。
+        // inline style ではなく class（.td-trend-up-bg/.td-trend-down-bg）を用いるのは、
+        // #resultTable tr:hover によるホバー時の上書きを成立させるため。
+        let bgClass = "";
+        if (toClose != null && r.比較元終値 != null) {
+          const result = calcCompareResult(r.比較元終値, toClose);
+          bgClass = result === "↗" ? "td-trend-up-bg"
+                  : result === "↘" ? "td-trend-down-bg"
+                  : "";
+        }
+        const classAttr = bgClass ? ` class="${bgClass}"` : "";
+
+        dateCellsHtml += `
+          <td${classAttr}>${toClose ?? ""}</td>
+          <td${classAttr}>${diffYen != null ? (diffYen > 0 ? "+" : "") + diffYen : ""}</td>
+          <td${classAttr}>${diffPct != null ? (diffPct > 0 ? "+" : "") + diffPct + "%" : ""}</td>
+        `;
+      }
 
       tr.innerHTML = `
         <td class="fixed-col" data-fixed-col>${r.コード}</td>
         <td class="fixed-col" data-fixed-col>${r.銘柄名}</td>
-        <td${predictBg ? ` style="background-color:${predictBg}"` : ""}>${score}</td>
-        <td${predictBg ? ` style="background-color:${predictBg}"` : ""}>${formatDirectionMark(r.予測) || "-"}</td>
-        <td style="background-color:${resultBg}">${compareResult}</td>
-        ${toDateCell}
-        <td style="background-color:${resultBg}">${r.比較元終値 ?? ""}</td>
-        <td style="background-color:${resultBg}">${r.比較先終値 ?? ""}</td>
-        <td style="background-color:${resultBg}">${r.増減円 > 0 ? "+" : ""}${r.増減円 ?? ""}</td>
-        <td style="background-color:${resultBg}">${r.増減率 > 0 ? "+" : ""}${r.増減率 != null ? r.増減率 + "%" : ""}</td>
+        <td class="fixed-col" data-fixed-col>${score}</td>
+        <td class="fixed-col" data-fixed-col>${formatDirectionMark(r.予測) || "-"}</td>
+        <td class="fixed-col" data-fixed-col data-fixed-col-last>${r.比較元終値 ?? ""}</td>
+        ${dateCellsHtml}
       `;
     }
 
@@ -1623,6 +1714,18 @@ function syncFixedColumns() {
   const headerFixedCols = document.querySelectorAll("#resultTableSticky [data-fixed-col]");
   headerFixedCols.forEach((th, i) => {
     if (offsets[i]) th.style.left = `${offsets[i].left}px`;
+  });
+
+  // ④ compare モードの比較元終値のように、1つの固定列がヘッダ側で2行に分割される
+  //    （1行目「比較元 YYYY/MM/DD（曜）」・2行目「終値」）場合、本体側は1つの td
+  //    （data-fixed-col 1個）である一方、ヘッダ側に data-fixed-col を2個（両方の行）
+  //    付与すると③の出現順ベースの対応付けが崩れてしまう。そのため2行目のみ
+  //    data-fixed-col を持たせて③で対応付け、1行目には代わりに
+  //    [data-fixed-col-group="<本体側offsetsのインデックス>"] を付与し、
+  //    同じ left オフセットを明示的に適用する（2026-07 追加）。
+  document.querySelectorAll("#resultTableSticky [data-fixed-col-group]").forEach(th => {
+    const offset = offsets[Number(th.dataset.fixedColGroup)];
+    if (offset) th.style.left = `${offset.left}px`;
   });
 }
 
