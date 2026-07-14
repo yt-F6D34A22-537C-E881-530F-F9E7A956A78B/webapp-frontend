@@ -289,12 +289,13 @@ function techValueToText(key, val) {
 
 /**
  * 現在の表示モードに応じた CSV ヘッダ行（1行）を生成する
- * 2行ヘッダ（heuristics）は「1行目（2行目）」形式でまとめる
- * @param {string} mode   ratio | date | heuristics
- * @param {string} label  date モードの日付ラベル（例: 2025/06/27（金））
+ * 2行ヘッダ（heuristics / compare）は「1行目（2行目）」相当を1セルへ連結してまとめる
+ * @param {string} mode              ratio | date | heuristics | compare
+ * @param {string} label             date モードの日付ラベル（例: 2025/06/27（金））
+ * @param {string[]} compareDateList compare モード用：比較先日付一覧（YYYYMMDD昇順）
  * @returns {string[]}    ヘッダセルの配列
  */
-function buildCsvHeaders(mode, label) {
+function buildCsvHeaders(mode, label, compareDateList = []) {
   if (mode === "ratio") {
     return ["コード", "銘柄名", "出来高倍率", "上髭実体比", "出来高", "上髭", "実体"];
   }
@@ -331,8 +332,17 @@ function buildCsvHeaders(mode, label) {
   }
 
   if (mode === "compare") {
-    // 画面表示と同一の列順に合わせる
-    return ["コード", "銘柄名", "スコア", "上昇/下降の予測", "上昇/下降の結果", "比較元終値", "比較先終値", "増減（円）", "増減（％）"];
+    // 画面表示（横持ち）と同一の列構成に合わせる。
+    // 固定列（コード・銘柄名・スコア・上昇/下降の予測・比較元終値）＋
+    // 比較先日付ごとに「YYYY/MM/DD（曜）終値」「YYYY/MM/DD（曜）増減（円）」
+    // 「YYYY/MM/DD（曜）増減（％）」の3列を横展開する（heuristics の
+    // 「グループ名（item.label）」と同様、2行ヘッダ相当を1セルへ連結する方式）。
+    const headers = ["コード", "銘柄名", "スコア", "上昇/下降の予測", "比較元終値"];
+    for (const targetDate of compareDateList) {
+      const dateLabel = makeDateLabel(targetDate);
+      headers.push(`${dateLabel}終値`, `${dateLabel}増減（円）`, `${dateLabel}増減（％）`);
+    }
+    return headers;
   }
 
   return [];
@@ -340,11 +350,13 @@ function buildCsvHeaders(mode, label) {
 
 /**
  * 結果1行分のセル値配列を返す
- * @param {object} r     結果オブジェクト
- * @param {string} mode  ratio | date | heuristics
+ * @param {object} r                 結果オブジェクト（compare モードは buildCompareWideRows() が
+ *                                    生成したピボット済みの横持ち行オブジェクトを渡す）
+ * @param {string} mode              ratio | date | heuristics | compare
+ * @param {string[]} compareDateList compare モード用：比較先日付一覧（YYYYMMDD昇順）
  * @returns {string[]}
  */
-function buildCsvRow(r, mode) {
+function buildCsvRow(r, mode, compareDateList = []) {
   if (mode === "ratio") {
     return [
       r.コード,
@@ -385,21 +397,30 @@ function buildCsvRow(r, mode) {
   }
 
   if (mode === "compare") {
-    const compareResult = (!r.error && r.比較元終値 != null && r.比較先終値 != null)
-      ? calcCompareResult(r.比較元終値, r.比較先終値)
-      : "";
+    // r は buildCompareWideRows() が生成した1銘柄1行のオブジェクト（画面表示と同一データ）。
+    // 「上昇/下降の結果」は2026-07 の横持ち表示への変更で列自体を廃止しているため出力しない。
     const score = uploadedCsvScoreMap[r.コード] ?? "-";
-    return [
+    const cells = [
       r.コード,
       r.銘柄名,
       score,
       formatDirectionMark(r.予測) || "-",
-      compareResult,
       r.比較元終値 ?? "",
-      r.比較先終値 ?? "",
-      r.増減円  != null ? (r.増減円  > 0 ? "+" : "") + r.増減円  : "",
-      r.増減率 != null ? (r.増減率 > 0 ? "+" : "") + r.増減率 + "%" : ""
-    ].map(String);
+    ];
+
+    for (const targetDate of compareDateList) {
+      const cell = r.dates[targetDate];
+      const toClose = cell?.比較先終値 ?? null;
+      const diffYen = cell?.増減円 ?? null;
+      const diffPct = cell?.増減率 ?? null;
+      cells.push(
+        toClose ?? "",
+        diffYen != null ? (diffYen > 0 ? "+" : "") + diffYen : "",
+        diffPct != null ? (diffPct > 0 ? "+" : "") + diffPct + "%" : ""
+      );
+    }
+
+    return cells.map(String);
   }
 
   return [];
@@ -407,7 +428,7 @@ function buildCsvRow(r, mode) {
 
 /**
  * 現在の currentResults を CSV ファイルとしてダウンロードする
- * ファイル名: screening_<mode>_<YYYYMMDD>.csv
+ * ファイル名: screening_<mode>_<YYYYMMDD>.csv（compare モードのみ <比較元日付>-<比較先日付>）
  */
 function downloadCsv() {
   const mode = document.querySelector('input[name="searchMode"]:checked').value;
@@ -425,8 +446,14 @@ function downloadCsv() {
     label = `${y}/${m}/${day}（${w}）`;
   }
 
-  const headers = buildCsvHeaders(mode, label);
-  const rows = currentResults.map(r => buildCsvRow(r, mode));
+  // compare モードは currentResults（縦持ち）を画面表示と同一の横持ちへ変換してから出力する。
+  // currentCompareDateList は showResults() と同じ比較先日付一覧（列構成）を保持している。
+  const csvRows = mode === "compare"
+    ? buildCompareWideRows(currentResults, currentCompareDateList)
+    : currentResults;
+
+  const headers = buildCsvHeaders(mode, label, currentCompareDateList);
+  const rows = csvRows.map(r => buildCsvRow(r, mode, currentCompareDateList));
 
   // CSV 文字列を組み立てる（RFC 4180 準拠）
   const csvLines = [headers, ...rows]
@@ -438,11 +465,15 @@ function downloadCsv() {
   const blob = new Blob([bom + csvLines], { type: "text/csv;charset=utf-8;" });
 
   // ファイル名: screening_<mode>_<YYYYMMDD>.csv
-  // YYYYMMDD はスクリーニングへ指定した日付（モードごとの日付セレクタ値）
+  // YYYYMMDD はスクリーニングへ指定した日付（モードごとの日付セレクタ値）。
+  // compare モードは単一の対象日を持たないため、比較元日付-比較先日付とする。
   const targetDateMap = {
     ratio:      ratioDateSelect.value,
     date:       dateSelect.value,
     heuristics: heuristicsDateSelect.value,
+    compare:    (compareFromDateInput.value && document.getElementById("compareToDateSelect").value)
+      ? `${compareFromDateInput.value}-${document.getElementById("compareToDateSelect").value}`
+      : "",
   };
   const dateStr = targetDateMap[mode] || "";
   const fileName = dateStr
