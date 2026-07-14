@@ -443,6 +443,12 @@ body {
 /* CSV・証券コード比較：全営業日比較トグル —　比較元日付・比較先日付と同じ flex 行内に並べる */
 .compare-all-market-days-option {
   display: flex;
+  flex-direction: row; /* .mode-conditions label の flex-direction: column（全ラベル共通）を
+                           上書きし、チェックボックス→文言を横並びにする。
+                           .compare-all-market-days-option（クラス1つ）は
+                           .mode-conditions label（クラス1＋要素1）より詳細度が低く、
+                           flex-direction を明示しない限り column 側が優先されてしまうため、
+                           2026-07 に明示指定を追加した */
   align-items: center;
   gap: 6px;
   font-size: 13px;
@@ -774,6 +780,20 @@ button:disabled {
     box-shadow: inset -3px 0 0 var(--color-trend-down-border);
 }
 
+/* compare モード（全営業日比較）：比較先日付の列グループ（終値・増減（円）・増減（％））
+   ごとの背景色。行単位の tr-trend-up/down（予測ベース）とは独立に、
+   日付ごとの実際の上昇/下降（比較元終値との比較）を個別のセルへ適用する。
+   inline style ではなく class を用いるのは、下記の #resultTable tr:hover による
+   上書き（ホバー優先）を成立させるため（inline style は :hover の !important クラスより
+   常に優先されてしまい上書きできない）。2026-07 追加 */
+.td-trend-up-bg {
+  background-color: var(--color-trend-up-bg) !important;
+}
+
+.td-trend-down-bg {
+  background-color: var(--color-trend-down-bg) !important;
+}
+
 .table-scroll-outer {
   overflow-x: auto;
   overflow-y: hidden;
@@ -803,9 +823,15 @@ button:disabled {
   transition: background-color var(--transition-base);
 }
 
+/* tr-trend-up/down（.fixed-col）・td-heuristics-applied・td-trend-up-bg/td-trend-down-bg
+   （compare モードの日付別セル）のいずれよりもホバー背景を優先させるため、
+   同じ !important の詳細度勝負を、CSSの記述順（本ルールを後方に置く）で決着させる
+   （後発の同詳細度ルールが有効になるカスケードの原則を利用している） */
 #resultTable tr:hover,
 #resultTable tr:hover .fixed-col,
-#resultTable tr:hover .td-heuristics-applied {
+#resultTable tr:hover .td-heuristics-applied,
+#resultTable tr:hover .td-trend-up-bg,
+#resultTable tr:hover .td-trend-down-bg {
   background: var(--color-bg-table-hover) !important;
   cursor: pointer;
 }
