@@ -6,6 +6,7 @@ const tbody = document.querySelector("#resultTable tbody");
 const dateSelect = document.getElementById("dateSelect");                     // date_ranking 用
 const ratioDateSelect = document.getElementById("ratioDateSelect");           // ratio 用
 const heuristicsDateSelect = document.getElementById("heuristicsDateSelect"); // heuristics 用
+const blockDateSelect = document.getElementById("blockDateSelect");           // block（超大口検出）用
 
 const loadingOverlay = document.getElementById("loadingOverlay");
 
@@ -304,6 +305,10 @@ function buildCsvHeaders(mode, label, compareDateList = []) {
     return ["コード", "銘柄名", "値上がり率", `${label}終値`, "前日終値"];
   }
 
+  if (mode === "block") {
+    return ["コード", "銘柄名", "検出件数", "最大売買代金（円）", "検出時刻", "価格変化率", "タイプ", "日次売買代金（円）"];
+  }
+
   if (mode === "heuristics") {
     // 固定列（rowspan=2 なので 1行目のみ）
     const headers = ["コード", "銘柄名", "トレンド", "スコア"];
@@ -376,6 +381,19 @@ function buildCsvRow(r, mode, compareDateList = []) {
       `${r.値上がり率}%`,
       r.当日終値,
       r.前日終値
+    ].map(String);
+  }
+
+  if (mode === "block") {
+    return [
+      r.コード,
+      r.銘柄名,
+      r.検出件数,
+      r.最大売買代金,
+      r.検出時刻,
+      `${r.価格変化率}%`,
+      r.タイプ,
+      r.日次売買代金
     ].map(String);
   }
 
@@ -471,6 +489,7 @@ function downloadCsv() {
     ratio:      ratioDateSelect.value,
     date:       dateSelect.value,
     heuristics: heuristicsDateSelect.value,
+    block:      blockDateSelect ? blockDateSelect.value : "",
     compare:    (compareFromDateInput.value && document.getElementById("compareToDateSelect").value)
       ? `${compareFromDateInput.value}-${document.getElementById("compareToDateSelect").value}`
       : "",
@@ -602,6 +621,7 @@ function renderExcludeMarketsFieldset(containerId) {
 function renderExcludeMarketsFieldsets() {
   renderExcludeMarketsFieldset("ratioConditions");
   renderExcludeMarketsFieldset("heuristicsConditions");
+  renderExcludeMarketsFieldset("blockConditions");
 }
 
 window.onload = () => {
@@ -623,6 +643,8 @@ function initSearchMode() {
   const heuristicsInputs = document.querySelectorAll("#heuristicsConditions select, #heuristicsConditions input[type='text']");
   const heuristicsFieldset = document.querySelectorAll("#heuristicsConditions fieldset");
   const compareFieldsets = document.querySelectorAll("#compareConditions fieldset");
+  const blockInputs = document.querySelectorAll("#blockConditions input:not([type='checkbox']), #blockConditions select");
+  const blockFieldset = document.querySelectorAll("#blockConditions fieldset");
 
   function updateMode() {
     const mode = document.querySelector('input[name="searchMode"]:checked').value;
@@ -633,6 +655,8 @@ function initSearchMode() {
     heuristicsInputs.forEach(i => i.disabled = (mode !== "heuristics"));
     heuristicsFieldset.forEach(i => i.disabled = (mode !== "heuristics"));
     compareFieldsets.forEach(i => i.disabled = (mode !== "compare"));
+    blockInputs.forEach(i => i.disabled = (mode !== "block"));
+    blockFieldset.forEach(i => i.disabled = (mode !== "block"));
 
     updateCompareSourceInputs();
   }
@@ -828,6 +852,11 @@ async function loadTradingDates() {
     compareToDateSelect.innerHTML = "";
     compareToDateSelect.appendChild(new Option("読み込み中...", ""));
 
+    if (blockDateSelect) {
+      blockDateSelect.innerHTML = "";
+      blockDateSelect.appendChild(new Option("読み込み中...", ""));
+    }
+
     const res = await fetch(`${API_BASE_URL}/trading_dates`);
     const data = await res.json();
 
@@ -835,6 +864,9 @@ async function loadTradingDates() {
       console.error("trading_dates API error:", { httpStatus: res.status, body: data });
       compareFromDateSelect.innerHTML = `<option value="">取得失敗</option>`;
       compareToDateSelect.innerHTML = `<option value="">取得失敗</option>`;
+      if (blockDateSelect) {
+        blockDateSelect.innerHTML = `<option value="">取得失敗</option>`;
+      }
       return;
     }
 
@@ -847,6 +879,16 @@ async function loadTradingDates() {
     // 比較先日付（デフォルト＝先頭＝最新の市場開場日）
     compareToDateSelect.innerHTML = "";
     dates.forEach(d => compareToDateSelect.appendChild(makeOption(d)));
+
+    // block（超大口検出）モードの日付：1分足は直近7日程度しか取得できない
+    // （Yahoo Finance 側の制約）ため、選択肢自体を直近6営業日に絞り込む
+    // （バックエンドの BLOCK_RECENT_TRADABLE_DAYS と同じ値。件数はここでのみ定義し、
+    // バックエンド側の定数と合わせて変更すること）。
+    if (blockDateSelect) {
+      const BLOCK_RECENT_TRADABLE_DAYS = 6;
+      blockDateSelect.innerHTML = "";
+      dates.slice(0, BLOCK_RECENT_TRADABLE_DAYS).forEach(d => blockDateSelect.appendChild(makeOption(d)));
+    }
 
   } catch (e) {
     console.error("trading_dates 取得エラー:", e);
@@ -1036,6 +1078,25 @@ function updateTableHeader(mode, label = "", compareFromLabel = "", compareDateL
     return;
   }
 
+  // block（超大口検出）
+  if (mode === "block") {
+    const html = `
+      <tr>
+        <th class="fixed-col" data-fixed-col>コード</th>
+        <th class="fixed-col" data-fixed-col>銘柄名</th>
+        <th>検出件数</th>
+        <th>最大売買代金</th>
+        <th>検出時刻</th>
+        <th>価格変化率</th>
+        <th>タイプ</th>
+        <th>日次売買代金</th>
+      </tr>
+    `;
+    stickyThead.innerHTML = html;
+    bodyThead.innerHTML   = html;
+    return;
+  }
+
   // heuristics
   if (mode === "heuristics") {
     let row1 = `
@@ -1134,6 +1195,9 @@ async function startScreening() {
   const toDate = document.getElementById("compareToDateSelect").value;
   const codes = document.getElementById("compareCodes").value.trim();
   const allMarketDays = document.getElementById("compareAllMarketDays")?.checked ?? false;
+  const targetDateBlock = blockDateSelect ? blockDateSelect.value : "";
+  const blockThresholdYen = parseFloat(document.getElementById("blockThresholdYen").value);
+  const blockCandidateLimit = parseInt(document.getElementById("blockCandidateLimit").value, 10);
 
   if (mode === "ratio" && !targetDateRatio) {
     alert("日付を選択してください。");
@@ -1148,6 +1212,21 @@ async function startScreening() {
   if (mode === "heuristics" && !targetDateHeuristics) {
     alert("日付を選択してください。");
     return;
+  }
+
+  if (mode === "block") {
+    if (!targetDateBlock) {
+      alert("日付を選択してください。");
+      return;
+    }
+    if (isNaN(blockThresholdYen) || blockThresholdYen <= 0) {
+      alert("検出しきい値は0より大きい数値で入力してください。");
+      return;
+    }
+    if (isNaN(blockCandidateLimit) || blockCandidateLimit <= 0) {
+      alert("事前絞り込み候補数は1以上の整数で入力してください。");
+      return;
+    }
   }
 
   if (mode === "compare") {
@@ -1255,6 +1334,18 @@ async function startScreening() {
       const heuristicsCodes = document.getElementById("heuristicsCodes").value.trim();
       if (heuristicsCodes) {
         url.searchParams.set("codes", heuristicsCodes);
+      }
+    } else if (mode === "block") {
+      url.searchParams.set("mode", "block");
+      url.searchParams.set("target_date", targetDateBlock);
+      // 億円単位の入力値を円へ変換して送信する
+      url.searchParams.set("threshold_yen", Math.round(blockThresholdYen * 1e8));
+      url.searchParams.set("candidate_limit", blockCandidateLimit);
+
+      // 除外市場をパラメータに追加（1件以上チェックされている場合のみ）
+      const excludeMarkets = getExcludeMarkets("blockConditions");
+      if (excludeMarkets) {
+        url.searchParams.set("exclude_markets", excludeMarkets);
       }
     } else if (mode === "compare") {
       url.searchParams.set("mode", "compare");
@@ -1396,6 +1487,26 @@ function showResults(results, mode, compareDateList = currentCompareDateList) {
         <td>${r.値上がり率}%</td>
         <td>${r.当日終値}</td>
         <td>${r.前日終値}</td>
+      `;
+    }
+
+    /* ------------------------------
+       block モード（超大口検出）
+    ------------------------------ */
+    else if (mode === "block") {
+      // 金額は円のままだと桁数が多く読みにくいため億円単位で表示する
+      const toOku = (yen) => (yen / 1e8).toFixed(2);
+      const pctText = `${r.価格変化率 > 0 ? "+" : ""}${r.価格変化率}%`;
+
+      tr.innerHTML = `
+        <td class="fixed-col" data-fixed-col>${r.コード}</td>
+        <td class="fixed-col" data-fixed-col>${r.銘柄名}</td>
+        <td>${r.検出件数}</td>
+        <td>${toOku(r.最大売買代金)}億円</td>
+        <td>${r.検出時刻}</td>
+        <td>${pctText}</td>
+        <td>${r.タイプ}</td>
+        <td>${toOku(r.日次売買代金)}億円</td>
       `;
     }
 
