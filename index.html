@@ -9,7 +9,7 @@
   <link rel="apple-touch-icon" href="assets/favicon.ico">
 
   <!-- ============================
-       Webフォント（セルフホスト） 
+       Webフォント（セルフホスト）
        見出し/テーブルヘッダ: Noto Serif JP／本文: Noto Sans JP／数値: Inter
        実体は assets/fonts/fonts.css の @font-face 定義を参照
   ============================ -->
@@ -84,6 +84,10 @@
         <label class="mode-tab">
           <input type="radio" name="searchMode" value="heuristics">
           <span>経験則判定（heuristics）</span>
+        </label>
+        <label class="mode-tab">
+          <input type="radio" name="searchMode" value="block">
+          <span>超大口検出</span>
         </label>
       </div>
 
@@ -173,6 +177,25 @@
             <label>証券コード（任意・4桁・カンマ区切りで複数可）
               <input id="heuristicsCodes" type="text" placeholder="例: 7203,9984" disabled>
             </label>
+            <div data-exclude-markets-slot></div>
+          </div>
+        </div>
+
+        <!-- モード：超大口検出 -->
+        <div class="mode-panel" data-mode="block">
+          <div class="mode-conditions" id="blockConditions">
+            <label>日付（1分足の取得制約上、直近の取引日のみ選択可）
+              <select id="blockDateSelect" disabled></select>
+            </label>
+
+            <label>検出しきい値（億円）以上
+              <input id="blockThresholdYen" type="number" value="1" step="0.1" min="0.1" disabled>
+            </label>
+
+            <label>事前絞り込み候補数（日次売買代金の上位）
+              <input id="blockCandidateLimit" type="number" value="50" step="10" min="1" disabled>
+            </label>
+
             <div data-exclude-markets-slot></div>
           </div>
         </div>
