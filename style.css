@@ -274,7 +274,8 @@ body {
 .mode-tabs:has(input[value="ratio"]:checked) ~ .mode-panels .mode-panel[data-mode="ratio"],
 .mode-tabs:has(input[value="date"]:checked) ~ .mode-panels .mode-panel[data-mode="date"],
 .mode-tabs:has(input[value="compare"]:checked) ~ .mode-panels .mode-panel[data-mode="compare"],
-.mode-tabs:has(input[value="heuristics"]:checked) ~ .mode-panels .mode-panel[data-mode="heuristics"] {
+.mode-tabs:has(input[value="heuristics"]:checked) ~ .mode-panels .mode-panel[data-mode="heuristics"],
+.mode-tabs:has(input[value="block"]:checked) ~ .mode-panels .mode-panel[data-mode="block"] {
   display: block;
 }
 
