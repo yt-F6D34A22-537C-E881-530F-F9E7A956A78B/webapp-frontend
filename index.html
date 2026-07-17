@@ -6,7 +6,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <link rel="icon" href="assets/favicon.ico">
-  <link rel="apple-touch-icon" href="assets/favicon.ico">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
+  <!-- ============================
+       apple-touch-icon について（2026-07 修正）
+       旧仕様では favicon.ico（最大でも64x64までしか解像度を持たない）を
+       apple-touch-icon としても兼用していたため、iOSの「ホーム画面に追加」機能が
+       要求する180x180にアップスケールされ、ぼやけて表示されていた。
+       さらに favicon.ico は角丸＋透過を持たせていたため、iOS側が透過部分を
+       正しく扱えず縁が不自然に見える一因にもなっていた。
+       apple-touch-icon.png は 180x180・透過なし（フルブリードの正方形）の
+       専用画像とし、角丸のマスキングはiOS側に任せる想定で作成している。
+  ============================ -->
 
   <!-- ============================
        Webフォント（セルフホスト）
