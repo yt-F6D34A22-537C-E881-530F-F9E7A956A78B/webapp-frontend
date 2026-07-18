@@ -218,6 +218,16 @@ function formatDirectionMark(direction) {
          direction === "flat" ? "－" : "";
 }
 
+/**
+ * 時価総額（円）を億円単位の文字列に整形する。
+ * 発行済株式数が market_cap.json に存在しない銘柄は null が返る想定のため、
+ * その場合は "-" を表示する（全モード共通の時価総額列で使用）。
+ */
+function formatMarketCap(yen) {
+  if (yen == null) return "-";
+  return `${(yen / 1e8).toLocaleString(undefined, { maximumFractionDigits: 1, minimumFractionDigits: 1 })}億円`;
+}
+
 /* ============================================================
    CSV ダウンロード
 ============================================================ */
@@ -298,20 +308,20 @@ function techValueToText(key, val) {
  */
 function buildCsvHeaders(mode, label, compareDateList = []) {
   if (mode === "ratio") {
-    return ["コード", "銘柄名", "出来高倍率", "上髭実体比", "出来高", "上髭", "実体"];
+    return ["コード", "銘柄名", "時価総額（円）", "終値", "出来高", "前日出来高", "出来高前日比（％）", "売買代金", "上髭実体比（％）", "上髭", "実体"];
   }
 
   if (mode === "date") {
-    return ["コード", "銘柄名", "値上がり率", `${label}終値`, "前日終値"];
+    return ["コード", "銘柄名", "時価総額（円）", "値上がり率", `${label}終値`, "前日終値"];
   }
 
   if (mode === "block") {
-    return ["コード", "銘柄名", "検出件数", "最大売買代金（円）", "検出時刻", "価格変化率", "タイプ", "日次売買代金（円）"];
+    return ["コード", "銘柄名", "時価総額（円）", "検出件数", "最大売買代金（円）", "検出時刻", "価格変化率", "タイプ", "日次売買代金（円）"];
   }
 
   if (mode === "heuristics") {
     // 固定列（rowspan=2 なので 1行目のみ）
-    const headers = ["コード", "銘柄名", "トレンド", "スコア"];
+    const headers = ["コード", "銘柄名", "時価総額（円）", "トレンド", "スコア"];
 
     for (const typeObj of HEURISTICS_TYPES) {
       const itemCount = typeObj.items.length;
@@ -338,11 +348,11 @@ function buildCsvHeaders(mode, label, compareDateList = []) {
 
   if (mode === "compare") {
     // 画面表示（横持ち）と同一の列構成に合わせる。
-    // 固定列（コード・銘柄名・スコア・上昇/下降の予測・比較元終値）＋
+    // 固定列（コード・銘柄名・時価総額・スコア・上昇/下降の予測・比較元終値）＋
     // 比較先日付ごとに「YYYY/MM/DD（曜）終値」「YYYY/MM/DD（曜）増減（円）」
     // 「YYYY/MM/DD（曜）増減（％）」の3列を横展開する（heuristics の
     // 「グループ名（item.label）」と同様、2行ヘッダ相当を1セルへ連結する方式）。
-    const headers = ["コード", "銘柄名", "スコア", "上昇/下降の予測", "比較元終値"];
+    const headers = ["コード", "銘柄名", "時価総額（円）", "スコア", "上昇/下降の予測", "比較元終値"];
     for (const targetDate of compareDateList) {
       const dateLabel = makeDateLabel(targetDate);
       headers.push(`${dateLabel}終値`, `${dateLabel}増減（円）`, `${dateLabel}増減（％）`);
@@ -366,9 +376,13 @@ function buildCsvRow(r, mode, compareDateList = []) {
     return [
       r.コード,
       r.銘柄名,
-      r.出来高倍率,
-      r.上髭実体比,
+      r.時価総額 ?? "",
+      r.終値,
       r.出来高,
+      r.前日出来高,
+      r.出来高前日比,
+      r.売買代金,
+      (r.上髭実体比 * 100).toFixed(2),
       r.上髭,
       r.実体
     ].map(String);
@@ -378,6 +392,7 @@ function buildCsvRow(r, mode, compareDateList = []) {
     return [
       r.コード,
       r.銘柄名,
+      r.時価総額 ?? "",
       `${r.値上がり率}%`,
       r.当日終値,
       r.前日終値
@@ -388,6 +403,7 @@ function buildCsvRow(r, mode, compareDateList = []) {
     return [
       r.コード,
       r.銘柄名,
+      r.時価総額 ?? "",
       r.検出件数,
       r.最大売買代金,
       r.検出時刻,
@@ -401,6 +417,7 @@ function buildCsvRow(r, mode, compareDateList = []) {
     const cells = [
       r.コード,
       r.銘柄名,
+      r.時価総額 ?? "",
       formatDirectionMark(r.トレンド),
       r.スコア
     ].map(String);
@@ -421,6 +438,7 @@ function buildCsvRow(r, mode, compareDateList = []) {
     const cells = [
       r.コード,
       r.銘柄名,
+      r.時価総額 ?? "",
       score,
       formatDirectionMark(r.予測) || "-",
       r.比較元終値 ?? "",
@@ -995,7 +1013,7 @@ function buildCompareWideRows(results, dateList) {
   for (const r of results) {
     let row = rowByCode.get(r.コード);
     if (!row) {
-      row = { コード: r.コード, 銘柄名: r.銘柄名, 予測: null, 比較元終値: null, dates: {} };
+      row = { コード: r.コード, 銘柄名: r.銘柄名, 時価総額: r.時価総額 ?? null, 予測: null, 比較元終値: null, dates: {} };
       rowByCode.set(r.コード, row);
       rows.push(row);
     }
@@ -1050,11 +1068,11 @@ function updateTableHeader(mode, label = "", compareFromLabel = "", compareDateL
       <tr>
         <th class="fixed-col" data-fixed-col>コード</th>
         <th class="fixed-col" data-fixed-col>銘柄名</th>
-        <th>出来高倍率</th>
-        <th>上髭実体比</th>
-        <th>出来高</th>
-        <th>上髭</th>
-        <th>実体</th>
+        <th>時価総額</th>
+        <th>終値</th>
+        <th>出来高（前日出来高 / 前日比%）</th>
+        <th>売買代金</th>
+        <th>上髭実体比%（上髭 / 実体）</th>
       </tr>
     `;
     stickyThead.innerHTML = html;
@@ -1068,6 +1086,7 @@ function updateTableHeader(mode, label = "", compareFromLabel = "", compareDateL
       <tr>
         <th class="fixed-col" data-fixed-col>コード</th>
         <th class="fixed-col" data-fixed-col>銘柄名</th>
+        <th>時価総額</th>
         <th>値上がり率</th>
         <th>${label}終値</th>
         <th>前日終値</th>
@@ -1084,6 +1103,7 @@ function updateTableHeader(mode, label = "", compareFromLabel = "", compareDateL
       <tr>
         <th class="fixed-col" data-fixed-col>コード</th>
         <th class="fixed-col" data-fixed-col>銘柄名</th>
+        <th>時価総額</th>
         <th>検出件数</th>
         <th>最大売買代金</th>
         <th>検出時刻</th>
@@ -1103,8 +1123,9 @@ function updateTableHeader(mode, label = "", compareFromLabel = "", compareDateL
       <tr>
         <th class="fixed-col" data-fixed-col rowspan="2">コード</th>
         <th class="fixed-col" data-fixed-col rowspan="2">銘柄名</th>
-        <th class="fixed-col" data-fixed-col rowspan="2">トレ<br class="mobile-line-break">ンド</th>
-        <th class="fixed-col" data-fixed-col data-fixed-col-last rowspan="2">スコア</th>
+        <th class="fixed-col" data-fixed-col rowspan="2">時価総額</th>
+        <th class="fixed-col" data-fixed-col data-heuristics-trend-col rowspan="2">トレ<br class="mobile-line-break">ンド</th>
+        <th class="fixed-col" data-fixed-col data-fixed-col-last data-heuristics-score-col rowspan="2">スコア</th>
     `;
     let row2 = `<tr>`;
 
@@ -1136,7 +1157,7 @@ function updateTableHeader(mode, label = "", compareFromLabel = "", compareDateL
 
   // compare（CSV/証券コード比較）
   // compare（CSV/証券コード比較）：横持ち表示。
-  // 固定列（コード・銘柄名・スコア・上昇/下降の予測・比較元終値）＋
+  // 固定列（コード・銘柄名・時価総額・スコア・上昇/下降の予測・比較元終値）＋
   // 比較先日付ごとに横展開した列グループ（終値・増減（円）・増減（％））の2行ヘッダ。
   if (mode === "compare") {
     const fromHeaderLine1 = compareFromLabel ? `比較元 ${compareFromLabel}` : "比較元";
@@ -1153,16 +1174,17 @@ function updateTableHeader(mode, label = "", compareFromLabel = "", compareDateL
     // 空ではないため）ため、比較先日付の列グループと同じ「1行目・2行目に分割」する
     // パターンで統一する。1つの固定列がヘッダ側で2セルに分かれるため、
     // [data-fixed-col] の出現順による本体列との対応付け（syncFixedColumns）が
-    // 崩れないよう、1行目セルには data-fixed-col ではなく data-fixed-col-group="4"
-    // （本体側の5番目＝インデックス4の固定列であることの明示）を用いる
-    // （詳細は screening.js の syncFixedColumns を参照。2026-07 追加）。
+    // 崩れないよう、1行目セルには data-fixed-col ではなく data-fixed-col-group="5"
+    // （本体側の6番目＝インデックス5の固定列であることの明示。時価総額列の追加により
+    // 4→5へ変更。2026-07）を用いる（詳細は screening.js の syncFixedColumns を参照）。
     const row1 = `
       <tr>
         <th class="fixed-col" data-fixed-col rowspan="2">コード</th>
         <th class="fixed-col" data-fixed-col rowspan="2">銘柄名</th>
+        <th class="fixed-col" data-fixed-col rowspan="2">時価総額</th>
         <th class="fixed-col" data-fixed-col rowspan="2">スコア</th>
         <th class="fixed-col" data-fixed-col rowspan="2">上昇/下降の予測</th>
-        <th class="fixed-col" data-fixed-col-group="4">${fromHeaderLine1}</th>
+        <th class="fixed-col" data-fixed-col-group="5">${fromHeaderLine1}</th>
         ${dateGroupHeaders}
       </tr>
     `;
@@ -1466,14 +1488,20 @@ function showResults(results, mode, compareDateList = currentCompareDateList) {
        ratio モード
     ------------------------------ */
     if (mode === "ratio") {
+      // 出来高（前日出来高 / 前日比%）
+      const volChangeText = `${r.出来高.toLocaleString()}（${r.前日出来高.toLocaleString()} / ${r.出来高前日比 > 0 ? "+" : ""}${r.出来高前日比}%）`;
+      // 上髭実体比%（上髭 / 実体）：上髭実体比は比率のため ×100 してパーセント表示する
+      const shadowRatioPct = (r.上髭実体比 * 100).toFixed(1);
+      const shadowRatioText = `${shadowRatioPct}%（${r.上髭} / ${r.実体}）`;
+
       tr.innerHTML = `
         <td class="fixed-col" data-fixed-col>${r.コード}</td>
         <td class="fixed-col" data-fixed-col>${r.銘柄名}</td>
-        <td>${r.出来高倍率}</td>
-        <td>${r.上髭実体比}</td>
-        <td>${r.出来高.toLocaleString()}</td>
-        <td>${r.上髭}</td>
-        <td>${r.実体}</td>
+        <td>${formatMarketCap(r.時価総額)}</td>
+        <td>${r.終値}</td>
+        <td>${volChangeText}</td>
+        <td>${r.売買代金.toLocaleString()}</td>
+        <td>${shadowRatioText}</td>
       `;
     }
 
@@ -1484,6 +1512,7 @@ function showResults(results, mode, compareDateList = currentCompareDateList) {
       tr.innerHTML = `
         <td class="fixed-col" data-fixed-col>${r.コード}</td>
         <td class="fixed-col" data-fixed-col>${r.銘柄名}</td>
+        <td>${formatMarketCap(r.時価総額)}</td>
         <td>${r.値上がり率}%</td>
         <td>${r.当日終値}</td>
         <td>${r.前日終値}</td>
@@ -1501,6 +1530,7 @@ function showResults(results, mode, compareDateList = currentCompareDateList) {
       tr.innerHTML = `
         <td class="fixed-col" data-fixed-col>${r.コード}</td>
         <td class="fixed-col" data-fixed-col>${r.銘柄名}</td>
+        <td>${formatMarketCap(r.時価総額)}</td>
         <td>${r.検出件数}</td>
         <td>${toOku(r.最大売買代金)}億円</td>
         <td>${r.検出時刻}</td>
@@ -1525,8 +1555,9 @@ function showResults(results, mode, compareDateList = currentCompareDateList) {
       let html = `
         <td class="fixed-col" data-fixed-col>${r.コード}</td>
         <td class="fixed-col" data-fixed-col>${r.銘柄名}</td>
-        <td class="fixed-col" data-fixed-col>${formatDirectionMark(r.トレンド)}</td>
-        <td class="fixed-col" data-fixed-col data-fixed-col-last>${r.スコア}</td>
+        <td class="fixed-col" data-fixed-col>${formatMarketCap(r.時価総額)}</td>
+        <td class="fixed-col" data-fixed-col data-heuristics-trend-col>${formatDirectionMark(r.トレンド)}</td>
+        <td class="fixed-col" data-fixed-col data-fixed-col-last data-heuristics-score-col>${r.スコア}</td>
       `;
 
       for (const typeObj of HEURISTICS_TYPES) {
@@ -1678,6 +1709,7 @@ function showResults(results, mode, compareDateList = currentCompareDateList) {
       tr.innerHTML = `
         <td class="fixed-col" data-fixed-col>${r.コード}</td>
         <td class="fixed-col" data-fixed-col>${r.銘柄名}</td>
+        <td class="fixed-col" data-fixed-col>${formatMarketCap(r.時価総額)}</td>
         <td class="fixed-col" data-fixed-col>${score}</td>
         <td class="fixed-col" data-fixed-col>${formatDirectionMark(r.予測) || "-"}</td>
         <td class="fixed-col" data-fixed-col data-fixed-col-last>${r.比較元終値 ?? ""}</td>
