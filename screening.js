@@ -376,7 +376,8 @@ const COLUMNS = {
 
   // --- block モード（超大口検出） ---
   blockDetectCount: { label: "検出件数", align: "num", format: r => r.検出件数 },
-  blockMaxValue:    { label: "最大売買代金", align: "num", format: r => `${(r.最大売買代金 / 1e8).toFixed(2)}億円` },
+  blockMaxValue:    { label: "最大売買代金", align: "num",
+    format: r => `${(r.最大売買代金 / 1e8).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}億円` },
   blockDetectTime:  { label: "検出時刻", format: r => r.検出時刻 },
   blockPriceChange: { label: "価格変化率", align: "num", format: r => formatSignedPercent(r.価格変化率) },
   blockType:        { label: "タイプ", format: r => r.タイプ },
@@ -1819,7 +1820,7 @@ function showResults(results, mode, compareDateList = currentCompareDateList) {
         <td class="fixed-col ${alignClass(COLUMNS.marketCap)}" data-fixed-col>${COLUMNS.marketCap.format(r)}</td>
         <td class="fixed-col ${alignClass(COLUMNS.score)}" data-fixed-col>${score}</td>
         <td class="fixed-col" data-fixed-col>${formatDirectionMark(r.予測) || "-"}</td>
-        <td class="fixed-col cell-num" data-fixed-col data-fixed-col-last>${r.比較元終値 ?? ""}</td>
+        <td class="fixed-col cell-num" data-fixed-col data-fixed-col-last>${r.比較元終値 != null ? r.比較元終値.toLocaleString() : ""}</td>
         ${dateCellsHtml}
       `;
     }
