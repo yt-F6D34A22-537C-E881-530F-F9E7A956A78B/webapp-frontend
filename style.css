@@ -651,6 +651,32 @@ button:disabled {
   border-right: 1px solid var(--color-border);
 }
 
+/* ============================================================
+   結果テーブルのセル文字寄せ（可読性向上。2026-07追加）
+   既定（.result-table td）は中央寄せのままとし、以下の列種別のみ
+   個別に上書きする：
+   ・.cell-num  ：時価総額・終値・出来高・売買代金・騰落率など「大小を
+     比較する数値」列。右寄せにすることで tabular-nums（桁揃え）と合わせ、
+     桁の位置が揃い数値の大小比較がしやすくなる。
+   ・.cell-text ：銘柄名など可変長の文字列列。左寄せにすることで文字の
+     開始位置が揃い、行を上下に見比べたときに読み始めやすくなる。
+   コード・トレンド記号（↗/↘）・検出時刻・タイプ区分などの短い識別子や
+   記号は、既定の中央寄せのままの方が視認性が高いため対象外（スコアは
+   数値のため .cell-num を適用し右寄せにする）。
+   class はスタイル調整のみに用い、JS側の要素特定には使用しない
+   （要素特定は id・name・data-* 属性で行う。conventions.domHookAttributes
+   準拠）。
+   ============================================================ */
+.result-table td.cell-num,
+.result-table th.cell-num {
+  text-align: right;
+}
+
+.result-table td.cell-text,
+.result-table th.cell-text {
+  text-align: left;
+}
+
 /* 左固定カラム */
 .fixed-col {
   position: sticky;

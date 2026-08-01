@@ -1067,12 +1067,12 @@ function updateTableHeader(mode, label = "", compareFromLabel = "", compareDateL
     const html = `
       <tr>
         <th class="fixed-col" data-fixed-col>コード</th>
-        <th class="fixed-col" data-fixed-col>銘柄名</th>
-        <th>時価総額</th>
-        <th>終値</th>
-        <th>出来高（前日出来高 / 前日比%）</th>
-        <th>売買代金</th>
-        <th>上髭実体比%（上髭 / 実体）</th>
+        <th class="fixed-col cell-text" data-fixed-col>銘柄名</th>
+        <th class="cell-num">時価総額</th>
+        <th class="cell-num">終値</th>
+        <th class="cell-text">出来高（前日出来高 / 前日比%）</th>
+        <th class="cell-num">売買代金</th>
+        <th class="cell-text">上髭実体比%（上髭 / 実体）</th>
       </tr>
     `;
     stickyThead.innerHTML = html;
@@ -1085,11 +1085,11 @@ function updateTableHeader(mode, label = "", compareFromLabel = "", compareDateL
     const html = `
       <tr>
         <th class="fixed-col" data-fixed-col>コード</th>
-        <th class="fixed-col" data-fixed-col>銘柄名</th>
-        <th>時価総額</th>
-        <th>値上がり率</th>
-        <th>${label}終値</th>
-        <th>前日終値</th>
+        <th class="fixed-col cell-text" data-fixed-col>銘柄名</th>
+        <th class="cell-num">時価総額</th>
+        <th class="cell-num">値上がり率</th>
+        <th class="cell-num">${label}終値</th>
+        <th class="cell-num">前日終値</th>
       </tr>
     `;
     stickyThead.innerHTML = html;
@@ -1102,14 +1102,14 @@ function updateTableHeader(mode, label = "", compareFromLabel = "", compareDateL
     const html = `
       <tr>
         <th class="fixed-col" data-fixed-col>コード</th>
-        <th class="fixed-col" data-fixed-col>銘柄名</th>
-        <th>時価総額</th>
-        <th>検出件数</th>
-        <th>最大売買代金</th>
+        <th class="fixed-col cell-text" data-fixed-col>銘柄名</th>
+        <th class="cell-num">時価総額</th>
+        <th class="cell-num">検出件数</th>
+        <th class="cell-num">最大売買代金</th>
         <th>検出時刻</th>
-        <th>価格変化率</th>
+        <th class="cell-num">価格変化率</th>
         <th>タイプ</th>
-        <th>日次売買代金</th>
+        <th class="cell-num">日次売買代金</th>
       </tr>
     `;
     stickyThead.innerHTML = html;
@@ -1122,10 +1122,10 @@ function updateTableHeader(mode, label = "", compareFromLabel = "", compareDateL
     let row1 = `
       <tr>
         <th class="fixed-col" data-fixed-col rowspan="2">コード</th>
-        <th class="fixed-col" data-fixed-col rowspan="2">銘柄名</th>
-        <th class="fixed-col" data-fixed-col rowspan="2">時価総額</th>
+        <th class="fixed-col cell-text" data-fixed-col rowspan="2">銘柄名</th>
+        <th class="fixed-col cell-num" data-fixed-col rowspan="2">時価総額</th>
         <th class="fixed-col" data-fixed-col data-heuristics-trend-col rowspan="2">トレ<br class="mobile-line-break">ンド</th>
-        <th class="fixed-col" data-fixed-col data-fixed-col-last data-heuristics-score-col rowspan="2">スコア</th>
+        <th class="fixed-col cell-num" data-fixed-col data-fixed-col-last data-heuristics-score-col rowspan="2">スコア</th>
     `;
     let row2 = `<tr>`;
 
@@ -1166,7 +1166,7 @@ function updateTableHeader(mode, label = "", compareFromLabel = "", compareDateL
     let dateSubHeaders   = "";   // 2行目：終値・増減（円）・増減（％）
     for (const targetDate of compareDateList) {
       dateGroupHeaders += `<th colspan="3">${makeDateLabel(targetDate)}</th>`;
-      dateSubHeaders   += `<th>終値</th><th>増減（円）</th><th>増減（％）</th>`;
+      dateSubHeaders   += `<th class="cell-num">終値</th><th class="cell-num">増減（円）</th><th class="cell-num">増減（％）</th>`;
     }
 
     // 比較元終値は固定列群の最右に配置し、2行ヘッダ（1行目に日付、2行目に「終値」）にする。
@@ -1180,17 +1180,17 @@ function updateTableHeader(mode, label = "", compareFromLabel = "", compareDateL
     const row1 = `
       <tr>
         <th class="fixed-col" data-fixed-col rowspan="2">コード</th>
-        <th class="fixed-col" data-fixed-col rowspan="2">銘柄名</th>
-        <th class="fixed-col" data-fixed-col rowspan="2">時価総額</th>
-        <th class="fixed-col" data-fixed-col rowspan="2">スコア</th>
+        <th class="fixed-col cell-text" data-fixed-col rowspan="2">銘柄名</th>
+        <th class="fixed-col cell-num" data-fixed-col rowspan="2">時価総額</th>
+        <th class="fixed-col cell-num" data-fixed-col rowspan="2">スコア</th>
         <th class="fixed-col" data-fixed-col rowspan="2">上昇/下降の予測</th>
-        <th class="fixed-col" data-fixed-col-group="5">${fromHeaderLine1}</th>
+        <th class="fixed-col cell-num" data-fixed-col-group="5">${fromHeaderLine1}</th>
         ${dateGroupHeaders}
       </tr>
     `;
     const row2 = `
       <tr>
-        <th class="fixed-col" data-fixed-col data-fixed-col-last>終値</th>
+        <th class="fixed-col cell-num" data-fixed-col data-fixed-col-last>終値</th>
         ${dateSubHeaders}
       </tr>
     `;
@@ -1496,12 +1496,12 @@ function showResults(results, mode, compareDateList = currentCompareDateList) {
 
       tr.innerHTML = `
         <td class="fixed-col" data-fixed-col>${r.コード}</td>
-        <td class="fixed-col" data-fixed-col>${r.銘柄名}</td>
-        <td>${formatMarketCap(r.時価総額)}</td>
-        <td>${r.終値}</td>
-        <td>${volChangeText}</td>
-        <td>${r.売買代金.toLocaleString()}</td>
-        <td>${shadowRatioText}</td>
+        <td class="fixed-col cell-text" data-fixed-col>${r.銘柄名}</td>
+        <td class="cell-num">${formatMarketCap(r.時価総額)}</td>
+        <td class="cell-num">${r.終値}</td>
+        <td class="cell-text">${volChangeText}</td>
+        <td class="cell-num">${r.売買代金.toLocaleString()}</td>
+        <td class="cell-text">${shadowRatioText}</td>
       `;
     }
 
@@ -1511,11 +1511,11 @@ function showResults(results, mode, compareDateList = currentCompareDateList) {
     else if (mode === "date") {
       tr.innerHTML = `
         <td class="fixed-col" data-fixed-col>${r.コード}</td>
-        <td class="fixed-col" data-fixed-col>${r.銘柄名}</td>
-        <td>${formatMarketCap(r.時価総額)}</td>
-        <td>${r.値上がり率}%</td>
-        <td>${r.当日終値}</td>
-        <td>${r.前日終値}</td>
+        <td class="fixed-col cell-text" data-fixed-col>${r.銘柄名}</td>
+        <td class="cell-num">${formatMarketCap(r.時価総額)}</td>
+        <td class="cell-num">${r.値上がり率}%</td>
+        <td class="cell-num">${r.当日終値}</td>
+        <td class="cell-num">${r.前日終値}</td>
       `;
     }
 
@@ -1529,14 +1529,14 @@ function showResults(results, mode, compareDateList = currentCompareDateList) {
 
       tr.innerHTML = `
         <td class="fixed-col" data-fixed-col>${r.コード}</td>
-        <td class="fixed-col" data-fixed-col>${r.銘柄名}</td>
-        <td>${formatMarketCap(r.時価総額)}</td>
-        <td>${r.検出件数}</td>
-        <td>${toOku(r.最大売買代金)}億円</td>
+        <td class="fixed-col cell-text" data-fixed-col>${r.銘柄名}</td>
+        <td class="cell-num">${formatMarketCap(r.時価総額)}</td>
+        <td class="cell-num">${r.検出件数}</td>
+        <td class="cell-num">${toOku(r.最大売買代金)}億円</td>
         <td>${r.検出時刻}</td>
-        <td>${pctText}</td>
+        <td class="cell-num">${pctText}</td>
         <td>${r.タイプ}</td>
-        <td>${toOku(r.日次売買代金)}億円</td>
+        <td class="cell-num">${toOku(r.日次売買代金)}億円</td>
       `;
     }
 
@@ -1554,10 +1554,10 @@ function showResults(results, mode, compareDateList = currentCompareDateList) {
         
       let html = `
         <td class="fixed-col" data-fixed-col>${r.コード}</td>
-        <td class="fixed-col" data-fixed-col>${r.銘柄名}</td>
-        <td class="fixed-col" data-fixed-col>${formatMarketCap(r.時価総額)}</td>
+        <td class="fixed-col cell-text" data-fixed-col>${r.銘柄名}</td>
+        <td class="fixed-col cell-num" data-fixed-col>${formatMarketCap(r.時価総額)}</td>
         <td class="fixed-col" data-fixed-col data-heuristics-trend-col>${formatDirectionMark(r.トレンド)}</td>
-        <td class="fixed-col" data-fixed-col data-fixed-col-last data-heuristics-score-col>${r.スコア}</td>
+        <td class="fixed-col cell-num" data-fixed-col data-fixed-col-last data-heuristics-score-col>${r.スコア}</td>
       `;
 
       for (const typeObj of HEURISTICS_TYPES) {
@@ -1697,7 +1697,8 @@ function showResults(results, mode, compareDateList = currentCompareDateList) {
                   : result === "↘" ? "td-trend-down-bg"
                   : "";
         }
-        const classAttr = bgClass ? ` class="${bgClass}"` : "";
+        // cell-num（数値の右寄せ）は常に付与し、背景色クラス（bgClass）があれば併記する。
+        const classAttr = ` class="cell-num${bgClass ? ` ${bgClass}` : ""}"`;
 
         dateCellsHtml += `
           <td${classAttr}>${toClose ?? ""}</td>
@@ -1708,11 +1709,11 @@ function showResults(results, mode, compareDateList = currentCompareDateList) {
 
       tr.innerHTML = `
         <td class="fixed-col" data-fixed-col>${r.コード}</td>
-        <td class="fixed-col" data-fixed-col>${r.銘柄名}</td>
-        <td class="fixed-col" data-fixed-col>${formatMarketCap(r.時価総額)}</td>
-        <td class="fixed-col" data-fixed-col>${score}</td>
+        <td class="fixed-col cell-text" data-fixed-col>${r.銘柄名}</td>
+        <td class="fixed-col cell-num" data-fixed-col>${formatMarketCap(r.時価総額)}</td>
+        <td class="fixed-col cell-num" data-fixed-col>${score}</td>
         <td class="fixed-col" data-fixed-col>${formatDirectionMark(r.予測) || "-"}</td>
-        <td class="fixed-col" data-fixed-col data-fixed-col-last>${r.比較元終値 ?? ""}</td>
+        <td class="fixed-col cell-num" data-fixed-col data-fixed-col-last>${r.比較元終値 ?? ""}</td>
         ${dateCellsHtml}
       `;
     }
