@@ -244,6 +244,20 @@ function formatSignedPercent(value) {
   return `${formatSignedNumber(value)}%`;
 }
 
+/**
+ * 増減額（円）のように、桁数が大きくなり得る符号付き整数を画面表示用に整形する。
+ * 2026-07追加: compareモードの「増減（円）」列は数千円〜数万円規模になることがあり、
+ * 桁が読み取りづらかったためカンマ区切りを追加する。formatSignedNumber（符号付与のみ）
+ * とは別関数にしているのは、CSV出力（buildCsvRow）側は他の数値列同様カンマなしの
+ * 素の数値のまま保つ方針のため（CSVはExcel等での再計算・別ツールへの取り込みを
+ * 想定しており、カンマ区切りにすると数値としてそのまま扱えなくなるおそれがある。
+ * 一方、符号のみの付与（+/-）は Number() でも解釈できる形式のためCSV側にも適用済み）。
+ * 画面表示専用の用途にのみ使用すること。
+ */
+function formatSignedInteger(value) {
+  return `${value > 0 ? "+" : ""}${value.toLocaleString()}`;
+}
+
 /* ============================================================
    CSV ダウンロード
 ============================================================ */
@@ -344,7 +358,7 @@ const COLUMNS = {
   score:     { label: "スコア",   align: "num",  format: r => r.スコア },
 
   // --- ratio モード ---
-  ratioClose: { label: "終値", align: "num", format: r => r.終値 },
+  ratioClose: { label: "終値", align: "num", format: r => r.終値.toLocaleString() },
   ratioVolume: {
     label: "出来高（前日出来高 / 前日比%）", align: "text",
     format: r => `${r.出来高.toLocaleString()}（${r.前日出来高.toLocaleString()} / ${formatSignedPercent(r.出来高前日比)}）`,
@@ -352,13 +366,13 @@ const COLUMNS = {
   ratioTradingValue: { label: "売買代金", align: "num", format: r => r.売買代金.toLocaleString() },
   ratioShadowRatio: {
     label: "上髭実体比%（上髭 / 実体）", align: "text",
-    format: r => `${(r.上髭実体比 * 100).toFixed(1)}%（${r.上髭} / ${r.実体}）`,
+    format: r => `${(r.上髭実体比 * 100).toFixed(1)}%（${r.上髭.toLocaleString()} / ${r.実体.toLocaleString()}）`,
   },
 
   // --- date モード ---
   dateChangeRate: { label: "値上がり率", align: "num", format: r => formatSignedPercent(r.値上がり率) },
-  dateTodayClose: { label: "終値", align: "num", format: r => r.当日終値 },   // ヘッダーラベルは呼び出し側で当日日付ラベルに差し替える
-  datePrevClose:  { label: "前日終値", align: "num", format: r => r.前日終値 },
+  dateTodayClose: { label: "終値", align: "num", format: r => r.当日終値.toLocaleString() },   // ヘッダーラベルは呼び出し側で当日日付ラベルに差し替える
+  datePrevClose:  { label: "前日終値", align: "num", format: r => r.前日終値.toLocaleString() },
 
   // --- block モード（超大口検出） ---
   blockDetectCount: { label: "検出件数", align: "num", format: r => r.検出件数 },
@@ -366,7 +380,11 @@ const COLUMNS = {
   blockDetectTime:  { label: "検出時刻", format: r => r.検出時刻 },
   blockPriceChange: { label: "価格変化率", align: "num", format: r => formatSignedPercent(r.価格変化率) },
   blockType:        { label: "タイプ", format: r => r.タイプ },
-  blockDailyValue:  { label: "日次売買代金", align: "num", format: r => `${(r.日次売買代金 / 1e8).toFixed(2)}億円` },
+  // 2026-07修正：日次売買代金（億円換算後の値）が大きい銘柄で桁が読み取りづらかったため、
+  // toFixed() から toLocaleString()（カンマ区切り）へ変更。小数点以下2桁を維持するため
+  // minimumFractionDigits/maximumFractionDigits を明示する。
+  blockDailyValue:  { label: "日次売買代金", align: "num",
+    format: r => `${(r.日次売買代金 / 1e8).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}億円` },
 };
 
 /** COLUMNS の定義に fixed（固定列）等の表示用オーバーライドを重ねた列オブジェクトを返す。 */
@@ -1695,7 +1713,7 @@ function showResults(results, mode, compareDateList = currentCompareDateList) {
               if (!val || !val.price) {
                 html += `</td>`;
               } else {
-                html += `${val.price}（${val.tryCount}回）</td>`;
+                html += `${val.price.toLocaleString()}（${val.tryCount}回）</td>`;
               }
               continue;
 
@@ -1789,8 +1807,8 @@ function showResults(results, mode, compareDateList = currentCompareDateList) {
         const classAttr = ` class="cell-num${bgClass ? ` ${bgClass}` : ""}"`;
 
         dateCellsHtml += `
-          <td${classAttr}>${toClose ?? ""}</td>
-          <td${classAttr}>${diffYen != null ? formatSignedNumber(diffYen) : ""}</td>
+          <td${classAttr}>${toClose != null ? toClose.toLocaleString() : ""}</td>
+          <td${classAttr}>${diffYen != null ? formatSignedInteger(diffYen) : ""}</td>
           <td${classAttr}>${diffPct != null ? formatSignedPercent(diffPct) : ""}</td>
         `;
       }
