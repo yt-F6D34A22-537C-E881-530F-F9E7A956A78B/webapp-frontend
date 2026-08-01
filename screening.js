@@ -802,6 +802,13 @@ function initSearchMode() {
   function updateMode() {
     const mode = document.querySelector('input[name="searchMode"]:checked').value;
 
+    // 2026-07追加: 現在の検索モードを body の data 属性として公開する。
+    // スマホ表示時、compare/heuristicsモードのみ結果グリッドのフォントサイズを
+    // さらに下げる（style.css側の body[data-search-mode="..."] 参照）ために追加。
+    // class ではなく data-* 属性を用いるのは、DOM要素特定用の属性は
+    // id・name・data-* を使うという規約（class はスタイル調整専用）に沿うため。
+    document.body.dataset.searchMode = mode;
+
     ratioInputs.forEach(i => i.disabled = (mode !== "ratio"));
     ratioFieldset.forEach(i => i.disabled = (mode !== "ratio"));
     dateInputs.forEach(i => i.disabled = (mode !== "date"));

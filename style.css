@@ -1321,6 +1321,36 @@ button:disabled {
     padding: 4px 3px;
   }
 
+  /* ----------------------------------------
+     テーブル：compare（CSV・証券コード比較）/ heuristics（経験則判定）モードのみ、
+     スマホでさらにフォントサイズを縮小する（2026-07追加）
+     この2モードは固定列（コード・銘柄名・時価総額 等）の列数が多く、
+     固定列だけでビューポート幅の大部分を占めてしまい、可動列（スクロール側）
+     のボディ部分が見づらいという指摘への対応。可読性を保ちつつ横スクロール
+     領域を広げるため、他モードより一段階小さいフォントサイズにする
+     （小さすぎて読めない場合はユーザー側のピンチズームでの閲覧を想定）。
+     現在のモードは body[data-search-mode] （updateMode() が切替時に設定）で判定する。
+  ---------------------------------------- */
+  body[data-search-mode="compare"] .table-header-sticky th,
+  body[data-search-mode="heuristics"] .table-header-sticky th {
+    font-size: 8px;
+  }
+
+  body[data-search-mode="compare"] .table-header-sticky thead tr:nth-child(2) th,
+  body[data-search-mode="heuristics"] .table-header-sticky thead tr:nth-child(2) th {
+    font-size: 7px;
+  }
+
+  body[data-search-mode="compare"] .fixed-col,
+  body[data-search-mode="heuristics"] .fixed-col {
+    font-size: 9px;
+  }
+
+  body[data-search-mode="compare"] #resultTable td,
+  body[data-search-mode="heuristics"] #resultTable td {
+    font-size: 8px;
+  }
+
   #resultTable tbody tr {
     /* 2026-07 修正：#resultTable tr（tbody/theadを問わず全tr）のままだと、
        heuristicsモードのヘッダ（rowspan=2、2行折り返しあり）にもこの高さが
