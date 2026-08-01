@@ -359,15 +359,18 @@ const COLUMNS = {
 
   // --- ratio モード ---
   ratioClose: { label: "終値", align: "num", format: r => r.終値.toLocaleString() },
-  ratioVolume: {
-    label: "出来高（前日出来高 / 前日比%）", align: "text",
-    format: r => `${r.出来高.toLocaleString()}（${r.前日出来高.toLocaleString()} / ${formatSignedPercent(r.出来高前日比)}）`,
-  },
+  // 2026-07修正：従来「出来高（前日出来高 / 前日比%）」の1列に3つの数値をまとめて
+  // 表示していたが、括弧内の桁数が行によって異なり、数値の位置が縦に揃わず
+  // 読みにくかった。CSV出力（buildCsvHeaders/buildCsvRow）は元々3列に分かれて
+  // いたため、それに合わせて画面表示側も列を分割する。
+  ratioVolume:       { label: "出来高", align: "num", format: r => r.出来高.toLocaleString() },
+  ratioVolumePrev:   { label: "前日出来高", align: "num", format: r => r.前日出来高.toLocaleString() },
+  ratioVolumeChange: { label: "出来高前日比", align: "num", format: r => formatSignedPercent(r.出来高前日比) },
   ratioTradingValue: { label: "売買代金", align: "num", format: r => r.売買代金.toLocaleString() },
-  ratioShadowRatio: {
-    label: "上髭実体比%（上髭 / 実体）", align: "text",
-    format: r => `${(r.上髭実体比 * 100).toFixed(1)}%（${r.上髭.toLocaleString()} / ${r.実体.toLocaleString()}）`,
-  },
+  // 2026-07修正：「上髭実体比%（上髭 / 実体）」も同様の理由で3列に分割する。
+  ratioShadowRatio: { label: "上髭実体比%", align: "num", format: r => `${(r.上髭実体比 * 100).toFixed(1)}%` },
+  ratioShadowUpper: { label: "上髭", align: "num", format: r => r.上髭.toLocaleString() },
+  ratioShadowBody:  { label: "実体", align: "num", format: r => r.実体.toLocaleString() },
 
   // --- date モード ---
   dateChangeRate: { label: "値上がり率", align: "num", format: r => formatSignedPercent(r.値上がり率) },
@@ -398,7 +401,7 @@ function alignClass(column) {
   return column.align === "num" ? "cell-num" : column.align === "text" ? "cell-text" : "";
 }
 
-/** 列定義（col）1件ぶんの class・data-* 属性文字列を組み立てる。 */
+/** 列定義（col）1件ぶんの <td>（データ行）用 class・data-* 属性文字列を組み立てる。 */
 function cellAttrs(column) {
   const classes = [column.fixed ? "fixed-col" : "", alignClass(column)].filter(Boolean).join(" ");
   const classAttr = classes ? ` class="${classes}"` : "";
@@ -407,9 +410,21 @@ function cellAttrs(column) {
   return `${classAttr}${fixedAttr}${lastAttr}`;
 }
 
+/**
+ * 列定義（col）1件ぶんの <th>（ヘッダー行）用 class・data-* 属性文字列を組み立てる。
+ * 2026-07修正：ヘッダーは列の種類（数値/文字列）によらず常に中央寄せとする方針のため、
+ * cellAttrs() と異なり alignClass（cell-num/cell-text）は付与しない。
+ */
+function headerCellAttrs(column) {
+  const classAttr = column.fixed ? ` class="fixed-col"` : "";
+  const fixedAttr = column.fixed ? " data-fixed-col" : "";
+  const lastAttr  = column.fixedLast ? " data-fixed-col-last" : "";
+  return `${classAttr}${fixedAttr}${lastAttr}`;
+}
+
 /** 列定義配列から、1行ヘッダー（1行=1<tr>）のHTMLを生成する（ratio/date/blockモード用）。 */
 function renderHeaderRow(columns) {
-  return "<tr>" + columns.map(c => `<th${cellAttrs(c)}>${c.label}</th>`).join("") + "</tr>";
+  return "<tr>" + columns.map(c => `<th${headerCellAttrs(c)}>${c.label}</th>`).join("") + "</tr>";
 }
 
 /** 列定義配列 + レコード r から、1行ぶんの <td> 群のHTMLを生成する（ratio/date/blockモード用）。 */
@@ -1190,8 +1205,12 @@ function updateTableHeader(mode, label = "", compareFromLabel = "", compareDateL
       COLUMNS.marketCap,
       COLUMNS.ratioClose,
       COLUMNS.ratioVolume,
+      COLUMNS.ratioVolumePrev,
+      COLUMNS.ratioVolumeChange,
       COLUMNS.ratioTradingValue,
       COLUMNS.ratioShadowRatio,
+      COLUMNS.ratioShadowUpper,
+      COLUMNS.ratioShadowBody,
     ]);
     stickyThead.innerHTML = html;
     bodyThead.innerHTML   = html;
@@ -1234,15 +1253,16 @@ function updateTableHeader(mode, label = "", compareFromLabel = "", compareDateL
   // heuristics
   if (mode === "heuristics") {
     // 固定列のうちコード・銘柄名・時価総額・スコアは他モードと共通の列定義（COLUMNS）を
-    // そのまま参照し、寄せ（align）の定義を重複させない。トレンド列はheuristics専用
-    // （ヘッダー文言に強制改行が入る等、共有しにくい表示のため個別に定義する）。
+    // そのままラベルとして参照する。ヘッダーは列の種類によらず常に中央寄せとする方針
+    // （2026-07）のため、データ行と異なりalignClass（cell-num/cell-text）は付与しない。
+    // トレンド列はheuristics専用（ヘッダー文言に強制改行が入る等、共有しにくい表示のため個別に定義する）。
     let row1 = `
       <tr>
         <th class="fixed-col" data-fixed-col rowspan="2">${COLUMNS.code.label}</th>
-        <th class="fixed-col ${alignClass(COLUMNS.name)}" data-fixed-col rowspan="2">${COLUMNS.name.label}</th>
-        <th class="fixed-col ${alignClass(COLUMNS.marketCap)}" data-fixed-col rowspan="2">${COLUMNS.marketCap.label}</th>
+        <th class="fixed-col" data-fixed-col rowspan="2">${COLUMNS.name.label}</th>
+        <th class="fixed-col" data-fixed-col rowspan="2">${COLUMNS.marketCap.label}</th>
         <th class="fixed-col" data-fixed-col data-heuristics-trend-col rowspan="2">トレ<br class="mobile-line-break">ンド</th>
-        <th class="fixed-col ${alignClass(COLUMNS.score)}" data-fixed-col data-fixed-col-last data-heuristics-score-col rowspan="2">${COLUMNS.score.label}</th>
+        <th class="fixed-col" data-fixed-col data-fixed-col-last data-heuristics-score-col rowspan="2">${COLUMNS.score.label}</th>
     `;
     let row2 = `<tr>`;
 
@@ -1282,8 +1302,14 @@ function updateTableHeader(mode, label = "", compareFromLabel = "", compareDateL
     let dateGroupHeaders = "";   // 1行目：比較先日付（3列分の colspan）
     let dateSubHeaders   = "";   // 2行目：終値・増減（円）・増減（％）
     for (const targetDate of compareDateList) {
-      dateGroupHeaders += `<th colspan="3">${makeDateLabel(targetDate)}</th>`;
-      dateSubHeaders   += `<th class="cell-num">終値</th><th class="cell-num">増減（円）</th><th class="cell-num">増減（％）</th>`;
+      // 2026-07追加：「比較先日付までの全営業日と比較する」チェック時、比較先日付が
+      // 複数出現し、日付グループ（終値・増減（円）・増減（％）の3列ひと組）が横に並ぶ。
+      // どこまでが同じ日付の3列かを一目で判別できるよう、グループの左右の境界線
+      // だけ太くする（.date-group-start/.date-group-end。実際の線幅・色はCSS側で定義）。
+      // 1行目は3列分のcolspanセル自体が1グループぶんの幅を持つため、開始・終了
+      // 両方のクラスを同じセルへ付与する。
+      dateGroupHeaders += `<th colspan="3" class="date-group-start date-group-end">${makeDateLabel(targetDate)}</th>`;
+      dateSubHeaders   += `<th class="date-group-start">終値</th><th>増減（円）</th><th class="date-group-end">増減（％）</th>`;
     }
 
     // 比較元終値は固定列群の最右に配置し、2行ヘッダ（1行目に日付、2行目に「終値」）にする。
@@ -1294,20 +1320,22 @@ function updateTableHeader(mode, label = "", compareFromLabel = "", compareDateL
     // 崩れないよう、1行目セルには data-fixed-col ではなく data-fixed-col-group="5"
     // （本体側の6番目＝インデックス5の固定列であることの明示。時価総額列の追加により
     // 4→5へ変更。2026-07）を用いる（詳細は screening.js の syncFixedColumns を参照）。
+    // ヘッダーは列の種類によらず常に中央寄せとする方針（2026-07）のため、固定列も
+    // データ行と異なりalignClass（cell-num/cell-text）は付与しない。
     const row1 = `
       <tr>
         <th class="fixed-col" data-fixed-col rowspan="2">${COLUMNS.code.label}</th>
-        <th class="fixed-col ${alignClass(COLUMNS.name)}" data-fixed-col rowspan="2">${COLUMNS.name.label}</th>
-        <th class="fixed-col ${alignClass(COLUMNS.marketCap)}" data-fixed-col rowspan="2">${COLUMNS.marketCap.label}</th>
-        <th class="fixed-col ${alignClass(COLUMNS.score)}" data-fixed-col rowspan="2">${COLUMNS.score.label}</th>
+        <th class="fixed-col" data-fixed-col rowspan="2">${COLUMNS.name.label}</th>
+        <th class="fixed-col" data-fixed-col rowspan="2">${COLUMNS.marketCap.label}</th>
+        <th class="fixed-col" data-fixed-col rowspan="2">${COLUMNS.score.label}</th>
         <th class="fixed-col" data-fixed-col rowspan="2">上昇/下降の予測</th>
-        <th class="fixed-col cell-num" data-fixed-col-group="5">${fromHeaderLine1}</th>
+        <th class="fixed-col" data-fixed-col-group="5">${fromHeaderLine1}</th>
         ${dateGroupHeaders}
       </tr>
     `;
     const row2 = `
       <tr>
-        <th class="fixed-col cell-num" data-fixed-col data-fixed-col-last>終値</th>
+        <th class="fixed-col" data-fixed-col data-fixed-col-last>終値</th>
         ${dateSubHeaders}
       </tr>
     `;
@@ -1611,8 +1639,12 @@ function showResults(results, mode, compareDateList = currentCompareDateList) {
         COLUMNS.marketCap,
         COLUMNS.ratioClose,
         COLUMNS.ratioVolume,
+        COLUMNS.ratioVolumePrev,
+        COLUMNS.ratioVolumeChange,
         COLUMNS.ratioTradingValue,
         COLUMNS.ratioShadowRatio,
+        COLUMNS.ratioShadowUpper,
+        COLUMNS.ratioShadowBody,
       ], r);
     }
 
@@ -1805,12 +1837,15 @@ function showResults(results, mode, compareDateList = currentCompareDateList) {
                   : "";
         }
         // cell-num（数値の右寄せ）は常に付与し、背景色クラス（bgClass）があれば併記する。
-        const classAttr = ` class="cell-num${bgClass ? ` ${bgClass}` : ""}"`;
+        // 2026-07追加：全営業日比較時に日付グループの区切りを分かりやすくするため、
+        // グループ（終値・増減円・増減％の3列）の先頭セルに .date-group-start、
+        // 末尾セルに .date-group-end を付与し、左右のborderを太くする（CSS側で定義）。
+        const cellClass = (extra) => ["cell-num", bgClass, extra].filter(Boolean).join(" ");
 
         dateCellsHtml += `
-          <td${classAttr}>${toClose != null ? toClose.toLocaleString() : ""}</td>
-          <td${classAttr}>${diffYen != null ? formatSignedInteger(diffYen) : ""}</td>
-          <td${classAttr}>${diffPct != null ? formatSignedPercent(diffPct) : ""}</td>
+          <td class="${cellClass("date-group-start")}">${toClose != null ? toClose.toLocaleString() : ""}</td>
+          <td class="${cellClass("")}">${diffYen != null ? formatSignedInteger(diffYen) : ""}</td>
+          <td class="${cellClass("date-group-end")}">${diffPct != null ? formatSignedPercent(diffPct) : ""}</td>
         `;
       }
 

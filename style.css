@@ -663,18 +663,42 @@ button:disabled {
    コード・トレンド記号（↗/↘）・検出時刻・タイプ区分などの短い識別子や
    記号は、既定の中央寄せのままの方が視認性が高いため対象外（スコアは
    数値のため .cell-num を適用し右寄せにする）。
+   2026-07修正：ヘッダー（th）は列の種類によらず常に中央寄せとする方針に
+   変更したため、.cell-num/.cell-text は td（データ行）にのみ適用する
+   （th側のセレクタは削除。JS側もヘッダー生成時にはこれらのクラスを
+   付与しなくなったが、CSS側もtd限定にしておくことで、仮に付与漏れ・
+   付与し過ぎがあってもヘッダーの見た目は中央寄せのまま保たれる）。
    class はスタイル調整のみに用い、JS側の要素特定には使用しない
    （要素特定は id・name・data-* 属性で行う。conventions.domHookAttributes
    準拠）。
    ============================================================ */
-.result-table td.cell-num,
-.result-table th.cell-num {
+.result-table td.cell-num {
   text-align: right;
 }
 
-.result-table td.cell-text,
-.result-table th.cell-text {
+.result-table td.cell-text {
   text-align: left;
+}
+
+/* ============================================================
+   compareモード：日付グループの区切り強調（2026-07追加）
+   「比較先日付までの全営業日と比較する」チェックON時、終値・増減（円）・
+   増減（％）の3列ひと組（日付グループ）が横に複数並ぶ。グループの左右の
+   境界だけ通常（1px）より太いborderにすることで、どこまでが同じ日付の
+   データかを視認しやすくする。
+   ・.date-group-start：グループ先頭セルの左端（前のグループとの区切り）
+   ・.date-group-end  ：グループ末尾セルの右端（次のグループとの区切り）
+   1行目ヘッダー（3列分のcolspanセル）は1セルでグループ全体を表すため、
+   両方のクラスを同じセルに付与する。
+   ============================================================ */
+.result-table th.date-group-start,
+.result-table td.date-group-start {
+  border-left: 2px solid var(--color-border-input);
+}
+
+.result-table th.date-group-end,
+.result-table td.date-group-end {
+  border-right: 2px solid var(--color-border-input);
 }
 
 /* 左固定カラム */
