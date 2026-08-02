@@ -116,6 +116,11 @@
      コメントで定義値を明示し、下部の @media と値を統一する。
      変更時はこのコメントと @media の数値を同時に修正すること。
        --bp-mobile: 600px   → @media (max-width: 600px)
+       --bp-landscape-phone: (orientation: landscape) and (max-height: 500px)
+         → iPhone 12 Pro 横持ち（約844×390のCSS px）を想定。
+           対象デバイスはPC・iPhone 12 Pro（縦持ち／横持ち）のみのため、
+           高さでの判定とし、高さ768px以上あるiPadなどのタブレット横持ちは
+           対象に含まれないようにしている（2026-07追加）。
   ---------------------------------------------------------------- */
 }
 
@@ -1323,36 +1328,40 @@ button:disabled {
 
   /* ----------------------------------------
      テーブル：compare（CSV・証券コード比較）/ heuristics（経験則判定）モードのみ、
-     スマホでさらにフォントサイズを縮小する（2026-07追加、2026-07再修正で
-     フォントサイズを追加縮小しpaddingも縮小、2026-07再々修正でさらに縮小）
+     スマホ縦持ちでさらにフォントサイズを縮小する（2026-07追加、2026-07再修正で
+     フォントサイズを追加縮小しpaddingも縮小したが、効果が薄かったため同修正分は
+     取り消し、本コミットで元の値に戻した）
      この2モードは固定列（コード・銘柄名・時価総額 等）の列数が多く、
      固定列だけでビューポート幅の大部分を占めてしまい、可動列（スクロール側）
      のボディ部分が見づらいという指摘への対応。可読性を保ちつつ横スクロール
      領域を広げるため、他モードより一段階小さいフォントサイズ・paddingにする
      （小さすぎて読めない場合はユーザー側のピンチズームでの閲覧を想定）。
      現在のモードは body[data-search-mode] （updateMode() が切替時に設定）で判定する。
+     なお、本ルールは @media (max-width: 600px) のポートレート用ブレークポイント内のため、
+     iPhone 12 Pro 横持ち（幅約844px）には適用されない。横持ち時の調整は
+     本ファイル末尾の @media (orientation: landscape) ブロックを参照。
   ---------------------------------------- */
   body[data-search-mode="compare"] .table-header-sticky th,
   body[data-search-mode="heuristics"] .table-header-sticky th {
-    font-size: 6px;
-    padding: 1px 1px;
+    font-size: 7px;
+    padding: 2px 2px;
   }
 
   body[data-search-mode="compare"] .table-header-sticky thead tr:nth-child(2) th,
   body[data-search-mode="heuristics"] .table-header-sticky thead tr:nth-child(2) th {
-    font-size: 5px;
-    padding: 1px 1px;
+    font-size: 6px;
+    padding: 2px 1px;
   }
 
   body[data-search-mode="compare"] .fixed-col,
   body[data-search-mode="heuristics"] .fixed-col {
-    font-size: 7px;
+    font-size: 8px;
   }
 
   body[data-search-mode="compare"] #resultTable td,
   body[data-search-mode="heuristics"] #resultTable td {
-    font-size: 6px;
-    padding: 1px 1px;
+    font-size: 7px;
+    padding: 2px 2px;
   }
 
   #resultTable tbody tr {
@@ -1524,5 +1533,75 @@ button:disabled {
     background: var(--color-bg-settings);
     border-radius: 50%;
     box-shadow: var(--shadow-settings);
+  }
+}
+
+/* ============================================================
+   iPhone 12 Pro 横持ち（landscape）専用調整（2026-07追加）
+   対象デバイスはPC・iPhone 12 Pro（縦持ち・横持ち）を想定する。
+   横持ち時の実効ビューポートはおよそ 844×390（CSS px）で、幅が
+   @media (max-width: 600px) のポートレート用ブレークポイントを
+   超えるため該当せず、デフォルト（PC向け）のレイアウトが適用されて
+   しまう。そのため高さを基準にした専用メディアクエリを設け、
+   横持ちのiPhone 12 Proのみを対象にする（値の根拠は冒頭
+   :root のブレークポイント定義コメントを参照。高さ768px以上ある
+   iPadなどのタブレット横持ちは対象外）。
+   ============================================================ */
+@media (orientation: landscape) and (max-height: 500px) {
+
+  /* ----------------------------------------
+     超大口検出：検索条件を縦持ち時と同じ縦積みレイアウトにする
+     （横幅は確保できるが、フィールド数が多く1行に並べると窮屈なため）
+  ---------------------------------------- */
+  #blockConditions {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  /* ----------------------------------------
+     CSV・証券コード比較：全営業日比較チェックボックスを
+     比較元日付・比較先日付の下（新しい行）に表示する。
+     比較元日付・矢印・比較先日付の3要素は横幅に余裕があるため
+     そのまま1行に収め、チェックボックスだけ折り返して次行へ送る。
+  ---------------------------------------- */
+  .compare-date-fieldset {
+    flex-wrap: wrap;
+  }
+
+  .compare-all-market-days-option {
+    flex-basis: 100%;
+  }
+
+  /* ----------------------------------------
+     CSV・証券コード比較：CSVアップロード欄のはみ出し対策
+     input[type="file"] はブラウザ既定の内部レイアウト（「ファイルを選択」
+     ボタン＋ファイル名表示）が幅指定に完全には追従せず、指定した
+     グリッド幅からはみ出すことがある（ブラウザのデフォルト挙動）。
+     ポートレート版（@media (max-width: 600px)）と同じ対策を適用し、
+     ラジオボタン・見出しテキストとは別の行に、幅いっぱいで表示する。
+  ---------------------------------------- */
+  .compare-source-fieldset .compare-source-option {
+    grid-template-columns: auto 1fr;
+    row-gap: 4px;
+  }
+
+  .compare-source-option input[type="text"],
+  .compare-source-option input[type="file"] {
+    grid-column: 1 / -1;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* ----------------------------------------
+     CSV・証券コード比較：結果グリッドのフォントサイズを10pxにする。
+     heuristics（および他モード）は本メディアクエリでは変更しない
+     （＝縦持ち用の縮小ルールも適用されないため、PCと同じ既定の
+     フォントサイズ・paddingのまま表示される。ご要望どおり）。
+     padding は特に指定がないため既定のままとする。
+  ---------------------------------------- */
+  body[data-search-mode="compare"] .table-header-sticky th,
+  body[data-search-mode="compare"] .fixed-col,
+  body[data-search-mode="compare"] #resultTable td {
+    font-size: 10px;
   }
 }
