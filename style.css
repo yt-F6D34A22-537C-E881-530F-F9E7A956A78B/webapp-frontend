@@ -1570,6 +1570,13 @@ button:disabled {
 
   .compare-all-market-days-option {
     flex-basis: 100%;
+    width: 100%;
+    /* 折り返して単独の行になった際、チェックボックス＋ラベル文言のかたまりが
+       行内で中央寄せに見えてしまっていたため、明示的に左揃えにする。
+       align-items: center（既存定義）はチェックボックスとラベル文言を
+       "縦方向に" 中央揃えするためのものなので、そのまま維持する
+       （justify-content は横方向の揃え、align-items は縦方向の揃え）。 */
+    justify-content: flex-start;
   }
 
   /* ----------------------------------------
