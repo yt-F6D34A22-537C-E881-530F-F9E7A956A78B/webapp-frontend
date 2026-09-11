@@ -62,6 +62,7 @@ const REVIEW_NOTES_RAW_URL =
 const DEFAULT_CHAPTERS = [
   {
     id: "candlestick-basics",
+    group: "学びの棚サンプル",
     part: "第1部　値動きを読む基礎",
     title: "ローソク足とは何を表すか（オフライン表示）",
     readMinutes: 3,
@@ -128,11 +129,33 @@ const memoStatusEl = document.getElementById("memoStatusEl");
 
 const reviewLoadingOverlay = document.getElementById("reviewLoadingOverlay");
 
+const addChapterBtn = document.getElementById("addChapterBtn");
+const editChapterBtn = document.getElementById("editChapterBtn");
+
+const chapterEditorModal = document.getElementById("chapterEditorModal");
+const chapterEditorTitleEl = document.getElementById("chapterEditorTitleEl");
+const chapterEditorCloseBtn = document.getElementById("chapterEditorCloseBtn");
+const chapterEditorGroupInput = document.getElementById("chapterEditorGroupInput");
+const chapterEditorPartInput = document.getElementById("chapterEditorPartInput");
+const chapterEditorTitleInput = document.getElementById("chapterEditorTitleInput");
+const chapterEditorReadMinutesInput = document.getElementById("chapterEditorReadMinutesInput");
+const chapterEditorBodyHtmlInput = document.getElementById("chapterEditorBodyHtmlInput");
+const chapterEditorPreviewEl = document.getElementById("chapterEditorPreviewEl");
+const chapterGroupOptionsEl = document.getElementById("chapterGroupOptions");
+const chapterPartOptionsEl = document.getElementById("chapterPartOptions");
+const chapterEditorSaveBtn = document.getElementById("chapterEditorSaveBtn");
+const chapterEditorCancelBtn = document.getElementById("chapterEditorCancelBtn");
+const chapterEditorDeleteBtn = document.getElementById("chapterEditorDeleteBtn");
+
 // ------------------------------------------------------------------
 // 状態
 // ------------------------------------------------------------------
 let notes = { bookmarks: [], memos: {} };
 let currentChapterId = CHAPTERS[0].id;
+
+// エディタが「新規追加」か「既存章の編集」かを判定するための状態。
+// null のときは新規追加モード、章IDが入っているときは編集モード。
+let editingChapterId = null;
 
 // ------------------------------------------------------------------
 // 合言葉（書き込み系エンドポイントの簡易認可）
@@ -188,7 +211,7 @@ async function loadNotes() {
   }
 }
 
-async function postWithSecret(path, body) {
+async function requestWithSecret(method, path, body) {
   const secret = getReviewSecret();
   if (!secret) {
     return { error: "合言葉が入力されなかったため、保存を中止しました。" };
@@ -196,12 +219,12 @@ async function postWithSecret(path, body) {
   reviewLoadingOverlay.classList.remove("hidden");
   try {
     const res = await fetch(`${API_BASE_URL}${path}`, {
-      method: "POST",
+      method,
       headers: {
         "Content-Type": "application/json",
         "X-Review-Secret": secret,
       },
-      body: JSON.stringify(body),
+      body: body !== undefined ? JSON.stringify(body) : undefined,
     });
     if (res.status === 401) {
       // 合言葉が誤っている場合は保存し直したものを次回再入力させる
@@ -218,6 +241,11 @@ async function postWithSecret(path, body) {
   } finally {
     reviewLoadingOverlay.classList.add("hidden");
   }
+}
+
+// 既存コードとの互換のため、POST専用の薄いラッパーとして残す。
+function postWithSecret(path, body) {
+  return requestWithSecret("POST", path, body);
 }
 
 async function toggleBookmark() {
@@ -258,40 +286,208 @@ async function saveMemo() {
 }
 
 // ------------------------------------------------------------------
+// 章コンテンツの追加・編集・削除（2026-09 追加）
+//
+// 「＋ 新規章を追加」ボタン、および読む画面の編集（✏️）ボタンから
+// 同じモーダルを開く。新規追加は editingChapterId = null、
+// 既存章の編集は editingChapterId = 編集対象のID として区別する。
+// ------------------------------------------------------------------
+
+function populateEditorDatalists() {
+  const groups = [...new Set(CHAPTERS.map((c) => c.group).filter(Boolean))];
+  const parts = [...new Set(CHAPTERS.map((c) => c.part).filter(Boolean))];
+
+  chapterGroupOptionsEl.innerHTML = groups
+    .map((g) => `<option value="${g.replace(/"/g, "&quot;")}"></option>`)
+    .join("");
+  chapterPartOptionsEl.innerHTML = parts
+    .map((p) => `<option value="${p.replace(/"/g, "&quot;")}"></option>`)
+    .join("");
+}
+
+function updateEditorPreview() {
+  // bodyHtml はページ作者（自分自身）が入力する信頼済みHTMLとして扱う
+  // 前提（scripts.review.contentModel.chapters を参照）。ユーザー投稿を
+  // 受け付けるフォームではないため、ここでも innerHTML へそのまま反映する。
+  chapterEditorPreviewEl.innerHTML = chapterEditorBodyHtmlInput.value;
+}
+
+function openChapterEditor(chapterId) {
+  editingChapterId = chapterId || null;
+  populateEditorDatalists();
+
+  if (editingChapterId) {
+    const chapter = CHAPTERS_BY_ID[editingChapterId];
+    if (!chapter) return;
+    chapterEditorTitleEl.textContent = "章を編集";
+    chapterEditorGroupInput.value = chapter.group || "";
+    chapterEditorPartInput.value = chapter.part || "";
+    chapterEditorTitleInput.value = chapter.title || "";
+    chapterEditorReadMinutesInput.value = chapter.readMinutes || 3;
+    chapterEditorBodyHtmlInput.value = chapter.bodyHtml || "";
+    chapterEditorDeleteBtn.classList.remove("hidden");
+  } else {
+    // 新規追加時は、今開いている章と同じグループ・部を初期値にしておくと
+    // 続けて同じ部に章を追加したい場合に入力の手間が減る。
+    const current = CHAPTERS_BY_ID[currentChapterId];
+    chapterEditorTitleEl.textContent = "新規章を追加";
+    chapterEditorGroupInput.value = current?.group || "";
+    chapterEditorPartInput.value = current?.part || "";
+    chapterEditorTitleInput.value = "";
+    chapterEditorReadMinutesInput.value = 3;
+    chapterEditorBodyHtmlInput.value = "";
+    chapterEditorDeleteBtn.classList.add("hidden");
+  }
+
+  updateEditorPreview();
+  chapterEditorModal.classList.remove("hidden");
+}
+
+function closeChapterEditor() {
+  chapterEditorModal.classList.add("hidden");
+  editingChapterId = null;
+}
+
+function slugifyForNewChapterId() {
+  // 新規章のIDは自動採番する（利用者にIDを意識させない）。
+  // 一意性だけを重視し、時刻ベースの文字列にする。
+  return `custom-${Date.now().toString(36)}`;
+}
+
+async function saveChapterFromEditor() {
+  const title = chapterEditorTitleInput.value.trim();
+  const bodyHtml = chapterEditorBodyHtmlInput.value.trim();
+  if (!title || !bodyHtml) {
+    alert("章タイトルと本文は必須です。");
+    return;
+  }
+
+  const payload = {
+    id: editingChapterId || slugifyForNewChapterId(),
+    group: chapterEditorGroupInput.value.trim(),
+    part: chapterEditorPartInput.value.trim(),
+    title,
+    readMinutes: Math.max(1, parseInt(chapterEditorReadMinutesInput.value, 10) || 1),
+    bodyHtml,
+  };
+
+  const result = await requestWithSecret("POST", "/review/chapter", payload);
+  if (result.error) {
+    alert("章の保存に失敗しました：" + result.error);
+    return;
+  }
+
+  setChapters(result.chapters);
+  closeChapterEditor();
+  renderChapterNav();
+  // 保存した章をそのまま開く（新規追加でも、編集でも同じ章に留まる）
+  showChapter(payload.id, { scroll: false });
+}
+
+async function deleteChapterFromEditor() {
+  if (!editingChapterId) return;
+  const chapter = CHAPTERS_BY_ID[editingChapterId];
+  const confirmed = window.confirm(
+    `「${chapter ? chapter.title : editingChapterId}」を削除します。よろしいですか？\n` +
+    `（この章に付けたしおり・メモも一緒に削除されます）`
+  );
+  if (!confirmed) return;
+
+  const deletingId = editingChapterId;
+  const result = await requestWithSecret(
+    "DELETE",
+    `/review/chapter?chapter_id=${encodeURIComponent(deletingId)}`
+  );
+  if (result.error) {
+    alert("章の削除に失敗しました：" + result.error);
+    return;
+  }
+
+  setChapters(result.chapters);
+  // ローカルの notes からも、バックエンドの自動クリーンアップ結果に合わせて
+  // 該当IDを取り除いておく（次回 loadNotes() されるまでの間の表示整合用）。
+  notes.bookmarks = notes.bookmarks.filter((id) => id !== deletingId);
+  delete notes.memos[deletingId];
+
+  closeChapterEditor();
+  renderChapterNav();
+  renderBookmarkList();
+  renderMemoList();
+
+  if (currentChapterId === deletingId) {
+    // 削除した章が表示中だった場合は、先頭の章へ退避する
+    showChapter(CHAPTERS[0].id, { scroll: false });
+  }
+}
+
+// ------------------------------------------------------------------
 // 描画
 // ------------------------------------------------------------------
+
+// 章配列を「グループ→部」の順にネストしたMapへ組み替える。
+// data/review_chapters.json は元々「隣接する要素が同じpartなら
+// グルーピング」という前提で作られていたが、章の追加・編集を
+// UIから任意の順序・位置で行えるようにした（2026-09）ことで、
+// 同じグループ/部の章が配列内で必ずしも隣り合わない場合がある。
+// そのため、配列内の位置に関わらず正しくグルーピングされるよう、
+// 「初めて登場した順」を保持する Map ベースの集計に変更した。
+// group が未設定（従来データとの後方互換）の場合は「分類未設定」とする。
+function groupChaptersForNav() {
+  const groups = new Map();
+  CHAPTERS.forEach((chapter) => {
+    const groupLabel = chapter.group || "分類未設定";
+    const partLabel = chapter.part || "（部未設定）";
+    if (!groups.has(groupLabel)) {
+      groups.set(groupLabel, new Map());
+    }
+    const parts = groups.get(groupLabel);
+    if (!parts.has(partLabel)) {
+      parts.set(partLabel, []);
+    }
+    parts.get(partLabel).push(chapter);
+  });
+  return groups;
+}
+
 function renderChapterNav() {
   chapterNavEl.innerHTML = "";
-  let lastPart = null;
-  CHAPTERS.forEach((chapter) => {
-    if (chapter.part !== lastPart) {
+  const groups = groupChaptersForNav();
+
+  groups.forEach((parts, groupLabel) => {
+    const groupEl = document.createElement("p");
+    groupEl.className = "review-chapter-group-title";
+    groupEl.textContent = groupLabel;
+    chapterNavEl.appendChild(groupEl);
+
+    parts.forEach((chapters, partLabel) => {
       const partEl = document.createElement("p");
       partEl.className = "review-chapter-part-title";
-      partEl.textContent = chapter.part;
+      partEl.textContent = partLabel;
       chapterNavEl.appendChild(partEl);
-      lastPart = chapter.part;
-    }
 
-    const itemEl = document.createElement("div");
-    itemEl.className = "review-chapter-item";
-    itemEl.dataset.chapterId = chapter.id;
-    if (chapter.id === currentChapterId) {
-      itemEl.setAttribute("data-current", "");
-    }
-    if (notes.bookmarks.includes(chapter.id)) {
-      itemEl.setAttribute("data-bookmarked", "");
-    }
+      chapters.forEach((chapter) => {
+        const itemEl = document.createElement("div");
+        itemEl.className = "review-chapter-item";
+        itemEl.dataset.chapterId = chapter.id;
+        if (chapter.id === currentChapterId) {
+          itemEl.setAttribute("data-current", "");
+        }
+        if (notes.bookmarks.includes(chapter.id)) {
+          itemEl.setAttribute("data-bookmarked", "");
+        }
 
-    const dotEl = document.createElement("span");
-    dotEl.className = "review-chapter-item-bookmark";
-    itemEl.appendChild(dotEl);
+        const dotEl = document.createElement("span");
+        dotEl.className = "review-chapter-item-bookmark";
+        itemEl.appendChild(dotEl);
 
-    const labelEl = document.createElement("span");
-    labelEl.textContent = chapter.title;
-    itemEl.appendChild(labelEl);
+        const labelEl = document.createElement("span");
+        labelEl.textContent = chapter.title;
+        itemEl.appendChild(labelEl);
 
-    itemEl.addEventListener("click", () => showChapter(chapter.id));
-    chapterNavEl.appendChild(itemEl);
+        itemEl.addEventListener("click", () => showChapter(chapter.id));
+        chapterNavEl.appendChild(itemEl);
+      });
+    });
   });
 }
 
@@ -392,7 +588,9 @@ function showChapter(chapterId, options = {}) {
   currentChapterId = chapterId;
   location.hash = chapterId;
 
-  chapterBreadcrumbEl.textContent = chapter.part;
+  chapterBreadcrumbEl.textContent = chapter.group
+    ? `${chapter.group} / ${chapter.part}`
+    : chapter.part;
   chapterTitleEl.textContent = chapter.title;
   chapterMetaEl.textContent = `読了目安 ${chapter.readMinutes}分`;
   chapterBodyEl.innerHTML = chapter.bodyHtml;
@@ -461,6 +659,15 @@ chapterNextBtn.addEventListener("click", () => {
   const index = CHAPTERS.findIndex((c) => c.id === currentChapterId);
   if (index < CHAPTERS.length - 1) showChapter(CHAPTERS[index + 1].id);
 });
+
+addChapterBtn.addEventListener("click", () => openChapterEditor(null));
+editChapterBtn.addEventListener("click", () => openChapterEditor(currentChapterId));
+chapterEditorCloseBtn.addEventListener("click", closeChapterEditor);
+chapterEditorCancelBtn.addEventListener("click", closeChapterEditor);
+chapterEditorModal.querySelector(".review-editor-backdrop").addEventListener("click", closeChapterEditor);
+chapterEditorBodyHtmlInput.addEventListener("input", updateEditorPreview);
+chapterEditorSaveBtn.addEventListener("click", saveChapterFromEditor);
+chapterEditorDeleteBtn.addEventListener("click", deleteChapterFromEditor);
 
 // ------------------------------------------------------------------
 // 初期化
