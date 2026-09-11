@@ -644,30 +644,50 @@ function switchTab(tab) {
 
 // ------------------------------------------------------------------
 // イベント登録
+//
+// on() は、対象要素が null（review.html と review.js のバージョンが
+// 一時的にズレていて、想定するidの要素が存在しない場合など）でも
+// スクリプト全体を止めずに済むようにするための安全なラッパー。
+// 通常の addEventListener を素で並べていると、1つの要素が見つからない
+// だけでそこから下の初期化処理（章の読み込み等）が丸ごと実行されなく
+// なってしまう（トップレベルで例外が発生すると、それ以降の同期処理は
+// 中断されるため）。要素が見つからない場合は console.warn に留め、
+// 他の初期化は継続する（2026-09 追加）。
 // ------------------------------------------------------------------
-reviewTabReadBtn.addEventListener("click", () => switchTab("read"));
-reviewTabBookmarksBtn.addEventListener("click", () => switchTab("bookmarks"));
-reviewTabMemosBtn.addEventListener("click", () => switchTab("memos"));
-bookmarkToggleBtn.addEventListener("click", toggleBookmark);
-memoSaveBtn.addEventListener("click", saveMemo);
+function on(element, event, handler) {
+  if (!element) {
+    console.warn(
+      `review.js: イベント登録対象の要素が見つかりませんでした（event=${event}）。` +
+      `review.html が古いバージョンのままになっている可能性があります。`
+    );
+    return;
+  }
+  element.addEventListener(event, handler);
+}
 
-chapterPrevBtn.addEventListener("click", () => {
+on(reviewTabReadBtn, "click", () => switchTab("read"));
+on(reviewTabBookmarksBtn, "click", () => switchTab("bookmarks"));
+on(reviewTabMemosBtn, "click", () => switchTab("memos"));
+on(bookmarkToggleBtn, "click", toggleBookmark);
+on(memoSaveBtn, "click", saveMemo);
+
+on(chapterPrevBtn, "click", () => {
   const index = CHAPTERS.findIndex((c) => c.id === currentChapterId);
   if (index > 0) showChapter(CHAPTERS[index - 1].id);
 });
-chapterNextBtn.addEventListener("click", () => {
+on(chapterNextBtn, "click", () => {
   const index = CHAPTERS.findIndex((c) => c.id === currentChapterId);
   if (index < CHAPTERS.length - 1) showChapter(CHAPTERS[index + 1].id);
 });
 
-addChapterBtn.addEventListener("click", () => openChapterEditor(null));
-editChapterBtn.addEventListener("click", () => openChapterEditor(currentChapterId));
-chapterEditorCloseBtn.addEventListener("click", closeChapterEditor);
-chapterEditorCancelBtn.addEventListener("click", closeChapterEditor);
-chapterEditorModal.querySelector(".review-editor-backdrop").addEventListener("click", closeChapterEditor);
-chapterEditorBodyHtmlInput.addEventListener("input", updateEditorPreview);
-chapterEditorSaveBtn.addEventListener("click", saveChapterFromEditor);
-chapterEditorDeleteBtn.addEventListener("click", deleteChapterFromEditor);
+on(addChapterBtn, "click", () => openChapterEditor(null));
+on(editChapterBtn, "click", () => openChapterEditor(currentChapterId));
+on(chapterEditorCloseBtn, "click", closeChapterEditor);
+on(chapterEditorCancelBtn, "click", closeChapterEditor);
+on(chapterEditorModal?.querySelector(".review-editor-backdrop"), "click", closeChapterEditor);
+on(chapterEditorBodyHtmlInput, "input", updateEditorPreview);
+on(chapterEditorSaveBtn, "click", saveChapterFromEditor);
+on(chapterEditorDeleteBtn, "click", deleteChapterFromEditor);
 
 // ------------------------------------------------------------------
 // 初期化
