@@ -1361,6 +1361,7 @@ async function startScreening() {
 
   const volumeRatio = parseFloat(document.getElementById("volumeRatio").value);
   const shadowRatio = parseFloat(document.getElementById("shadowRatio").value);
+  const minVolume = parseFloat(document.getElementById("minVolume").value);
   const targetDateRanking = dateSelect.value;
   const targetDateRatio = ratioDateSelect.value;
   const targetDateHeuristics = heuristicsDateSelect.value;
@@ -1482,6 +1483,7 @@ async function startScreening() {
       url.searchParams.set("mode", "ratio");
       url.searchParams.set("volume_ratio", volumeRatio);
       url.searchParams.set("shadow_ratio", shadowRatio);
+      url.searchParams.set("min_volume", minVolume);
       url.searchParams.set("target_date", targetDateRatio);
 
       // 除外市場をパラメータに追加（1件以上チェックされている場合のみ）
