@@ -137,6 +137,28 @@
             <input id="chapterEditorReadMinutesInput" type="number" min="1" value="3">
           </label>
 
+          <div class="review-editor-field">
+            <span>画像を挿入</span>
+            <div id="chapterEditorImageDropzone" class="review-editor-image-dropzone" tabindex="0">
+              画像ファイルをドラッグ&amp;ドロップ、クリックして選択、またはこの枠をクリックして<br>Ctrl+V（Macは⌘+V）でクリップボードから貼り付け
+              <input id="chapterEditorImageFileInput" type="file" accept="image/*" class="review-editor-image-file-input">
+            </div>
+            <p id="chapterEditorImageStatusEl" class="review-editor-image-status" aria-live="polite"></p>
+            <div id="chapterEditorImageResultWrap" class="review-editor-image-result hidden">
+              <img id="chapterEditorImagePreview" class="review-editor-image-preview" alt="">
+              <div class="review-editor-image-tag-row">
+                <textarea id="chapterEditorImageTagOutput" rows="2" readonly></textarea>
+                <button id="chapterEditorImageCopyBtn" type="button" class="btn ghost small review-editor-image-copy-btn" title="imgタグをコピー">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                       fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
           <label class="review-editor-field">
             <span>本文（HTML）</span>
             <textarea id="chapterEditorBodyHtmlInput" rows="8" placeholder="&lt;p&gt;本文…&lt;/p&gt;"></textarea>
