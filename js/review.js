@@ -634,21 +634,115 @@ function groupChaptersForNav() {
   return groups;
 }
 
+// ------------------------------------------------------------------
+// 目次のアコーディオン開閉状態（2026-09 追加）
+//
+// デフォルトはすべて閉じており、アクティブな章が属するグループ・部だけを
+// 自動的に開く。ユーザーが手動で開閉したグループ・部の状態は
+// renderChapterNav() が再実行されても保持する（章を切り替えるたびに
+// 他のグループが勝手に閉じ直されると使いづらいため、アクティブな章の
+// 分だけ追加で開き、それ以外はユーザー操作をそのまま尊重する）。
+//
+// 部のラベルはグループをまたいで重複しうる（例：異なるグループに
+// 同じ「第1部」が存在する）ため、"グループ名::部名" を複合キーとして
+// 部の開閉状態を管理する。
+// ------------------------------------------------------------------
+const navOpenGroups = new Set();
+const navOpenParts = new Set();
+
+function navPartKey(groupLabel, partLabel) {
+  return `${groupLabel}::${partLabel}`;
+}
+
+// 現在表示中の章が属するグループ・部を開閉状態に追加する
+function ensureActiveChapterNavOpen() {
+  const activeChapter = CHAPTERS.find((c) => c.id === currentChapterId);
+  if (!activeChapter) return;
+  const groupLabel = activeChapter.group || "分類未設定";
+  const partLabel = activeChapter.part || "（部未設定）";
+  navOpenGroups.add(groupLabel);
+  navOpenParts.add(navPartKey(groupLabel, partLabel));
+}
+
+function toggleNavGroup(groupLabel) {
+  if (navOpenGroups.has(groupLabel)) {
+    navOpenGroups.delete(groupLabel);
+  } else {
+    navOpenGroups.add(groupLabel);
+  }
+  renderChapterNav();
+}
+
+function toggleNavPart(groupLabel, partLabel) {
+  const key = navPartKey(groupLabel, partLabel);
+  if (navOpenParts.has(key)) {
+    navOpenParts.delete(key);
+  } else {
+    navOpenParts.add(key);
+  }
+  renderChapterNav();
+}
+
+// 開閉の向きを示すシェブロンアイコン（静的マークアップのみで動的な値を
+// 埋め込まないため innerHTML を使用しても安全）
+function createNavChevron(sizePx) {
+  const span = document.createElement("span");
+  span.className = "review-nav-chevron";
+  span.innerHTML =
+    `<svg width="${sizePx}" height="${sizePx}" viewBox="0 0 24 24" fill="none" ` +
+    `stroke="currentColor" stroke-width="3" aria-hidden="true">` +
+    `<polyline points="9 6 15 12 9 18"></polyline></svg>`;
+  return span;
+}
+
 function renderChapterNav() {
   chapterNavEl.innerHTML = "";
   const groups = groupChaptersForNav();
+  ensureActiveChapterNavOpen();
 
   groups.forEach((parts, groupLabel) => {
-    const groupEl = document.createElement("p");
-    groupEl.className = "review-chapter-group-title";
-    groupEl.textContent = groupLabel;
-    chapterNavEl.appendChild(groupEl);
+    const groupIsOpen = navOpenGroups.has(groupLabel);
+
+    const groupWrapEl = document.createElement("div");
+    groupWrapEl.className = "review-chapter-group";
+
+    const groupBtnEl = document.createElement("button");
+    groupBtnEl.type = "button";
+    groupBtnEl.className = "review-chapter-group-title";
+    groupBtnEl.setAttribute("aria-expanded", groupIsOpen ? "true" : "false");
+    if (groupIsOpen) groupBtnEl.setAttribute("data-open", "");
+    groupBtnEl.appendChild(createNavChevron(13));
+    const groupLabelEl = document.createElement("span");
+    groupLabelEl.textContent = groupLabel;
+    groupBtnEl.appendChild(groupLabelEl);
+    groupBtnEl.addEventListener("click", () => toggleNavGroup(groupLabel));
+    groupWrapEl.appendChild(groupBtnEl);
+
+    const groupBodyEl = document.createElement("div");
+    groupBodyEl.className = "review-chapter-group-body";
+    if (groupIsOpen) groupBodyEl.setAttribute("data-open", "");
 
     parts.forEach((chapters, partLabel) => {
-      const partEl = document.createElement("p");
-      partEl.className = "review-chapter-part-title";
-      partEl.textContent = partLabel;
-      chapterNavEl.appendChild(partEl);
+      const partIsOpen = navOpenParts.has(navPartKey(groupLabel, partLabel));
+
+      const partWrapEl = document.createElement("div");
+      partWrapEl.className = "review-chapter-part";
+
+      const partBtnEl = document.createElement("button");
+      partBtnEl.type = "button";
+      partBtnEl.className = "review-chapter-part-title";
+      partBtnEl.setAttribute("aria-expanded", partIsOpen ? "true" : "false");
+      if (partIsOpen) partBtnEl.setAttribute("data-open", "");
+      partBtnEl.appendChild(createNavChevron(11));
+      const partLabelEl = document.createElement("span");
+      partLabelEl.textContent = partLabel;
+      partBtnEl.appendChild(partLabelEl);
+      partBtnEl.addEventListener("click", () => toggleNavPart(groupLabel, partLabel));
+      partWrapEl.appendChild(partBtnEl);
+
+      const partBodyEl = document.createElement("div");
+      partBodyEl.className = "review-chapter-part-body";
+      if (partIsOpen) partBodyEl.setAttribute("data-open", "");
 
       chapters.forEach((chapter) => {
         const itemEl = document.createElement("div");
@@ -670,9 +764,15 @@ function renderChapterNav() {
         itemEl.appendChild(labelEl);
 
         itemEl.addEventListener("click", () => showChapter(chapter.id));
-        chapterNavEl.appendChild(itemEl);
+        partBodyEl.appendChild(itemEl);
       });
+
+      partWrapEl.appendChild(partBodyEl);
+      groupBodyEl.appendChild(partWrapEl);
     });
+
+    groupWrapEl.appendChild(groupBodyEl);
+    chapterNavEl.appendChild(groupWrapEl);
   });
 }
 
