@@ -150,18 +150,43 @@
   }
 }
 
-/* --- 目次（グループ → 部 → 章） --- */
+/* --- 目次（グループ → 部 → 章。アコーディオン、2026-09 変更）
+   デフォルトはすべて閉じており、アクティブな章のグループ・部だけを
+   自動で開く（scripts.review.ui.chapterNav.accordion を参照）。
+   グループ・部見出しはクリック可能な <button> とし、開閉状態は
+   data-open（JSが付け外しするCSS専用フック。conventions.domHookAttributes
+   に準拠）で表現する。 --- */
+.review-chapter-group-title,
+.review-chapter-part-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-input);
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-sans); /* <button> の見た目リセット。文字はそれぞれ個別に上書きする */
+}
+
+.review-chapter-group-title:hover,
+.review-chapter-part-title:hover {
+  background: var(--color-bg-mode-block);
+}
+
 .review-chapter-group-title {
   font-family: var(--font-serif);
   font-size: 14px;
   font-weight: 700;
   color: var(--color-accent-primary);
   margin: 20px 0 8px;
-  padding-top: 14px;
+  padding: 14px 4px 0 0;
   border-top: 1px solid var(--color-border);
 }
 
-.review-chapter-group-title:first-child {
+/* 最初のグループだけ、上の余白・区切り線を付けない */
+.review-chapter-group:first-child .review-chapter-group-title {
   margin-top: 0;
   padding-top: 0;
   border-top: none;
@@ -172,10 +197,45 @@
   color: var(--color-text-muted);
   font-weight: 700;
   margin: 16px 0 6px;
+  padding: 2px 4px;
 }
 
-.review-chapter-part-title:first-child {
+/* 各グループ内で最初の部だけ、グループ見出し直後の余白を詰める */
+.review-chapter-part:first-child .review-chapter-part-title {
   margin-top: 0;
+}
+
+/* シェブロン（開閉の向きを示す三角アイコン）。閉:→ 開:↓ */
+.review-nav-chevron {
+  flex: none;
+  display: inline-flex;
+  color: var(--color-text-muted);
+  transition: transform var(--transition-base);
+}
+
+.review-chapter-group-title[data-open] .review-nav-chevron,
+.review-chapter-part-title[data-open] .review-nav-chevron {
+  transform: rotate(90deg);
+}
+
+/* グループ・部それぞれの中身（部の一覧／章の一覧）。data-open が
+   無ければ非表示＝閉じた状態がデフォルト。 */
+.review-chapter-group-body,
+.review-chapter-part-body {
+  display: none;
+}
+
+.review-chapter-group-body[data-open],
+.review-chapter-part-body[data-open] {
+  display: block;
+}
+
+.review-chapter-group-body {
+  padding-left: 2px;
+}
+
+.review-chapter-part-body {
+  padding-left: 14px;
 }
 
 .review-add-chapter-btn {
