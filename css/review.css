@@ -289,6 +289,29 @@
   margin: 0 0 1.5em;
 }
 
+/* 本文中に画像を差し込んだ場合、カード幅を超えてはみ出さないようにする
+   （2026-09 追加。img自体には幅・高さを指定しなくても自動で収まる）。
+   figure/figcaption はキャプション付きで画像を貼りたい場合の任意の書き方。 */
+.review-prose img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius-input);
+  display: block;
+  margin: 1.2em auto;
+}
+
+.review-prose figure {
+  margin: 1.5em 0;
+}
+
+.review-prose figcaption {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--color-text-muted);
+  text-align: center;
+  margin-top: 6px;
+}
+
 .review-prose mark {
   background: transparent;
   color: inherit;
@@ -534,6 +557,107 @@
 .review-editor-delete-btn:hover {
   color: #8f2e2e;
 }
+
+/* --- 章エディタ：画像アップロード（2026-09 追加）
+   バックエンドに画像アップロード用のエンドポイントは存在しないため、
+   選択・貼り付けされた画像はブラウザ内で data:URL（base64）へ変換し、
+   その data:URL を src に持つ <img> タグ文字列をここで生成・表示する。
+   ユーザーはそのタグをコピーし、本文（HTML）欄へ貼り付けて使う。 --- */
+.review-editor-image-dropzone {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-height: 56px;
+  padding: 14px;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-input);
+  background: var(--color-bg-mode-block);
+  color: var(--color-text-muted);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  line-height: 1.6;
+  cursor: pointer;
+  transition: border-color var(--transition-base), background var(--transition-base);
+}
+
+.review-editor-image-dropzone:hover,
+.review-editor-image-dropzone:focus-visible {
+  border-color: var(--color-accent-primary);
+  outline: none;
+}
+
+/* is-dragover: ドラッグ中のファイルが枠上にある間だけJSが付け外しするフラグ（CSS専用フック） */
+.review-editor-image-dropzone.is-dragover {
+  border-color: var(--color-accent-primary);
+  background: var(--color-accent-primary-bg);
+}
+
+.review-editor-image-file-input {
+  /* クリックは dropzone 本体（div）が click ハンドラ経由で input.click() を
+     呼ぶことで開くため、input 自体は非表示にする */
+  display: none;
+}
+
+.review-editor-image-status {
+  margin: 0;
+  min-height: 1.4em;
+  font-size: 11.5px;
+  color: var(--color-text-muted);
+}
+
+.review-editor-image-result {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.review-editor-image-result.hidden {
+  display: none;
+}
+
+.review-editor-image-preview {
+  flex: none;
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: var(--radius-input);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-input);
+}
+
+.review-editor-image-tag-row {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+}
+
+.review-editor-image-tag-row textarea {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  height: 64px;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--color-text-primary);
+  background: var(--color-bg-input);
+  border: 1px solid var(--color-border-input);
+  border-radius: var(--radius-input);
+  padding: 6px 8px;
+  resize: vertical;
+  box-sizing: border-box;
+  word-break: break-all;
+}
+
+.review-editor-image-copy-btn {
+  flex: none;
+  padding: 6px;
+}
+
 
 @media (max-width: 600px) {
   .review-editor-content {
