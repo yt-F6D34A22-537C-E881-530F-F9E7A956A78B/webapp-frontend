@@ -147,6 +147,15 @@ const chapterEditorSaveBtn = document.getElementById("chapterEditorSaveBtn");
 const chapterEditorCancelBtn = document.getElementById("chapterEditorCancelBtn");
 const chapterEditorDeleteBtn = document.getElementById("chapterEditorDeleteBtn");
 
+// 章エディタ：画像アップロード関連要素（2026-09 追加）
+const chapterEditorImageDropzone = document.getElementById("chapterEditorImageDropzone");
+const chapterEditorImageFileInput = document.getElementById("chapterEditorImageFileInput");
+const chapterEditorImageStatusEl = document.getElementById("chapterEditorImageStatusEl");
+const chapterEditorImageResultWrap = document.getElementById("chapterEditorImageResultWrap");
+const chapterEditorImagePreview = document.getElementById("chapterEditorImagePreview");
+const chapterEditorImageTagOutput = document.getElementById("chapterEditorImageTagOutput");
+const chapterEditorImageCopyBtn = document.getElementById("chapterEditorImageCopyBtn");
+
 // ------------------------------------------------------------------
 // 状態
 // ------------------------------------------------------------------
@@ -339,6 +348,7 @@ function openChapterEditor(chapterId) {
     chapterEditorDeleteBtn.classList.add("hidden");
   }
 
+  resetImageEditorArea();
   updateEditorPreview();
   chapterEditorModal.classList.remove("hidden");
 }
@@ -346,6 +356,7 @@ function openChapterEditor(chapterId) {
 function closeChapterEditor() {
   chapterEditorModal.classList.add("hidden");
   editingChapterId = null;
+  resetImageEditorArea();
 }
 
 function slugifyForNewChapterId() {
@@ -419,6 +430,180 @@ async function deleteChapterFromEditor() {
     showChapter(CHAPTERS[0].id, { scroll: false });
   }
 }
+
+// ------------------------------------------------------------------
+// 章エディタ：画像アップロード（2026-09 追加）
+//
+// バックエンドに画像アップロード用のエンドポイント・専用ストレージは
+// 存在しない（contentModel.chapters を参照）。そのため、選択・貼り付け
+// された画像をサーバーへは送らず、ブラウザ内で data:URL（base64）へ
+// 変換し、その data:URL を src に持つ <img> タグ文字列を生成してその場で
+// 提示する。ユーザーはそのタグをコピーし、本文（HTML）欄
+// （chapterEditorBodyHtmlInput）へ貼り付けて使う（保存時は他のbodyHtmlと
+// 同様、通常のテキストとしてそのままGitHubへコミットされる）。
+//
+// data:URL はコミットされるJSON自体に埋め込まれることになるため、
+// ファイルサイズが大きいほどコミット・章コンテンツの読み込みも
+// 肥大化する。写真等の大きい画像を極力軽量化してから埋め込むため、
+// PNG/GIF以外（主に写真＝JPEG想定）は IMAGE_MAX_DIMENSION を超える
+// 場合のみ Canvas で縮小し、image/jpeg（IMAGE_JPEG_QUALITY）として
+// 再エンコードする。PNGは透過を保持するため常に元フォーマットの
+// まま（縮小のみ）とし、GIFはアニメーションが壊れるため一切加工
+// せずそのまま使う。
+// ------------------------------------------------------------------
+const IMAGE_MAX_DIMENSION = 1600; // 縮小後の最大の辺（px）
+const IMAGE_JPEG_QUALITY = 0.85;
+const IMAGE_SIZE_WARNING_KB = 1500; // これを超えたら保存が重くなる旨を注意表示するだけの目安（ブロックはしない）
+
+function escapeImageAltAttr(value) {
+  return value.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
+}
+
+// File/Blob → data:URL（無加工）
+function readFileAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(reader.error || new Error("読み込みに失敗しました"));
+    reader.readAsDataURL(file);
+  });
+}
+
+// data:URL → HTMLImageElement（サイズ取得・Canvas描画用）
+function loadImageFromDataUrl(dataUrl) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error("画像の読み込みに失敗しました"));
+    img.src = dataUrl;
+  });
+}
+
+// 必要に応じて縮小・再エンコードした data:URL を返す
+async function processImageFile(file) {
+  const originalDataUrl = await readFileAsDataUrl(file);
+
+  // GIFはアニメーションを壊さないよう無加工でそのまま使う
+  if (file.type === "image/gif") {
+    return originalDataUrl;
+  }
+
+  const img = await loadImageFromDataUrl(originalDataUrl);
+  const needsResize = img.width > IMAGE_MAX_DIMENSION || img.height > IMAGE_MAX_DIMENSION;
+
+  // PNGは透過保持のため、リサイズが不要ならそのまま返す
+  if (file.type === "image/png" && !needsResize) {
+    return originalDataUrl;
+  }
+
+  const scale = needsResize ? IMAGE_MAX_DIMENSION / Math.max(img.width, img.height) : 1;
+  const targetWidth = Math.max(1, Math.round(img.width * scale));
+  const targetHeight = Math.max(1, Math.round(img.height * scale));
+
+  const canvas = document.createElement("canvas");
+  canvas.width = targetWidth;
+  canvas.height = targetHeight;
+  canvas.getContext("2d").drawImage(img, 0, 0, targetWidth, targetHeight);
+
+  // PNG（縮小のみ・透過保持）、それ以外はJPEGへ再エンコードして軽量化する
+  return file.type === "image/png"
+    ? canvas.toDataURL("image/png")
+    : canvas.toDataURL("image/jpeg", IMAGE_JPEG_QUALITY);
+}
+
+function resetImageEditorArea() {
+  chapterEditorImageResultWrap?.classList.add("hidden");
+  if (chapterEditorImageStatusEl) chapterEditorImageStatusEl.textContent = "";
+  if (chapterEditorImageTagOutput) chapterEditorImageTagOutput.value = "";
+  chapterEditorImagePreview?.removeAttribute("src");
+}
+
+async function handleImageFile(file) {
+  if (!file || !file.type.startsWith("image/")) {
+    chapterEditorImageStatusEl.textContent = "画像ファイルを選択してください。";
+    return;
+  }
+
+  chapterEditorImageStatusEl.textContent = "処理中…";
+  chapterEditorImageResultWrap.classList.add("hidden");
+
+  try {
+    const dataUrl = await processImageFile(file);
+    const altText = (file.name || "").replace(/\.[^.]+$/, "");
+    const tag = `<img src="${dataUrl}" alt="${escapeImageAltAttr(altText)}">`;
+
+    chapterEditorImagePreview.src = dataUrl;
+    chapterEditorImageTagOutput.value = tag;
+    chapterEditorImageResultWrap.classList.remove("hidden");
+
+    const kb = Math.round(dataUrl.length / 1024);
+    let msg = `変換しました（約${kb}KB）。右のアイコンでタグをコピーし、本文（HTML）に貼り付けてください。`;
+    if (kb > IMAGE_SIZE_WARNING_KB) {
+      msg += " ※サイズが大きいため、保存や章の読み込みが遅くなることがあります。";
+    }
+    chapterEditorImageStatusEl.textContent = msg;
+  } catch (e) {
+    console.error("画像の変換に失敗しました:", e);
+    chapterEditorImageStatusEl.textContent = "画像の変換に失敗しました。別の画像でお試しください。";
+  }
+}
+
+// クリックでファイル選択ダイアログを開く
+on(chapterEditorImageDropzone, "click", () => chapterEditorImageFileInput?.click());
+
+on(chapterEditorImageFileInput, "change", (e) => {
+  const file = e.target.files && e.target.files[0];
+  if (file) handleImageFile(file);
+  e.target.value = ""; // 同じファイルを連続選択した場合も change が発火するようにする
+});
+
+// ドラッグ&ドロップ
+on(chapterEditorImageDropzone, "dragover", (e) => {
+  e.preventDefault();
+  chapterEditorImageDropzone.classList.add("is-dragover");
+});
+on(chapterEditorImageDropzone, "dragleave", () => {
+  chapterEditorImageDropzone?.classList.remove("is-dragover");
+});
+on(chapterEditorImageDropzone, "drop", (e) => {
+  e.preventDefault();
+  chapterEditorImageDropzone.classList.remove("is-dragover");
+  const file = e.dataTransfer?.files && e.dataTransfer.files[0];
+  if (file) handleImageFile(file);
+});
+
+// クリップボードからの貼り付け（枠をクリックしてフォーカスした状態で Ctrl+V / ⌘+V）
+on(chapterEditorImageDropzone, "paste", (e) => {
+  const items = e.clipboardData?.items;
+  if (!items) return;
+  for (const item of items) {
+    if (item.type && item.type.startsWith("image/")) {
+      e.preventDefault();
+      const file = item.getAsFile();
+      if (file) handleImageFile(file);
+      break;
+    }
+  }
+});
+
+on(chapterEditorImageCopyBtn, "click", async () => {
+  const tag = chapterEditorImageTagOutput.value;
+  if (!tag) return;
+  try {
+    await navigator.clipboard.writeText(tag);
+  } catch (e) {
+    // Clipboard API が使えない環境向けのフォールバック
+    chapterEditorImageTagOutput.select();
+    document.execCommand("copy");
+  }
+  chapterEditorImageStatusEl.textContent = "コピーしました。";
+  setTimeout(() => {
+    if (chapterEditorImageStatusEl.textContent === "コピーしました。") {
+      chapterEditorImageStatusEl.textContent = "";
+    }
+  }, 2500);
+});
+
 
 // ------------------------------------------------------------------
 // 描画
