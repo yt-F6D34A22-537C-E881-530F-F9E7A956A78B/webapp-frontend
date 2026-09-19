@@ -1,18 +1,26 @@
 // --------------------------------------
 // chart-main.js
 // モーダル制御・チャート描画の司令塔
+//
+// 2026-09 の可読性改修（1チャート3ペイン化）により、本ファイルは
+// 「価格・RCI・MACD の3チャートを生成して同期させる」構成から、
+// 「1つの chart インスタンスに3ペインを積み、インジケータ記述子を
+//   組み立てる合成ルート（composition root）」へ変わった。
+//   ・時間軸は最下段に1本だけ描画される（旧：3本重複）
+//   ・十字カーソルは3ペインを貫通する（旧：ペインごとに独立）
+//   ・価格軸幅・リサイズはライブラリが管理する（旧：手動 resize リスナ）
 // --------------------------------------
-import { fetchChartData } from "./chart-data.js";
+import { fetchChartData, clearChartDataCache } from "./chart-data.js";
+import { PRICE_INDICATORS } from "./chart-price.js";
+import { RCI_INDICATORS } from "./chart-rci.js";
+import { MACD_INDICATORS } from "./chart-macd.js";
+import { createLegend } from "./chart-legend.js";
+import { getTheme, formatTickMark } from "./chart-theme.js";
 import {
-  createPriceChart,
-  setShowCandles,
-  setShowMA,
-  setShowBB,
-  setShowIchimoku,
-} from "./chart-price.js";
-import { createRciChart } from "./chart-rci.js";
-import { createMacdChart } from "./chart-macd.js";
-import { bindTimeSync, setupResize, applyDefaultRange } from "./chart-sync.js";
+  applyDefaultRange,
+  applyInitialBarRange,
+  applyPaneStretch,
+} from "./chart-sync.js";
 
 // iPhone Safari の余白対策
 function updateVh() {
@@ -25,8 +33,6 @@ window.addEventListener('resize', updateVh);
 const modal = document.getElementById("chartModal");
 const closeBtn = document.getElementById("closeChartBtn");
 const chartContainer = document.getElementById("chartContainer");
-const rciContainer = document.getElementById("rciContainer");
-const macdContainer = document.getElementById("macdContainer");
 const chartLoadingOverlay = document.getElementById("chartLoadingOverlay");
 
 const headerLeft = document.getElementById("chartHeaderLeft");
@@ -36,10 +42,13 @@ const nextBtn = document.getElementById("nextChartBtn");
 // 設定 UI
 const settingsBtn = document.getElementById("chartSettingsBtn");
 const settingsModal = document.getElementById("chartSettingsModal");
-const toggleCandlesCheckbox = document.getElementById("toggleCandles");
-const toggleMACheckbox = document.getElementById("toggleMA");
-const toggleBBCheckbox = document.getElementById("toggleBB");
-const toggleIchimokuCheckbox = document.getElementById("toggleIchimoku");
+
+// インジケータ表示トグル（data-indicator-group をフックに一括取得する。
+// 旧実装はチェックボックスごとに個別の addEventListener と専用セッター
+// （setShowCandles / setShowMA / setShowBB / setShowIchimoku）を持っていたため、
+// インジケータを1つ増やすたびに index.html・chart-main.js・chart-price.js の
+// 3ファイルへ追記する必要があった）
+const indicatorToggles = document.querySelectorAll('input[data-indicator-group]');
 
 // 足種ラジオボタン
 const timeframeRadios = document.querySelectorAll('input[name="timeframe"]');
@@ -48,10 +57,22 @@ let currentTimeframe = "1d";   // 初期値（日足）
 // 初期状態ではモーダル非表示
 modal.style.display = "none";
 
-// チャートインスタンス
-let priceChart = null;
-let rciChart = null;
-let macdChart = null;
+// --------------------------------------
+// インジケータ記述子の集合（表示順＝ペインの生成順）
+// 価格ペイン（0）→ RCIペイン（1）→ MACDペイン（2）の順に
+// シリーズを追加することで、ライブラリ側にペインを順番に生成させる。
+// --------------------------------------
+const INDICATOR_GROUPS = [
+  ...PRICE_INDICATORS,
+  ...RCI_INDICATORS,
+  ...MACD_INDICATORS,
+];
+
+// チャートインスタンス（1つ）
+let chart = null;
+let legend = null;
+let builtGroups = new Map();   // groupKey -> { descriptor, series, primitives, legend }
+let lastBarTime = null;
 
 let currentIndex = 0;
 let screeningResults = [];
@@ -61,27 +82,99 @@ window.setScreeningResults = function(results) {
   screeningResults = results;
 };
 
+// --------------------------------------
+// 表示設定の永続化（2026-09 追加）
+// トグル状態の「真実」は index.html のチェックボックス1か所に置き、
+// localStorage はその復元元としてのみ使う。
+// localStorage はプライベートブラウズ等で例外を投げうるため必ず try/catch する。
+// --------------------------------------
+const VISIBILITY_STORAGE_KEY = "chartIndicatorVisibility";
+
+function loadVisibilityPreferences() {
+  try {
+    const raw = localStorage.getItem(VISIBILITY_STORAGE_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    return (parsed && typeof parsed === "object") ? parsed : {};
+  } catch (e) {
+    console.warn("表示設定の読み込みに失敗しました:", e);
+    return {};
+  }
+}
+
+function saveVisibilityPreferences() {
+  try {
+    const prefs = {};
+    indicatorToggles.forEach(input => {
+      prefs[input.dataset.indicatorGroup] = input.checked;
+    });
+    localStorage.setItem(VISIBILITY_STORAGE_KEY, JSON.stringify(prefs));
+  } catch (e) {
+    console.warn("表示設定の保存に失敗しました:", e);
+  }
+}
+
+// 保存値があればチェックボックスへ復元する（無ければ HTML の checked を採用）
+function restoreTogglesFromPreferences() {
+  const prefs = loadVisibilityPreferences();
+  indicatorToggles.forEach(input => {
+    const key = input.dataset.indicatorGroup;
+    if (typeof prefs[key] === "boolean") input.checked = prefs[key];
+  });
+}
+restoreTogglesFromPreferences();
+
+// --------------------------------------
+// 表示状態の解決と適用
+// --------------------------------------
+function isGroupVisible(descriptor) {
+  if (!descriptor.toggleId) return descriptor.defaultVisible !== false;
+
+  const input = document.getElementById(descriptor.toggleId);
+  return input ? input.checked : (descriptor.defaultVisible !== false);
+}
+
+function applyGroupVisibility(groupKey, visible) {
+  const built = builtGroups.get(groupKey);
+  if (!built) return;
+
+  if (typeof built.descriptor.setVisible === "function") {
+    // 既定の visible 切替では都合が悪いグループ（ローソク足）用の差し込み口
+    built.descriptor.setVisible(built, visible);
+  } else {
+    built.series.forEach(s => s.applyOptions({ visible }));
+  }
+
+  built.primitives.forEach(p => p.setVisible(visible));
+
+  // 非表示のインジケータの値を HUD 凡例にも残さない
+  if (legend) legend.setGroupVisible(groupKey, visible);
+}
+
+function applyAllVisibility() {
+  builtGroups.forEach((built, key) => {
+    applyGroupVisibility(key, isGroupVisible(built.descriptor));
+  });
+}
+
 // モーダルを閉じる
 function closeModal() {
   modal.style.display = "none";
 
   // ここで一度だけ remove し、必ず null にする（再度 remove されないように）
-  if (priceChart) {
-    priceChart.remove();
-    priceChart = null;
-  }
-  if (rciChart) {
-    rciChart.remove();
-    rciChart = null;
-  }
-  if (macdChart) {
-    macdChart.remove();
-    macdChart = null;
+  if (chart) {
+    chart.remove();
+    chart = null;
   }
 
+  legend = null;
+  builtGroups = new Map();
+  lastBarTime = null;
+
   chartContainer.innerHTML = "";
-  rciContainer.innerHTML = "";
-  macdContainer.innerHTML = "";
+
+  // モーダルを開いている間だけ保持していた取得結果を破棄する
+  clearChartDataCache();
 }
 
 closeBtn.addEventListener("click", closeModal);
@@ -98,11 +191,15 @@ function waitForHeight(callback) {
 window.openChartModal = function(ticker, name, index) {
   currentIndex = index;
 
-  headerLeft.innerHTML = `
-    <span class="ticker">${ticker}</span>
-    <span class="name">${name}</span>
-    <span class="page">（${currentIndex + 1}/${screeningResults.length}）</span>
-  `;
+  // 銘柄名は data.json（JPX 由来）の値であり、innerHTML でそのまま
+  // 埋め込むと HTML として解釈されうるため textContent で描画する
+  // （2026-09、XSS 経路の遮断）
+  headerLeft.textContent = "";
+  headerLeft.appendChild(makeHeaderSpan("ticker", ticker));
+  headerLeft.appendChild(makeHeaderSpan("name", name));
+  headerLeft.appendChild(
+    makeHeaderSpan("page", `（${currentIndex + 1}/${screeningResults.length}）`)
+  );
 
   modal.style.display = "flex";
   // オーバーレイ制御は drawChart() で一元化
@@ -113,6 +210,13 @@ window.openChartModal = function(ticker, name, index) {
     });
   });
 };
+
+function makeHeaderSpan(className, text) {
+  const span = document.createElement("span");
+  span.className = className;   // 見た目の指定のみ（style.css が参照）
+  span.textContent = text;
+  return span;
+}
 
 // 前へ・次へ
 window.showPrev = function() {
@@ -151,24 +255,12 @@ document.addEventListener("click", (e) => {
   }
 });
 
-// ローソク足の見た目切り替え
-toggleCandlesCheckbox.addEventListener("change", (e) => {
-  setShowCandles(e.target.checked);
-});
-
-// MA の表示/非表示
-toggleMACheckbox.addEventListener("change", (e) => {
-  setShowMA(e.target.checked);
-});
-
-// BB の表示/非表示
-toggleBBCheckbox.addEventListener("change", (e) => {
-  setShowBB(e.target.checked);
-});
-
-// 一目均衡表の表示/非表示
-toggleIchimokuCheckbox.addEventListener("change", (e) => {
-  setShowIchimoku(e.target.checked);
+// インジケータ表示トグル（記述子ベースの一括バインド）
+indicatorToggles.forEach(input => {
+  input.addEventListener("change", (e) => {
+    applyGroupVisibility(e.target.dataset.indicatorGroup, e.target.checked);
+    saveVisibilityPreferences();
+  });
 });
 
 // 足種切替イベント
@@ -208,26 +300,41 @@ async function drawChart(ticker, name) {
     }
 
     // 既存チャート破棄（closeModal で null にしているので二重 remove は起きない）
-    if (priceChart) priceChart.remove();
-    if (rciChart) rciChart.remove();
-    if (macdChart) macdChart.remove();
+    if (chart) {
+      chart.remove();
+      chart = null;
+    }
+    legend = null;
+    builtGroups = new Map();
 
     chartContainer.innerHTML = "";
-    rciContainer.innerHTML = "";
-    macdContainer.innerHTML = "";
 
-    // ① 価格チャート
-    const rect = chartContainer.getBoundingClientRect();
-    priceChart = LightweightCharts.createChart(chartContainer, {
-      width: rect.width,
-      height: rect.height,
+    const T = getTheme();
+
+    // ① チャート本体（1インスタンス・3ペイン）
+    chart = LightweightCharts.createChart(chartContainer, {
+      // autoSize: 内部の ResizeObserver がコンテナ追従で再描画する。
+      // 旧実装の window resize リスナ（多重登録の原因）を置き換える。
+      autoSize: true,
       layout: {
-        background: { color: '#fff' },
-        textColor: '#333',
+        background: { color: T.background },
+        textColor: T.textColor,
+        panes: {
+          separatorColor: T.paneSeparator,
+          separatorHoverColor: T.paneSeparator,
+          enableResize: true,
+        },
       },
-      rightPriceScale: { visible: true, borderVisible: true },
+      rightPriceScale: {
+        visible: true,
+        borderVisible: true,
+        borderColor: T.border,
+        // 3ペインの価格軸幅を揃え、プロット領域の左右をそろえる
+        minimumWidth: 64,
+      },
       timeScale: {
         borderVisible: true,
+        borderColor: T.border,
         timeVisible: false,
         secondsVisible: false,
         fixLeftEdge: true,
@@ -235,70 +342,64 @@ async function drawChart(ticker, name) {
         tickMarkSpacing: 50,
       },
       grid: {
-        vertLines: { color: '#eee' },
-        horzLines: { color: '#eee' },
+        // 縦グリッドはローソク足と干渉するため非表示（chart-theme.js で管理）
+        vertLines: { color: T.gridVert },
+        horzLines: { color: T.gridHorz },
       },
       crosshair: {
         mode: LightweightCharts.CrosshairMode.Normal,
       },
-    });
-
-    priceChart.applyOptions({
       localization: {
         locale: 'ja-JP',
         dateFormat: 'yyyy/MM/dd',
       },
     });
 
-    priceChart.timeScale().applyOptions({
-      tickMarkFormatter: (time) => {
-        const date = new Date(time * 1000);
-        const m = String(date.getMonth() + 1).padStart(2, '0');
-        const d = String(date.getDate()).padStart(2, '0');
-        return `${m}/${d}`;
-      },
+    // 年跨ぎ・週足・月足でも粒度が読めるラベル整形（chart-theme.js）
+    chart.timeScale().applyOptions({
+      tickMarkFormatter: formatTickMark,
     });
 
-    // ② 価格チャートシリーズ生成
-    createPriceChart(priceChart, chartContainer, tradingData);
+    // ② インジケータ記述子からシリーズを生成する
+    for (const descriptor of INDICATOR_GROUPS) {
+      const built = descriptor.build(chart, tradingData);
+      builtGroups.set(descriptor.key, {
+        descriptor,
+        series: built.series ?? [],
+        primitives: built.primitives ?? [],
+        legend: built.legend ?? [],
+      });
+    }
 
-    const price = { chart: priceChart };
+    // ③ ペイン高さ比
+    applyPaneStretch(chart);
 
-    // ③ RCI / MACD チャート生成
-    const rci = createRciChart(rciContainer, tradingData);
-    rciChart = rci.chart;   // ES Modules化により、旧来の暗黙グローバル代入から明示代入に変更
-    const macd = createMacdChart(macdContainer, tradingData);
-    macdChart = macd.chart; // 同上
+    // ④ HUD凡例（値表示付き固定凡例）
+    legend = createLegend(
+      chartContainer,
+      INDICATOR_GROUPS.map(d => ({
+        key: d.key,
+        legend: builtGroups.get(d.key).legend,
+      }))
+    );
 
-    // ④ 同期処理
-    bindTimeSync(price.chart, [rci.chart, macd.chart]);
-    bindTimeSync(rci.chart, [price.chart, macd.chart]);
-    bindTimeSync(macd.chart, [price.chart, rci.chart]);
+    // ⑤ 表示トグルの状態を反映（チェックボックスが唯一の真実）
+    applyAllVisibility();
 
-    // ⑤ リサイズ処理
-    setupResize(price.chart, rci.chart, macd.chart, chartContainer, rciContainer, macdContainer);
+    // ⑥ 十字カーソル移動で HUD の数値のみを差し替える。
+    //    カーソルがチャート外にある場合は最新バーの値へフォールバックし、
+    //    常に何らかの値が読める状態を保つ。
+    lastBarTime = tradingData[tradingData.length - 1].time;
 
-    // ⑥ デフォルト表示期間（あなたの既存ロジック）
-    applyDefaultRange(price.chart, rci.chart, macd.chart, tradingData);
-
-    // ⑦ 直近80本だけ表示（論理バー番号ベース）
-    const total = tradingData.length;
-    const visibleCount = 80;
-    const fromIndex = Math.max(0, total - visibleCount);
-    const toIndex = total - 1;
-
-    price.chart.timeScale().setVisibleLogicalRange({
-      from: fromIndex,
-      to: toIndex
+    chart.subscribeCrosshairMove(param => {
+      legend.update(param.time ?? lastBarTime);
     });
-    rci.chart.timeScale().setVisibleLogicalRange({
-      from: fromIndex,
-      to: toIndex
-    });
-    macd.chart.timeScale().setVisibleLogicalRange({
-      from: fromIndex,
-      to: toIndex
-    });
+
+    legend.update(lastBarTime);   // 初期表示
+
+    // ⑦ デフォルト表示期間（直近4ヶ月）→ 直近80本で上書き
+    applyDefaultRange(chart, tradingData);
+    applyInitialBarRange(chart, tradingData, 80);
 
   } finally {
     // 必ずオーバーレイを非表示にする（共通仕様）

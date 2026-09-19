@@ -95,6 +95,10 @@
   --container-max-width:    1500px;
   --card-padding:           20px;
   --mode-block-min-width:   260px;   /* PC 時の mode-block 最小幅 */
+  /* 2026-09：1チャート3ペイン化により、RCI / MACD の高さは
+     js/chart/chart-theme.js の PANE_STRETCH（相対比）で制御するようになったため
+     以下の2値は現在参照されていない。将来 CSS 側で高さを固定したくなった場合の
+     基準値として残置する。 */
   --rci-macd-height:        160px;   /* PC 時の RCI / MACD チャート高さ */
   --rci-macd-height-mobile: 120px;   /* スマホ時の RCI / MACD チャート高さ */
 
@@ -1047,11 +1051,8 @@ button:disabled {
   min-height: 180px;
 }
 
-#rciContainer,
-#macdContainer {
-  width: 100%;
-  height: var(--rci-macd-height);
-}
+/* 2026-09：#rciContainer / #macdContainer は廃止（1チャート3ペイン化）。
+   RCI / MACD は #chartContainer 内のペインとして描画される。 */
 
 /* ============================================================
    チャート設定
@@ -1159,9 +1160,38 @@ button:disabled {
   white-space: nowrap;
 }
 
-#chartContainer,
-#rciContainer,
-#macdContainer {
+/* ----------------------------------------
+   HUD凡例の行レイアウト（2026-09 追加）
+   旧実装の「色と名前だけの静的凡例」＋「マウス追従ツールチップ」を
+   値表示付きの固定凡例へ統合したことに伴うもの。
+   1行＝1インジケータグループ（data-legend-group）で、
+   行内に項目（■ ラベル 値）を横並びにする。
+---------------------------------------- */
+.chart-legend .legend-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 10px;
+}
+
+.chart-legend .legend-item {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 3px;
+}
+
+.chart-legend .legend-label {
+  color: var(--color-text-secondary);
+}
+
+/* 数値は等幅数字にして桁のガタつきを防ぐ（情報密度が高くても読める） */
+.chart-legend .legend-value {
+  font-family: var(--font-numeric);
+  font-variant-numeric: tabular-nums;
+}
+
+/* HUD凡例（.chart-legend）を絶対配置するための基準 */
+#chartContainer {
   position: relative;
 }
 
@@ -1504,17 +1534,26 @@ button:disabled {
   /* ----------------------------------------
      チャートモーダル：本体・サブチャート
   ---------------------------------------- */
-  #rciContainer,
-  #macdContainer {
-    /* PC の 160px より縮小して縦スペースを確保する */
-    height: var(--rci-macd-height-mobile);
-  }
+  /* 2026-09：#rciContainer / #macdContainer の廃止に伴い、
+     スマホ時の高さ指定も削除した。ペイン比は chart-theme.js の
+     PANE_STRETCH が制御する。 */
 
   /* ----------------------------------------
-     チャート凡例：スマホでは非表示
-     （チャート領域が狭くデータが隠れるため）
+     チャート凡例：スマホでは日付・OHLC・出来高の3行のみに縮約
+     （2026-09 変更。旧実装は display: none で全消ししていたが、
+       HUD化により凡例が唯一の数値表示手段となったため、
+       狭い画面でも最低限の値が読めるよう縮約表示へ切り替えた）
   ---------------------------------------- */
   .chart-legend {
+    font-size: 11px;
+    padding: 4px 6px;
+  }
+
+  .chart-legend .legend-row[data-legend-group="ma"],
+  .chart-legend .legend-row[data-legend-group="bb"],
+  .chart-legend .legend-row[data-legend-group="ichimoku"],
+  .chart-legend .legend-row[data-legend-group="rci"],
+  .chart-legend .legend-row[data-legend-group="macd"] {
     display: none;
   }
 

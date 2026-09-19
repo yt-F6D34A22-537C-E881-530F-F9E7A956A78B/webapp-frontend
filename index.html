@@ -352,18 +352,27 @@
             <p>チャートデータ取得中…</p>
           </div>
 
+          <!-- 2026-09：価格・RCI・MACD を1つの LightweightCharts インスタンスの
+               3ペインへ統合したため、#rciContainer / #macdContainer を廃止した。
+               （時間軸の3重描画・十字カーソルの非同期・価格軸幅の不揃いを解消） -->
           <div id="chartContainer"></div>
-          <div id="rciContainer"></div>
-          <div id="macdContainer"></div>
 
           <div id="chartSettingsBtn" class="chart-settings-btn">⚙️</div>
 
           <div id="chartSettingsModal" class="chart-settings-modal hidden">
+            <!-- data-indicator-group：chart-main.js がトグルを一括取得するためのフック
+                 （conventions.domHookAttributes。class はスタイル専用）。
+                 値は chart-price.js のインジケータ記述子の key と一致させること。
+                 2026-09：初期表示を「ローソク足＋出来高＋MA」に絞り、
+                 ボリンジャーバンド・一目均衡表は既定 OFF（checked を外した）。
+                 価格ペインに常時13本の線が重なることが可読性低下の主因だったため。
+                 なお前回の選択状態は localStorage に保存され、次回開いた際に復元される。 -->
             <div class="settings-content">
-              <label><input type="checkbox" id="toggleCandles" checked> ローソク足を表示</label>
-              <label><input type="checkbox" id="toggleMA" checked> 移動平均線（MA）を表示</label>
-              <label><input type="checkbox" id="toggleBB" checked> ボリンジャーバンドを表示</label>
-              <label><input type="checkbox" id="toggleIchimoku" checked> 一目均衡表を表示</label>
+              <label><input type="checkbox" id="toggleCandles" data-indicator-group="candle" checked> ローソク足を表示</label>
+              <label><input type="checkbox" id="toggleVolume" data-indicator-group="volume" checked> 出来高を表示</label>
+              <label><input type="checkbox" id="toggleMA" data-indicator-group="ma" checked> 移動平均線（MA）を表示</label>
+              <label><input type="checkbox" id="toggleBB" data-indicator-group="bb"> ボリンジャーバンドを表示</label>
+              <label><input type="checkbox" id="toggleIchimoku" data-indicator-group="ichimoku"> 一目均衡表を表示</label>
             </div>
           </div>
 

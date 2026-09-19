@@ -1,7 +1,21 @@
 // --------------------------------------
-// chart-price.js（一目均衡表・動的雲：Series Primitiveによる2線間塗りつぶし）
+// chart-price.js（価格ペイン：ローソク足 / 出来高 / MA / BB / 一目均衡表）
+//
+// 2026-09 の可読性改修により、本ファイルの責務は
+// 「価格ペイン（paneIndex 0）に載せるインジケータ群の記述子を提供すること」
+// に変わった。旧 createPriceChart() が担っていた
+//   ・シリーズ生成
+//   ・表示フラグ（showCandles 等）の保持と apply*Visibility()
+//   ・凡例 DOM の生成
+//   ・マウス追従ツールチップ
+// のうち、表示制御は chart-main.js、凡例は chart-legend.js へ移し、
+// ツールチップは HUD 凡例へ統合して廃止した。
+// インジケータを1つ追加する際に触る箇所を「記述子1件」に閉じるための構成
+// （旧実装ではシリーズ変数宣言・apply*Visibility・set* セッター・凡例 HTML・
+//   ツールチップ HTML の5か所を同時に修正する必要があった）。
 // --------------------------------------
 import { calcMA, calcBB } from "./chart-indicators.js";
+import { getTheme, LINE_WIDTH } from "./chart-theme.js";
 
 // --------------------------------------
 // 一目均衡表の雲（Ichimoku Cloud）Series Primitive
@@ -106,116 +120,6 @@ class IchimokuCloudPrimitive {
   }
 }
 
-let candleSeries;
-let volumeSeries;
-
-let ma5Series, ma25Series, ma50Series, ma75Series, ma100Series;
-
-let bbMidSeries, bbUpperSeries, bbLowerSeries;
-
-let tenkanSeries, kijunSeries, span1Series, span2Series, chikouSeries;
-let ichimokuCloud;
-
-// ▼ 表示状態フラグ
-let showCandles = true;
-let showMA = true;
-let showBB = true;
-let showIchimoku = true;
-
-// --------------------------------------
-// ローソク足の表示／非表示
-// --------------------------------------
-function applyCandleVisibility() {
-  if (!candleSeries) return;
-
-  if (showCandles) {
-    candleSeries.applyOptions({
-      upColor: 'red',
-      downColor: 'blue',
-      borderUpColor: 'red',
-      borderDownColor: 'blue',
-      wickUpColor: 'red',
-      wickDownColor: 'blue',
-    });
-  } else {
-    candleSeries.applyOptions({
-      upColor: 'rgba(0,0,0,0)',
-      downColor: 'rgba(0,0,0,0)',
-      borderUpColor: 'rgba(0,0,0,0)',
-      borderDownColor: 'rgba(0,0,0,0)',
-      wickUpColor: 'rgba(0,0,0,0)',
-      wickDownColor: 'rgba(0,0,0,0)',
-    });
-  }
-}
-
-// --------------------------------------
-// MA の表示／非表示
-// --------------------------------------
-function applyMAVisibility() {
-  if (!ma5Series) return;
-
-  ma5Series.applyOptions({ visible: showMA });
-  ma25Series.applyOptions({ visible: showMA });
-  ma50Series.applyOptions({ visible: showMA });
-  ma75Series.applyOptions({ visible: showMA });
-  ma100Series.applyOptions({ visible: showMA });
-}
-
-// --------------------------------------
-// BB の表示／非表示
-// --------------------------------------
-function applyBBVisibility() {
-  if (!bbMidSeries) return;
-
-  bbMidSeries.applyOptions({ visible: showBB });
-  bbUpperSeries.applyOptions({ visible: showBB });
-  bbLowerSeries.applyOptions({ visible: showBB });
-}
-
-// --------------------------------------
-// 一目均衡表の表示／非表示
-// --------------------------------------
-function applyIchimokuVisibility() {
-  if (!tenkanSeries) return;
-
-  tenkanSeries.applyOptions({ visible: showIchimoku });
-  kijunSeries.applyOptions({ visible: showIchimoku });
-  span1Series.applyOptions({ visible: showIchimoku });
-  span2Series.applyOptions({ visible: showIchimoku });
-  chikouSeries.applyOptions({ visible: showIchimoku });
-
-  if (ichimokuCloud) ichimokuCloud.setVisible(showIchimoku);
-}
-
-// --------------------------------------
-// 表示状態フラグの外部からの更新口
-// ES Modules化に伴い、chart-main.js から showCandles 等へ直接代入できなくなったため、
-// 「フラグ更新＋再適用」をまとめたセッター関数として公開する。
-// （挙動は従来の chart-main.js 側の
-//   `showCandles = e.target.checked; if (typeof applyCandleVisibility === "function") applyCandleVisibility();`
-//   と等価）
-// --------------------------------------
-export function setShowCandles(value) {
-  showCandles = value;
-  applyCandleVisibility();
-}
-
-export function setShowMA(value) {
-  showMA = value;
-  applyMAVisibility();
-}
-
-export function setShowBB(value) {
-  showBB = value;
-  applyBBVisibility();
-}
-
-export function setShowIchimoku(value) {
-  showIchimoku = value;
-  applyIchimokuVisibility();
-}
-
 // --------------------------------------
 // 一目均衡表の計算
 // --------------------------------------
@@ -290,289 +194,287 @@ function calcIchimoku(candleData) {
 }
 
 // --------------------------------------
-// 価格チャート生成（前半）
+// 共通ヘルパ
 // --------------------------------------
-export function createPriceChart(priceChart, chartContainer, candleData) {
+const PANE_PRICE = 0;
 
-  const candleMap = new Map();
-  candleData.forEach(c => candleMap.set(c.time, c));
-
-  const makeValueMap = (arr) => {
-    const m = new Map();
-    arr.forEach(p => {
-      if (p.value != null) m.set(p.time, p.value);
-    });
-    return m;
-  };
-
-  // 一目均衡表の計算
-  const ichimoku = calcIchimoku(candleData);
-
-  const bullColor = "rgba(0,200,0,0.35)";
-  const bearColor = "rgba(200,0,0,0.35)";
-
-  const spanBMap = new Map();
-  for (const b of ichimoku.span2) {
-    spanBMap.set(b.time, b.value);
-  }
-
-  // 雲（先行スパン1・先行スパン2で挟まれた領域）の元データ。
-  // Series Primitive（IchimokuCloudPrimitive）へそのまま渡す。
-  const cloudData = [];
-  for (const a of ichimoku.span1) {
-    const bValue = spanBMap.get(a.time);
-    if (bValue === undefined) continue;
-    cloudData.push({ time: a.time, spanA: a.value, spanB: bValue });
-  }
-
-  // ローソク足（最新値だけ y軸に表示）
-  candleSeries = priceChart.addSeries(LightweightCharts.CandlestickSeries, {
-    upColor: 'red',
-    downColor: 'blue',
-    borderUpColor: 'red',
-    borderDownColor: 'blue',
-    wickUpColor: 'red',
-    wickDownColor: 'blue',
-    // lastValueVisible: true（デフォルトのまま）
+function makeValueMap(arr) {
+  const m = new Map();
+  arr.forEach(p => {
+    if (p.value != null) m.set(p.time, p.value);
   });
-  candleSeries.setData(candleData);
-
-  candleSeries.priceScale().applyOptions({
-    scaleMargins: { top: 0.05, bottom: 0.05 },
-  });
-
-  applyCandleVisibility();
-
-  // 雲（Ichimoku Cloud）Series Primitiveをローソク足シリーズへアタッチする。
-  // zOrder: "bottom" のため、アタッチ先の series は候補のうちどれでもよく
-  // （priceToCoordinateは同じ右軸価格スケールを共有する全シリーズで同じ結果になる）、
-  // 生成順が最も早いcandleSeriesへアタッチしている。
-  ichimokuCloud = new IchimokuCloudPrimitive(cloudData, { bullColor, bearColor });
-  candleSeries.attachPrimitive(ichimokuCloud);
-
-  // 出来高
-  volumeSeries = priceChart.addSeries(LightweightCharts.HistogramSeries, {
-    priceFormat: { type: 'volume' },
-    priceScaleId: 'volume',
-    color: 'rgba(128,128,128,0.6)',
-  });
-
-  priceChart.priceScale('volume').applyOptions({
-    scaleMargins: {
-      top: 0.8,
-      bottom: 0,
-    }
-  });
-
-  volumeSeries.setData(
-    candleData.map(c => ({ time: c.time, value: c.volume }))
-  );
-
-  function addMA(color, data) {
-    const s = priceChart.addSeries(LightweightCharts.LineSeries, {
-      color,
-      lineWidth: 2,
-      lastValueVisible: false,   // ★ y軸ラベル非表示
-      priceLineVisible: false,   // ★ 価格ライン非表示
-    });
-    s.setData(data.filter(p => p.value !== null));
-    return s;
-  }
-
-  const ma5 = calcMA(candleData, 5);
-  const ma25 = calcMA(candleData, 25);
-  const ma50 = calcMA(candleData, 50);
-  const ma75 = calcMA(candleData, 75);
-  const ma100 = calcMA(candleData, 100);
-
-  ma5Series   = addMA('#ff1493', ma5);
-  ma25Series  = addMA('#00aa00', ma25);
-  ma50Series  = addMA('#0000ff', ma50);
-  ma75Series  = addMA('#aa00aa', ma75);
-  ma100Series = addMA('#ffaa00', ma100);
-
-  const ma5Map   = makeValueMap(ma5);
-  const ma25Map  = makeValueMap(ma25);
-  const ma50Map  = makeValueMap(ma50);
-  const ma75Map  = makeValueMap(ma75);
-  const ma100Map = makeValueMap(ma100);
-
-  const bb = calcBB(candleData, 20, 2);
-
-  bbMidSeries = priceChart.addSeries(LightweightCharts.LineSeries, {
-    color: '#ffa500',
-    lineWidth: 1,
-    lastValueVisible: false,
-    priceLineVisible: false,
-  });
-  bbMidSeries.setData(bb.mid.filter(p => p.value !== null));
-
-  bbUpperSeries = priceChart.addSeries(LightweightCharts.LineSeries, {
-    color: '#ffa500',
-    lineWidth: 1,
-    lastValueVisible: false,
-    priceLineVisible: false,
-  });
-  bbUpperSeries.setData(bb.upper.filter(p => p.value !== null));
-
-  bbLowerSeries = priceChart.addSeries(LightweightCharts.LineSeries, {
-    color: '#ffa500',
-    lineWidth: 1,
-    lastValueVisible: false,
-    priceLineVisible: false,
-  });
-  bbLowerSeries.setData(bb.lower.filter(p => p.value !== null));
-
-  const bbMidMap   = makeValueMap(bb.mid);
-  const bbUpperMap = makeValueMap(bb.upper);
-  const bbLowerMap = makeValueMap(bb.lower);
-
-  // 一目均衡表の線（スケールは同じ、ラベルだけ消す）
-  tenkanSeries = priceChart.addSeries(LightweightCharts.LineSeries, {
-    color: "#ff0000",
-    lineWidth: 1,
-    lastValueVisible: false,
-    priceLineVisible: false,
-  });
-  tenkanSeries.setData(ichimoku.tenkanLine);
-
-  kijunSeries = priceChart.addSeries(LightweightCharts.LineSeries, {
-    color: "#0000ff",
-    lineWidth: 1,
-    lastValueVisible: false,
-    priceLineVisible: false,
-  });
-  kijunSeries.setData(ichimoku.kijunLine);
-
-  span1Series = priceChart.addSeries(LightweightCharts.LineSeries, {
-    color: "#00aa00",
-    lineWidth: 1,
-    lastValueVisible: false,
-    priceLineVisible: false,
-  });
-  span1Series.setData(ichimoku.span1);
-
-  span2Series = priceChart.addSeries(LightweightCharts.LineSeries, {
-    color: "#aa00aa",
-    lineWidth: 1,
-    lastValueVisible: false,
-    priceLineVisible: false,
-  });
-  span2Series.setData(ichimoku.span2);
-
-  chikouSeries = priceChart.addSeries(LightweightCharts.LineSeries, {
-    color: "#888888",
-    lineWidth: 1,
-    lastValueVisible: false,
-    priceLineVisible: false,
-  });
-  chikouSeries.setData(ichimoku.chikou);
-
-  // 一目用 Map
-  const tenkanMap = makeValueMap(ichimoku.tenkanLine);
-  const kijunMap  = makeValueMap(ichimoku.kijunLine);
-  const span1Map  = makeValueMap(ichimoku.span1);
-  const span2Map  = makeValueMap(ichimoku.span2);
-  const chikouMap = makeValueMap(ichimoku.chikou);
-
-  // ツールチップ
-  const tooltip = document.createElement("div");
-  tooltip.style.position = "absolute";
-  tooltip.style.display = "none";
-  tooltip.style.padding = "6px";
-  tooltip.style.background = "rgba(255,255,255,0.9)";
-  tooltip.style.border = "1px solid #ccc";
-  tooltip.style.borderRadius = "4px";
-  tooltip.style.fontSize = "12px";
-  tooltip.style.pointerEvents = "none";
-  tooltip.style.zIndex = "2100";
-
-  chartContainer.style.position = "relative";
-  chartContainer.appendChild(tooltip);
-
-  priceChart.subscribeCrosshairMove(param => {
-    if (!param.time || !param.point) {
-      tooltip.style.display = "none";
-      return;
-    }
-
-    const candle = candleMap.get(param.time);
-    if (!candle) {
-      tooltip.style.display = "none";
-      return;
-    }
-
-    const JST_OFFSET = 9 * 60 * 60 * 1000;
-    const date = new Date(param.time * 1000 + JST_OFFSET);
-    const y = date.getFullYear();
-    const m = String(date.getMonth() + 1).padStart(2, "0");
-    const d = String(date.getDate()).padStart(2, "0");
-
-    tooltip.style.display = "block";
-
-    const tooltipWidth = tooltip.offsetWidth;
-    const containerWidth = chartContainer.clientWidth;
-
-    let left = param.point.x + 20;
-    if (left + tooltipWidth > containerWidth) {
-      left = param.point.x - tooltipWidth - 20;
-    }
-    if (left < 0) left = 0;
-
-    tooltip.style.left = left + "px";
-    tooltip.style.top = param.point.y + 20 + "px";
-
-    tooltip.innerHTML = `
-      <div>日付: ${y}/${m}/${d}</div>
-      <div>始値: ${candle.open}</div>
-      <div>高値: ${candle.high}</div>
-      <div>安値: ${candle.low}</div>
-      <div>終値: ${candle.close}</div>
-      <div>出来高: ${candle.volume?.toLocaleString() ?? "-"}</div>
-      <hr>
-      <div>MA(5): ${ma5Map.get(param.time)?.toFixed(2) ?? "-"}</div>
-      <div>MA(25): ${ma25Map.get(param.time)?.toFixed(2) ?? "-"}</div>
-      <div>MA(50): ${ma50Map.get(param.time)?.toFixed(2) ?? "-"}</div>
-      <div>MA(75): ${ma75Map.get(param.time)?.toFixed(2) ?? "-"}</div>
-      <div>MA(100): ${ma100Map.get(param.time)?.toFixed(2) ?? "-"}</div>
-      <hr>
-      <div>BB ミドル: ${bbMidMap.get(param.time)?.toFixed(2) ?? "-"}</div>
-      <div>BB 上限: ${bbUpperMap.get(param.time)?.toFixed(2) ?? "-"}</div>
-      <div>BB 下限: ${bbLowerMap.get(param.time)?.toFixed(2) ?? "-"}</div>
-      <hr>
-      <div>転換線: ${tenkanMap.get(param.time)?.toFixed(2) ?? "-"}</div>
-      <div>基準線: ${kijunMap.get(param.time)?.toFixed(2) ?? "-"}</div>
-      <div>先行スパン1: ${span1Map.get(param.time)?.toFixed(2) ?? "-"}</div>
-      <div>先行スパン2: ${span2Map.get(param.time)?.toFixed(2) ?? "-"}</div>
-      <div>遅行スパン: ${chikouMap.get(param.time)?.toFixed(2) ?? "-"}</div>
-    `;
-  });
-
-  // 凡例
-  const legend = document.createElement("div");
-  legend.className = "chart-legend";
-  legend.innerHTML = `
-    <div><strong>【価格チャート】</strong></div>
-    <div><span style="color:red;">■</span> 陽線</div>
-    <div><span style="color:blue;">■</span> 陰線</div>
-    <div><span style="color:#ff1493;">■</span> MA(5)</div>
-    <div><span style="color:#00aa00;">■</span> MA(25)</div>
-    <div><span style="color:#0000ff;">■</span> MA(50)</div>
-    <div><span style="color:#aa00aa;">■</span> MA(75)</div>
-    <div><span style="color:#ffaa00;">■</span> MA(100)</div>
-    <div><span style="color:#ffa500;">■</span> ボリンジャーバンド</div>
-    <div><span style="color:#ff0000;">■</span> 転換線</div>
-    <div><span style="color:#0000ff;">■</span> 基準線</div>
-    <div><span style="color:#00aa00;">■</span> 先行スパン1</div>
-    <div><span style="color:#aa00aa;">■</span> 先行スパン2</div>
-    <div><span style="color:#888888;">■</span> 遅行スパン</div>
-  `;
-  chartContainer.appendChild(legend);
-
-  // 初期反映
-  applyMAVisibility();
-  applyBBVisibility();
-  applyIchimokuVisibility();
-
-  return { chart: priceChart };
+  return m;
 }
+
+// 凡例用の数値整形。値が無い時刻は null を返し、chart-legend.js 側で "-" になる。
+function formatFixed(map, time, digits = 2) {
+  const v = map.get(time);
+  return v == null ? null : v.toFixed(digits);
+}
+
+function addLine(chart, color, data, extraOptions = {}) {
+  const series = chart.addSeries(LightweightCharts.LineSeries, {
+    color,
+    lineWidth: LINE_WIDTH.ma,
+    lastValueVisible: false,   // ★ y軸ラベル非表示
+    priceLineVisible: false,   // ★ 価格ライン非表示
+    ...extraOptions,
+  }, PANE_PRICE);
+  series.setData(data.filter(p => p.value !== null));
+  return series;
+}
+
+// --------------------------------------
+// インジケータ記述子（価格ペイン）
+//
+// key            : グループ識別子。localStorage のキー・凡例の data-legend-group
+//                  ・チェックボックスの data-indicator-group と一致させる
+// label          : 人間向けの名称（現状は保守用。UI では未使用）
+// toggleId       : 対応するチェックボックスの id（null ならトグルなし＝常時表示）
+// defaultVisible : 保存値もチェックボックスも無い場合の既定値
+// pane           : 配置先ペイン番号
+// build          : シリーズ・凡例項目を生成して返す
+//                  → { series: [], primitives: [], legend: [] }
+// setVisible     : 既定の visible 切替以外の挙動が必要な場合のみ定義（ローソク足）
+//
+// 新しいインジケータを追加する場合は、この配列に記述子を1件足すだけでよい
+// （凡例・表示トグル・保存/復元はすべて記述子から自動生成される）。
+// --------------------------------------
+export const PRICE_INDICATORS = [
+  {
+    key: "candle",
+    label: "ローソク足",
+    toggleId: "toggleCandles",
+    defaultVisible: true,
+    pane: PANE_PRICE,
+
+    build(chart, candleData) {
+      const T = getTheme();
+      const candleMap = new Map();
+      candleData.forEach(c => candleMap.set(c.time, c));
+
+      const series = chart.addSeries(LightweightCharts.CandlestickSeries, {
+        upColor: T.candleUp,
+        downColor: T.candleDown,
+        borderUpColor: T.candleUp,
+        borderDownColor: T.candleDown,
+        wickUpColor: T.candleUp,
+        wickDownColor: T.candleDown,
+        // lastValueVisible: true（デフォルトのまま）
+      }, PANE_PRICE);
+      series.setData(candleData);
+
+      // 出来高（下端22%）とローソク足の描画領域を重ねない。
+      // 旧設定（bottom: 0.05）では安値圏でローソク足に出来高が被っていた。
+      series.priceScale().applyOptions({
+        scaleMargins: { top: 0.05, bottom: 0.22 },
+      });
+
+      return {
+        series: [series],
+        primitives: [],
+        legend: [
+          {
+            key: "ohlc",
+            label: "O/H/L/C",
+            color: T.candleUp,
+            valueAt: (time) => {
+              const c = candleMap.get(time);
+              if (!c) return null;
+              return `${c.open} / ${c.high} / ${c.low} / ${c.close}`;
+            },
+          },
+        ],
+      };
+    },
+
+    // ローソク足だけは visible: false ではなく透明色で隠す。
+    // visible: false にすると価格スケールの自動調整対象から外れ、
+    // MA だけを表示した際にスケールが変わってしまうため（旧実装の挙動を踏襲）。
+    setVisible(built, visible) {
+      const T = getTheme();
+      const transparent = "rgba(0,0,0,0)";
+      const up   = visible ? T.candleUp   : transparent;
+      const down = visible ? T.candleDown : transparent;
+
+      built.series[0].applyOptions({
+        upColor: up,
+        downColor: down,
+        borderUpColor: up,
+        borderDownColor: down,
+        wickUpColor: up,
+        wickDownColor: down,
+      });
+    },
+  },
+
+  {
+    key: "volume",
+    label: "出来高",
+    toggleId: "toggleVolume",
+    defaultVisible: true,
+    pane: PANE_PRICE,
+
+    build(chart, candleData) {
+      const T = getTheme();
+      const volumeMap = new Map();
+      candleData.forEach(c => volumeMap.set(c.time, c.volume));
+
+      const series = chart.addSeries(LightweightCharts.HistogramSeries, {
+        priceFormat: { type: "volume" },
+        priceScaleId: "volume",
+        color: T.volume,
+      }, PANE_PRICE);
+
+      series.priceScale().applyOptions({
+        scaleMargins: { top: 0.8, bottom: 0 },
+      });
+
+      series.setData(candleData.map(c => ({ time: c.time, value: c.volume })));
+
+      return {
+        series: [series],
+        primitives: [],
+        legend: [
+          {
+            key: "volume",
+            label: "出来高",
+            color: T.volume,
+            valueAt: (time) => volumeMap.get(time)?.toLocaleString() ?? null,
+          },
+        ],
+      };
+    },
+  },
+
+  {
+    key: "ma",
+    label: "移動平均線",
+    toggleId: "toggleMA",
+    defaultVisible: true,
+    pane: PANE_PRICE,
+
+    // 期間を1か所で持つ。期間を増減する場合は、この配列と chart-theme.js の
+    // 色定義（ma<期間>）を対応させるだけでよい。
+    periods: [5, 25, 50, 75, 100],
+
+    build(chart, candleData) {
+      const T = getTheme();
+      const series = [];
+      const legend = [];
+
+      for (const period of this.periods) {
+        const data = calcMA(candleData, period);
+        const color = T[`ma${period}`];
+        series.push(addLine(chart, color, data));
+
+        const map = makeValueMap(data);
+        legend.push({
+          key: `ma${period}`,
+          label: `MA(${period})`,
+          color,
+          valueAt: (time) => formatFixed(map, time),
+        });
+      }
+
+      return { series, primitives: [], legend };
+    },
+  },
+
+  {
+    key: "bb",
+    label: "ボリンジャーバンド",
+    toggleId: "toggleBB",
+    // 2026-09：初期表示を「ローソク足＋出来高＋MA」に絞る。
+    // 価格ペインに常時13本の線が重なることが可読性低下の最大要因だったため。
+    defaultVisible: false,
+    pane: PANE_PRICE,
+
+    build(chart, candleData) {
+      const T = getTheme();
+      const bb = calcBB(candleData, 20, 2);
+
+      const upper = addLine(chart, T.bbBand, bb.upper, { lineWidth: LINE_WIDTH.bb });
+      // 中心線のみ破線にして上下バンドと区別できるようにする
+      // （旧実装は上限・中心・下限がすべて #ffa500 で区別できなかった）
+      const mid = addLine(chart, T.bbMid, bb.mid, {
+        lineWidth: LINE_WIDTH.bb,
+        lineStyle: LightweightCharts.LineStyle.Dashed,
+      });
+      const lower = addLine(chart, T.bbBand, bb.lower, { lineWidth: LINE_WIDTH.bb });
+
+      const upperMap = makeValueMap(bb.upper);
+      const midMap   = makeValueMap(bb.mid);
+      const lowerMap = makeValueMap(bb.lower);
+
+      return {
+        series: [upper, mid, lower],
+        primitives: [],
+        legend: [
+          { key: "bbUpper", label: "BB上限", color: T.bbBand, valueAt: (t) => formatFixed(upperMap, t) },
+          { key: "bbMid",   label: "BB中心", color: T.bbMid,  valueAt: (t) => formatFixed(midMap, t) },
+          { key: "bbLower", label: "BB下限", color: T.bbBand, valueAt: (t) => formatFixed(lowerMap, t) },
+        ],
+      };
+    },
+  },
+
+  {
+    key: "ichimoku",
+    label: "一目均衡表",
+    toggleId: "toggleIchimoku",
+    defaultVisible: false,   // 2026-09：BB と同様に初期 OFF
+    pane: PANE_PRICE,
+
+    build(chart, candleData) {
+      const T = getTheme();
+      const ichimoku = calcIchimoku(candleData);
+
+      const tenkan = addLine(chart, T.tenkan, ichimoku.tenkanLine, { lineWidth: LINE_WIDTH.ichimoku });
+      const kijun  = addLine(chart, T.kijun,  ichimoku.kijunLine,  { lineWidth: LINE_WIDTH.ichimoku });
+      const span1  = addLine(chart, T.span1,  ichimoku.span1,      { lineWidth: LINE_WIDTH.ichimoku });
+      const span2  = addLine(chart, T.span2,  ichimoku.span2,      { lineWidth: LINE_WIDTH.ichimoku });
+      const chikou = addLine(chart, T.chikou, ichimoku.chikou,     { lineWidth: LINE_WIDTH.ichimoku });
+
+      // 雲（先行スパン1・先行スパン2で挟まれた領域）の元データ。
+      // 片方が欠損している時刻は雲の対象外。
+      const spanBMap = new Map();
+      for (const b of ichimoku.span2) spanBMap.set(b.time, b.value);
+
+      const cloudData = [];
+      for (const a of ichimoku.span1) {
+        const bValue = spanBMap.get(a.time);
+        if (bValue === undefined) continue;
+        cloudData.push({ time: a.time, spanA: a.value, spanB: bValue });
+      }
+
+      // zOrder: "bottom" のためアタッチ先の series は候補のうちどれでもよい
+      // （priceToCoordinate は同じ価格スケールを共有する全シリーズで同じ結果になる）。
+      // 旧実装は candleSeries へアタッチしていたが、グループ間の依存を無くすため
+      // 一目均衡表グループ自身の span1 シリーズへアタッチする（2026-09 変更）。
+      const cloud = new IchimokuCloudPrimitive(cloudData, {
+        bullColor: T.cloudBull,
+        bearColor: T.cloudBear,
+      });
+      span1.attachPrimitive(cloud);
+
+      const tenkanMap = makeValueMap(ichimoku.tenkanLine);
+      const kijunMap  = makeValueMap(ichimoku.kijunLine);
+      const span1Map  = makeValueMap(ichimoku.span1);
+      const span2Map  = makeValueMap(ichimoku.span2);
+      const chikouMap = makeValueMap(ichimoku.chikou);
+
+      return {
+        series: [tenkan, kijun, span1, span2, chikou],
+        primitives: [cloud],   // setVisible(visible) を持つもの
+        legend: [
+          { key: "tenkan", label: "転換線",      color: T.tenkan, valueAt: (t) => formatFixed(tenkanMap, t) },
+          { key: "kijun",  label: "基準線",      color: T.kijun,  valueAt: (t) => formatFixed(kijunMap, t) },
+          { key: "span1",  label: "先行スパン1", color: T.span1,  valueAt: (t) => formatFixed(span1Map, t) },
+          { key: "span2",  label: "先行スパン2", color: T.span2,  valueAt: (t) => formatFixed(span2Map, t) },
+          { key: "chikou", label: "遅行スパン",  color: T.chikou, valueAt: (t) => formatFixed(chikouMap, t) },
+        ],
+      };
+    },
+  },
+];
