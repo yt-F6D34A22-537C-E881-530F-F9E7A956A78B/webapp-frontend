@@ -284,7 +284,9 @@ body {
 .mode-tabs:has(input[value="date"]:checked) ~ .mode-panels .mode-panel[data-mode="date"],
 .mode-tabs:has(input[value="compare"]:checked) ~ .mode-panels .mode-panel[data-mode="compare"],
 .mode-tabs:has(input[value="heuristics"]:checked) ~ .mode-panels .mode-panel[data-mode="heuristics"],
-.mode-tabs:has(input[value="block"]:checked) ~ .mode-panels .mode-panel[data-mode="block"] {
+.mode-tabs:has(input[value="block"]:checked) ~ .mode-panels .mode-panel[data-mode="block"],
+.mode-tabs:has(input[value="dateDown"]:checked) ~ .mode-panels .mode-panel[data-mode="dateDown"],
+.mode-tabs:has(input[value="marginBb"]:checked) ~ .mode-panels .mode-panel[data-mode="marginBb"] {
   display: block;
 }
 
@@ -303,11 +305,13 @@ body {
    ratio：除外市場・商品区分（volumeRatio 等と同じ行に詰め込まず、
    フィールドセットのみ折り返して次行に表示する）
    ============================================================ */
-#ratioConditions {
+#ratioConditions,
+#marginBbConditions {
   flex-wrap: wrap;
 }
 
-#ratioConditions [data-exclude-markets-slot] {
+#ratioConditions [data-exclude-markets-slot],
+#marginBbConditions [data-exclude-markets-slot] {
   flex: 1 1 100%;
 }
 
