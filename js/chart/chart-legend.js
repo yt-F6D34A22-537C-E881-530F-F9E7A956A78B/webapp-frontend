@@ -19,6 +19,20 @@
 //     （chart-price.js 側の記述子変更。本ファイルは特別扱いをせず、
 //      通常項目と同じ描画パスで4行になる）
 //   ・インジケータグループが切り替わる境目に区切り線を挟む
+//   ・クリック／タップで凡例本体の折りたたみ・展開を切り替える
+//     （凡例をクリックすると閉じ、閉じた状態の凡例をクリックすると
+//     元の状態に展開する。折りたたみ中は「凡例」という短いラベルのみ
+//     表示し、それをタップすると展開する）
+//   ・開閉状態は localStorage に保存し、次回（銘柄送り・足種切替・
+//     モーダル再オープン）も同じ状態を復元する
+//     （「前回閉じていたら次も閉じたまま」。2026-09 追加）
+//
+// 凡例のクリック判定を有効にするため、.chart-legend は
+// pointer-events: auto（style.css）にしている。旧実装は
+// pointer-events: none でマウスイベントを下のチャートへ透過させていたが、
+// クリックで開閉する要件と両立できないため変更した。これにより、
+// カーソルが凡例の上にある間はチャート側の十字カーソルが更新されなくなる
+// （凡例が画面の一角を占める小さな要素であるため実用上の影響は小さい）。
 //
 // DOM 取得フックは data-legend-group / data-legend-item / data-legend-value を
 // 用いる（conventions.domHookAttributes：class はスタイル専用）。
@@ -26,6 +40,34 @@
 // （API 由来の値を HTML として解釈させないため）。
 // --------------------------------------
 import { formatDateJst } from "./chart-theme.js";
+
+// --------------------------------------
+// 折りたたみ状態の永続化（2026-09 追加）
+// 「前回閉じていたら次回も閉じたまま」とするため、開閉状態を
+// localStorage（キー: chartLegendCollapsed）へ保存し、次に createLegend()
+// が呼ばれた（＝銘柄送り・足種切替・モーダル再オープンのたび）際に復元する。
+// chart-main.js の表示トグル永続化（VISIBILITY_STORAGE_KEY）と同じ理由で、
+// localStorage はプライベートブラウズ等で例外を投げうるため try/catch で
+// 囲み、失敗時は既定値（展開）へフォールバックして処理を継続する。
+// --------------------------------------
+const COLLAPSE_STORAGE_KEY = "chartLegendCollapsed";
+
+function loadCollapsedPreference() {
+  try {
+    return localStorage.getItem(COLLAPSE_STORAGE_KEY) === "true";
+  } catch (e) {
+    console.warn("凡例の開閉状態の読み込みに失敗しました:", e);
+    return false;
+  }
+}
+
+function saveCollapsedPreference(collapsed) {
+  try {
+    localStorage.setItem(COLLAPSE_STORAGE_KEY, String(collapsed));
+  } catch (e) {
+    console.warn("凡例の開閉状態の保存に失敗しました:", e);
+  }
+}
 
 /**
  * HUD凡例を生成する。
@@ -39,6 +81,20 @@ export function createLegend(container, groups) {
   const legend = document.createElement("div");
   legend.className = "chart-legend";
   legend.id = "chartLegend";
+
+  // 折りたたみ中に表示する短いラベル。展開中は非表示（style.css で制御）。
+  const collapsedLabel = document.createElement("div");
+  collapsedLabel.className = "legend-collapsed-label";
+  collapsedLabel.textContent = "凡例";
+  legend.appendChild(collapsedLabel);
+
+  // 通常時に表示する本体（日付・各インジケータの行）。
+  // 折りたたみ・展開はこの要素ごと表示/非表示を切り替えることで行う
+  // （setGroupVisible の行単位の display 制御とは独立させ、
+  //  互いに干渉しないようにしている）。
+  const body = document.createElement("div");
+  body.className = "legend-body";
+  legend.appendChild(body);
 
   const valueEls = new Map();     // itemKey -> HTMLElement（値の表示先）
   const itemsFlat = [];           // [{ key, valueAt }]（update() が走査する一覧）
@@ -89,7 +145,7 @@ export function createLegend(container, groups) {
     value.textContent = "-";
     row.appendChild(value);
 
-    legend.appendChild(row);
+    body.appendChild(row);
 
     if (!groupRows.has(groupKey)) groupRows.set(groupKey, []);
     groupRows.get(groupKey).push(row);
@@ -110,6 +166,17 @@ export function createLegend(container, groups) {
 
   container.style.position = "relative";
   container.appendChild(legend);
+
+  // 前回の開閉状態を復元する（保存値が無い、または取得に失敗した場合は展開）
+  if (loadCollapsedPreference()) {
+    legend.classList.add("is-collapsed");
+  }
+
+  // クリック／タップで折りたたみ・展開を切り替える。
+  legend.addEventListener("click", () => {
+    legend.classList.toggle("is-collapsed");
+    saveCollapsedPreference(legend.classList.contains("is-collapsed"));
+  });
 
   // 凡例の表示位置（既定は左上）。
   // カーソルがチャート左半分にあるときは右上へ退避させ、
