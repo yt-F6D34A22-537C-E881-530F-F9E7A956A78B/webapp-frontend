@@ -1187,23 +1187,21 @@ button:disabled {
   font-variant-numeric: tabular-nums;
 }
 
+/* スワッチ（色が無い項目でも幅を確保し、同グループ内でラベルの左端を揃える。
+   2026-09 追加：O/H/L/C は O 行のみスワッチを表示し、H/L/C は空にする際に使用） */
+.chart-legend .legend-swatch {
+  display: inline-block;
+  min-width: 1em;
+}
+
 /* ----------------------------------------
-   O/H/L/C 行（2026-09 追加）
-   ラベル行「O/H/L/C」と値行を上下2段に分ける。
-   どちらも左揃え（block要素の既定）で描画するため、
-   ラベル行の先頭文字（O）と値行の先頭文字（始値）の左端が揃う。
+   O/H/L/C（2026-09：4行に分割。各行「■ O 値」の単純な1行構成だが、
+   O/H/L/C の1文字ラベルは字幅が文字ごとに微妙に異なるため、
+   ラベル列の幅を固定して値の左端を4行で揃える）
 ---------------------------------------- */
-.chart-legend .legend-row--stacked {
-  align-items: flex-start;
-}
-
-.chart-legend .legend-ohlc {
-  display: flex;
-  flex-direction: column;
-}
-
-.chart-legend .legend-ohlc .legend-label {
-  margin-bottom: 1px;
+.chart-legend .legend-row[data-legend-group="candle"] .legend-label {
+  display: inline-block;
+  min-width: 1em;
 }
 
 /* ----------------------------------------
