@@ -56,6 +56,12 @@ export function createLegend(container, groups) {
   container.style.position = "relative";
   container.appendChild(legend);
 
+  // 凡例の表示位置（既定は左上）。
+  // カーソルがチャート左半分にあるときは右上へ退避させ、
+  // 凡例がカーソル位置と重なって値やローソク足が読めなくなるのを防ぐ
+  // （2026-09 追加）。
+  let currentSide = "left";
+
   // ------------------------------
   // 行・項目の生成ヘルパ
   // ------------------------------
@@ -114,6 +120,25 @@ export function createLegend(container, groups) {
           const text = time == null ? null : item.valueAt(time);
           el.textContent = text ?? "-";
         }
+      }
+    },
+
+    /**
+     * 凡例の表示位置を左上／右上に切り替える。
+     * 位置は CSS の left / right のみで制御し、レイアウト計測は行わない
+     * （crosshairMove のたびに offsetWidth を読むとレイアウト再計算が発生するため）。
+     * @param {"left"|"right"} side
+     */
+    setSide(side) {
+      if (side === currentSide) return;
+      currentSide = side;
+
+      if (side === "right") {
+        legend.style.left  = "auto";
+        legend.style.right = "6px";
+      } else {
+        legend.style.left  = "6px";
+        legend.style.right = "auto";
       }
     },
 

@@ -50,6 +50,13 @@ const settingsModal = document.getElementById("chartSettingsModal");
 // 3ファイルへ追記する必要があった）
 const indicatorToggles = document.querySelectorAll('input[data-indicator-group]');
 
+// 初期表示本数（論理バー番号ベース）
+// 日足で直近6ヶ月が収まる本数を基準にする（1ヶ月あたり約21営業日 × 6 ≒ 125本）。
+// 週足・月足も同じ本数を表示するため、足種に応じて表示期間は自然に伸びる
+// （週足: 約2年5ヶ月 / 月足: 約10年。データがそれより短い場合は
+//  fixLeftEdge: true により先頭で止まる）。
+const INITIAL_BAR_COUNT = 125;
+
 // 足種ラジオボタン
 const timeframeRadios = document.querySelectorAll('input[name="timeframe"]');
 let currentTimeframe = "1d";   // 初期値（日足）
@@ -393,13 +400,21 @@ async function drawChart(ticker, name) {
 
     chart.subscribeCrosshairMove(param => {
       legend.update(param.time ?? lastBarTime);
+
+      // カーソルがチャート左半分にあるときは凡例を右上へ退避させる
+      if (param.point) {
+        const halfWidth = chartContainer.clientWidth / 2;
+        legend.setSide(param.point.x < halfWidth ? "right" : "left");
+      } else {
+        legend.setSide("left");
+      }
     });
 
     legend.update(lastBarTime);   // 初期表示
 
-    // ⑦ デフォルト表示期間（直近4ヶ月）→ 直近80本で上書き
+    // ⑦ デフォルト表示期間（直近6ヶ月）→ 直近 INITIAL_BAR_COUNT 本で上書き
     applyDefaultRange(chart, tradingData);
-    applyInitialBarRange(chart, tradingData, 80);
+    applyInitialBarRange(chart, tradingData, INITIAL_BAR_COUNT);
 
   } finally {
     // 必ずオーバーレイを非表示にする（共通仕様）

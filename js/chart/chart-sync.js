@@ -21,26 +21,30 @@
 import { PANE_STRETCH } from "./chart-theme.js";
 
 // ------------------------------
-// デフォルト表示期間（直近4ヶ月）
+// デフォルト表示期間（直近6ヶ月）
+// 2026-09 変更：旧「直近4ヶ月」から6ヶ月へ。
+// 直後に applyInitialBarRange() が本数ベースで上書きするため、
+// 実際の初期表示は本数側が決めるが、両者の基準を揃えておく。
 // ------------------------------
 export function applyDefaultRange(chart, candleData) {
   if (!chart) return;
   if (!candleData || candleData.length === 0) return;
 
   const lastTime = candleData[candleData.length - 1].time;
-  const fourMonthsSec = 60 * 60 * 24 * 30 * 4;
-  const fromTime = lastTime - fourMonthsSec;
+  const sixMonthsSec = 60 * 60 * 24 * 30 * 6;
+  const fromTime = lastTime - sixMonthsSec;
 
   chart.timeScale().setVisibleRange({ from: fromTime, to: lastTime });
 }
 
 // ------------------------------
 // 初期表示本数（直近 visibleCount 本・論理バー番号ベース）
+// 既定の125本は「日足で直近6ヶ月」を基準にした値（1ヶ月 ≒ 21営業日 × 6）。
 // 旧実装では chart-main.js の drawChart() に直書きされ、
 // 3チャートへ同じ設定を3回適用していた。
 // 表示範囲に関する処理として本ファイルへ集約する。
 // ------------------------------
-export function applyInitialBarRange(chart, candleData, visibleCount = 80) {
+export function applyInitialBarRange(chart, candleData, visibleCount = 125) {
   if (!chart) return;
   if (!candleData || candleData.length === 0) return;
 

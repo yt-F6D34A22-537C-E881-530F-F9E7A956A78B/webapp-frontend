@@ -45,9 +45,15 @@ export const THEMES = {
     ma75:  "#C05E9B",   // マゼンタ
     ma100: "#6B7C8C",   // スレート
 
-    // ボリンジャーバンド：上下バンドは同色、中心線のみ別色＋破線で区別する
-    bbBand: "#C9A227",
+    // ボリンジャーバンド（2026-09：±1σ / ±2σ / ±3σ の3本構成へ拡張）
+    // σ が外側になるほど濃くし、線種（LINE_STYLE）と合わせて判別できるようにする
     bbMid:  "#9C7E1E",
+    bb1:    "#DCC98A",
+    bb2:    "#C9A227",
+    bb3:    "#8A6D12",
+    // ±3σ の外側（統計上まれな価格帯）を示す背景。
+    // 一目均衡表の雲より背面に描画する
+    bbOutside: "rgba(120,120,120,0.10)",
 
     // 一目均衡表
     tenkan: "#E06C3B",
@@ -86,8 +92,11 @@ export const THEMES = {
     ma75:  "#D67FB4",
     ma100: "#93A2AF",
 
-    bbBand: "#D9B84A",
     bbMid:  "#B99A33",
+    bb1:    "#6A5C2A",
+    bb2:    "#B99A33",
+    bb3:    "#D9B84A",
+    bbOutside: "rgba(200,200,200,0.08)",
 
     tenkan: "#F08A5C",
     kijun:  "#6D9BD1",
@@ -124,6 +133,33 @@ export function getTheme() {
 // ローソク足（主役）より脇役が目立たないよう、インジケータはすべて 1px とする
 // （旧実装の MA は lineWidth: 2 でローソク足の枠線より太かった）。
 // --------------------------------------
+// --------------------------------------
+// 線種（2026-09 追加）
+// MA・ボリンジャーバンド・一目均衡表で最大17本の線が重なるため、
+// 色だけでなく線種でも判別できるようにする。
+// ・MA は要望により必ず実線（Solid）
+// ・ボリンジャーバンドは σ が外側になるほど破線の間隔を広げる
+// ・一目均衡表は MA と区別するため実線を使わない
+// LightweightCharts.LineStyle を参照するため、モジュール読み込み時ではなく
+// 呼び出し時に解決する関数として公開する。
+// --------------------------------------
+export function getLineStyles() {
+  const S = LightweightCharts.LineStyle;
+  return {
+    ma:     S.Solid,          // MA（5/25/50/75/100）はすべて実線
+
+    bbMid:  S.SparseDotted,   // BB 中心線
+    bb1:    S.Dotted,         // ±1σ
+    bb2:    S.Dashed,         // ±2σ
+    bb3:    S.LargeDashed,    // ±3σ
+
+    tenkan: S.Dashed,         // 転換線
+    kijun:  S.LargeDashed,    // 基準線
+    span:   S.Dotted,         // 先行スパン1 / 2
+    chikou: S.SparseDotted,   // 遅行スパン
+  };
+}
+
 export const LINE_WIDTH = {
   ma: 1,
   bb: 1,

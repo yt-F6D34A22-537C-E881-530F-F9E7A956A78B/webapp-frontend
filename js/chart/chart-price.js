@@ -15,7 +15,103 @@
 //   ツールチップ HTML の5か所を同時に修正する必要があった）。
 // --------------------------------------
 import { calcMA, calcBB } from "./chart-indicators.js";
-import { getTheme, LINE_WIDTH } from "./chart-theme.js";
+import { getTheme, LINE_WIDTH, getLineStyles } from "./chart-theme.js";
+
+// --------------------------------------
+// ボリンジャーバンド ±3σ 外側の背景塗り Series Primitive（2026-09 追加）
+//
+// 「+3σ より上」「-3σ より下」をグレーで塗り、統計上まれな価格帯であることを
+// 可視化する。上端・下端はペインの上辺・下辺まで塗りつぶす。
+//
+// 重なり順：zOrder は "bottom"（ローソク足・各ラインより背面）。
+// 同じ zOrder の Primitive 同士は、アタッチ先シリーズの生成順に描画されるため、
+// 本 Primitive を一目均衡表の雲より先に生成されるシリーズ（ボリンジャーバンド）へ
+// アタッチすることで、雲より背面に描画される。
+// PRICE_INDICATORS の並び順（… bb → ichimoku …）がこの前後関係を担保している。
+// --------------------------------------
+class OuterBandPrimitive {
+  constructor(data, options) {
+    this._data = data;               // [{ time, upper, lower }]（±3σ）
+    this._options = options;         // { fillColor }
+    this._visible = true;
+    this._chart = null;
+    this._series = null;
+    this._requestUpdate = null;
+    this._points = [];
+
+    this._paneView = {
+      renderer: () => ({ draw: (target) => this._draw(target) }),
+      zOrder: () => "bottom",
+    };
+  }
+
+  attached({ chart, series, requestUpdate }) {
+    this._chart = chart;
+    this._series = series;
+    this._requestUpdate = requestUpdate;
+  }
+
+  detached() {
+    this._chart = null;
+    this._series = null;
+    this._requestUpdate = null;
+  }
+
+  paneViews() {
+    return [this._paneView];
+  }
+
+  updateAllViews() {
+    if (!this._chart || !this._series) {
+      this._points = [];
+      return;
+    }
+    const timeScale = this._chart.timeScale();
+    const points = [];
+    for (const d of this._data) {
+      const x = timeScale.timeToCoordinate(d.time);
+      const yUpper = this._series.priceToCoordinate(d.upper);
+      const yLower = this._series.priceToCoordinate(d.lower);
+      if (x === null || yUpper === null || yLower === null) continue;
+      points.push({ x, yUpper, yLower });
+    }
+    this._points = points;
+  }
+
+  setVisible(visible) {
+    this._visible = visible;
+    if (this._requestUpdate) this._requestUpdate();
+  }
+
+  _draw(target) {
+    if (!this._visible) return;
+    const pts = this._points;
+    if (pts.length < 2) return;
+
+    target.useBitmapCoordinateSpace((scope) => {
+      const { context: ctx, horizontalPixelRatio: hr, verticalPixelRatio: vr } = scope;
+      const height = scope.bitmapSize.height;
+
+      ctx.fillStyle = this._options.fillColor;
+
+      // +3σ より上（ペイン上辺まで）
+      ctx.beginPath();
+      ctx.moveTo(pts[0].x * hr, 0);
+      for (const p of pts) ctx.lineTo(p.x * hr, p.yUpper * vr);
+      ctx.lineTo(pts[pts.length - 1].x * hr, 0);
+      ctx.closePath();
+      ctx.fill();
+
+      // -3σ より下（ペイン下辺まで）
+      ctx.beginPath();
+      ctx.moveTo(pts[0].x * hr, height);
+      for (const p of pts) ctx.lineTo(p.x * hr, p.yLower * vr);
+      ctx.lineTo(pts[pts.length - 1].x * hr, height);
+      ctx.closePath();
+      ctx.fill();
+    });
+  }
+}
 
 // --------------------------------------
 // 一目均衡表の雲（Ichimoku Cloud）Series Primitive
@@ -363,10 +459,13 @@ export const PRICE_INDICATORS = [
       const series = [];
       const legend = [];
 
+      const LS = getLineStyles();
+
       for (const period of this.periods) {
         const data = calcMA(candleData, period);
         const color = T[`ma${period}`];
-        series.push(addLine(chart, color, data));
+        // MA はすべて実線（線種で他のインジケータと区別する）
+        series.push(addLine(chart, color, data, { lineStyle: LS.ma }));
 
         const map = makeValueMap(data);
         legend.push({
@@ -383,38 +482,95 @@ export const PRICE_INDICATORS = [
 
   {
     key: "bb",
-    label: "ボリンジャーバンド",
+    label: "ボリンジャーバンド（±1σ / ±2σ / ±3σ）",
     toggleId: "toggleBB",
     // 2026-09：初期表示を「ローソク足＋出来高＋MA」に絞る。
     // 価格ペインに常時13本の線が重なることが可読性低下の最大要因だったため。
     defaultVisible: false,
     pane: PANE_PRICE,
 
+    // 描画する σ（2026-09：従来の ±2σ のみから ±1σ / ±2σ / ±3σ へ拡張）。
+    // 値を増減する場合は chart-theme.js の色（bb<σ>）と線種（LINE_STYLE.bb<σ>）を
+    // 対応させること。
+    sigmas: [1, 2, 3],
+
     build(chart, candleData) {
       const T = getTheme();
-      const bb = calcBB(candleData, 20, 2);
+      const LS = getLineStyles();
+      const bb = calcBB(candleData, 20, this.sigmas);
 
-      const upper = addLine(chart, T.bbBand, bb.upper, { lineWidth: LINE_WIDTH.bb });
-      // 中心線のみ破線にして上下バンドと区別できるようにする
-      // （旧実装は上限・中心・下限がすべて #ffa500 で区別できなかった）
-      const mid = addLine(chart, T.bbMid, bb.mid, {
+      const series = [];
+      const legend = [];
+
+      // 中心線（凡例上は +σ 群と -σ 群の間に置くため、後で並べ替える）
+      const midSeries = addLine(chart, T.bbMid, bb.mid, {
         lineWidth: LINE_WIDTH.bb,
-        lineStyle: LightweightCharts.LineStyle.Dashed,
+        lineStyle: LS.bbMid,
       });
-      const lower = addLine(chart, T.bbBand, bb.lower, { lineWidth: LINE_WIDTH.bb });
+      const midMap = makeValueMap(bb.mid);
+      series.push(midSeries);
 
-      const upperMap = makeValueMap(bb.upper);
-      const midMap   = makeValueMap(bb.mid);
-      const lowerMap = makeValueMap(bb.lower);
+      const upperLegend = [];
+      const lowerLegend = [];
+
+      for (const band of bb.bands) {
+        const color = T[`bb${band.sigma}`];
+        const lineStyle = LS[`bb${band.sigma}`];
+
+        const upperSeries = addLine(chart, color, band.upper, {
+          lineWidth: LINE_WIDTH.bb,
+          lineStyle,
+        });
+        const lowerSeries = addLine(chart, color, band.lower, {
+          lineWidth: LINE_WIDTH.bb,
+          lineStyle,
+        });
+        series.push(upperSeries, lowerSeries);
+
+        const upperMap = makeValueMap(band.upper);
+        const lowerMap = makeValueMap(band.lower);
+
+        upperLegend.push({
+          key: `bbUpper${band.sigma}`,
+          label: `+${band.sigma}σ`,
+          color,
+          valueAt: (t) => formatFixed(upperMap, t),
+        });
+        lowerLegend.push({
+          key: `bbLower${band.sigma}`,
+          label: `-${band.sigma}σ`,
+          color,
+          valueAt: (t) => formatFixed(lowerMap, t),
+        });
+      }
+
+      // 凡例は +3σ → +1σ → 中心 → -1σ → -3σ の順（チャート上の並びと一致させる）
+      legend.push(
+        ...upperLegend.slice().reverse(),
+        { key: "bbMid", label: "BB中心", color: T.bbMid, valueAt: (t) => formatFixed(midMap, t) },
+        ...lowerLegend
+      );
+
+      // ±3σ の外側をグレーで塗る（外側＝最大 σ のバンドを使用）
+      const outerBand = bb.bands[bb.bands.length - 1];
+      const outerData = [];
+      for (let i = 0; i < outerBand.upper.length; i++) {
+        const u = outerBand.upper[i];
+        const l = outerBand.lower[i];
+        if (u.value == null || l.value == null) continue;
+        outerData.push({ time: u.time, upper: u.value, lower: l.value });
+      }
+
+      const outside = new OuterBandPrimitive(outerData, {
+        fillColor: T.bbOutside,
+      });
+      // 一目均衡表の雲より背面に置くため、雲より先に生成されるシリーズへアタッチする
+      midSeries.attachPrimitive(outside);
 
       return {
-        series: [upper, mid, lower],
-        primitives: [],
-        legend: [
-          { key: "bbUpper", label: "BB上限", color: T.bbBand, valueAt: (t) => formatFixed(upperMap, t) },
-          { key: "bbMid",   label: "BB中心", color: T.bbMid,  valueAt: (t) => formatFixed(midMap, t) },
-          { key: "bbLower", label: "BB下限", color: T.bbBand, valueAt: (t) => formatFixed(lowerMap, t) },
-        ],
+        series,
+        primitives: [outside],
+        legend,
       };
     },
   },
@@ -428,13 +584,16 @@ export const PRICE_INDICATORS = [
 
     build(chart, candleData) {
       const T = getTheme();
+      const LS = getLineStyles();
       const ichimoku = calcIchimoku(candleData);
 
-      const tenkan = addLine(chart, T.tenkan, ichimoku.tenkanLine, { lineWidth: LINE_WIDTH.ichimoku });
-      const kijun  = addLine(chart, T.kijun,  ichimoku.kijunLine,  { lineWidth: LINE_WIDTH.ichimoku });
-      const span1  = addLine(chart, T.span1,  ichimoku.span1,      { lineWidth: LINE_WIDTH.ichimoku });
-      const span2  = addLine(chart, T.span2,  ichimoku.span2,      { lineWidth: LINE_WIDTH.ichimoku });
-      const chikou = addLine(chart, T.chikou, ichimoku.chikou,     { lineWidth: LINE_WIDTH.ichimoku });
+      // 一目均衡表は実線を使わない（実線は MA 専用）。
+      // 転換線・基準線・先行スパン・遅行スパンをそれぞれ異なる線種で描き分ける。
+      const tenkan = addLine(chart, T.tenkan, ichimoku.tenkanLine, { lineWidth: LINE_WIDTH.ichimoku, lineStyle: LS.tenkan });
+      const kijun  = addLine(chart, T.kijun,  ichimoku.kijunLine,  { lineWidth: LINE_WIDTH.ichimoku, lineStyle: LS.kijun });
+      const span1  = addLine(chart, T.span1,  ichimoku.span1,      { lineWidth: LINE_WIDTH.ichimoku, lineStyle: LS.span });
+      const span2  = addLine(chart, T.span2,  ichimoku.span2,      { lineWidth: LINE_WIDTH.ichimoku, lineStyle: LS.span });
+      const chikou = addLine(chart, T.chikou, ichimoku.chikou,     { lineWidth: LINE_WIDTH.ichimoku, lineStyle: LS.chikou });
 
       // 雲（先行スパン1・先行スパン2で挟まれた領域）の元データ。
       // 片方が欠損している時刻は雲の対象外。

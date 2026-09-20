@@ -23,7 +23,7 @@
   --color-bg-disabled:      #E7E0D3;
   --color-bg-overlay:       rgba(43, 32, 26, 0.45);
   --color-bg-chart-loading: rgba(43, 32, 26, 0.5);
-  --color-bg-legend:        rgba(251, 248, 241, 0.9);
+  --color-bg-legend:        rgba(251, 248, 241, 0.62);   /* 2026-09：裏のチャートが透けて見えるよう透過を強めた（旧 0.9） */
   --color-bg-settings:      #FBF8F1;
   --color-bg-timeframe:     rgba(251, 248, 241, 0.75);
 
@@ -1158,6 +1158,9 @@ button:disabled {
   pointer-events: none;
   box-shadow: var(--shadow-legend);
   white-space: nowrap;
+  /* チャートの横半分を超えないようにする（超えると裏のローソク足が読めなくなる）。
+     行はフレックスで折り返すため、幅に収まらない項目は縦方向へ伸びる。 */
+  max-width: 50%;
 }
 
 /* ----------------------------------------
@@ -1539,22 +1542,21 @@ button:disabled {
      PANE_STRETCH が制御する。 */
 
   /* ----------------------------------------
-     チャート凡例：スマホでは日付・OHLC・出来高の3行のみに縮約
-     （2026-09 変更。旧実装は display: none で全消ししていたが、
-       HUD化により凡例が唯一の数値表示手段となったため、
-       狭い画面でも最低限の値が読めるよう縮約表示へ切り替えた）
+     チャート凡例：スマホでも PC と同じ全項目を表示する
+     （2026-09 変更の再修正。当初は日付・OHLC・出来高の3行へ縮約していたが、
+       情報量が足りずアプリの利用に支障があったため全項目表示へ戻した。
+       縦に伸びて RCI / MACD ペインへ跨ることは許容し、代わりに
+       横幅は .chart-legend の max-width: 50% で制限する。
+       文字サイズと行間を詰めて占有面積を抑える）
   ---------------------------------------- */
   .chart-legend {
-    font-size: 11px;
-    padding: 4px 6px;
+    font-size: 9px;
+    line-height: 1.3;
+    padding: 3px 5px;
   }
 
-  .chart-legend .legend-row[data-legend-group="ma"],
-  .chart-legend .legend-row[data-legend-group="bb"],
-  .chart-legend .legend-row[data-legend-group="ichimoku"],
-  .chart-legend .legend-row[data-legend-group="rci"],
-  .chart-legend .legend-row[data-legend-group="macd"] {
-    display: none;
+  .chart-legend .legend-row {
+    column-gap: 6px;
   }
 
   /* ----------------------------------------

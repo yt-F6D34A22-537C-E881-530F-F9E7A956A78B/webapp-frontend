@@ -32,17 +32,32 @@ export function calcMA(data, period) {
 
 // ------------------------------
 // ボリンジャーバンド
+//
+// 2026-09 変更：±1σ / ±2σ / ±3σ を同時に描画できるようにするため、
+// 第3引数を「単一の k」から「σ の配列」へ変更した。
+// 平均・標準偏差の計算は1回だけ行い、各 σ のバンドはその使い回しで求める
+// （旧実装のまま σ ごとに calcBB を3回呼ぶと、同じ移動平均・標準偏差を
+//   3度計算することになり無駄が大きいため）。
+//
+// 戻り値:
+//   {
+//     mid:   [{ time, value }],                       // 中心線（period の単純移動平均）
+//     bands: [{ sigma, upper: [...], lower: [...] }]  // sigmas の並び順に対応
+//   }
 // ------------------------------
-export function calcBB(data, period = 20, k = 2) {
+export function calcBB(data, period = 20, sigmas = [1, 2, 3]) {
   const mid = [];
-  const upper = [];
-  const lower = [];
+  const bands = sigmas.map(sigma => ({ sigma, upper: [], lower: [] }));
 
   for (let i = 0; i < data.length; i++) {
+    const time = data[i].time;
+
     if (i < period - 1) {
-      mid.push({ time: data[i].time, value: null });
-      upper.push({ time: data[i].time, value: null });
-      lower.push({ time: data[i].time, value: null });
+      mid.push({ time, value: null });
+      bands.forEach(b => {
+        b.upper.push({ time, value: null });
+        b.lower.push({ time, value: null });
+      });
       continue;
     }
 
@@ -60,12 +75,14 @@ export function calcBB(data, period = 20, k = 2) {
     variance /= period;
     const std = Math.sqrt(variance);
 
-    mid.push({ time: data[i].time, value: mean });
-    upper.push({ time: data[i].time, value: mean + k * std });
-    lower.push({ time: data[i].time, value: mean - k * std });
+    mid.push({ time, value: mean });
+    bands.forEach(b => {
+      b.upper.push({ time, value: mean + b.sigma * std });
+      b.lower.push({ time, value: mean - b.sigma * std });
+    });
   }
 
-  return { mid, upper, lower };
+  return { mid, bands };
 }
 
 // ------------------------------
