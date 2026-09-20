@@ -1164,23 +1164,17 @@ button:disabled {
 }
 
 /* ----------------------------------------
-   HUD凡例の行レイアウト（2026-09 追加）
+   HUD凡例の行レイアウト（2026-09 追加、同月に1行1項目へ再改修）
    旧実装の「色と名前だけの静的凡例」＋「マウス追従ツールチップ」を
    値表示付きの固定凡例へ統合したことに伴うもの。
-   1行＝1インジケータグループ（data-legend-group）で、
-   行内に項目（■ ラベル 値）を横並びにする。
+   1行＝1項目（■ ラベル 値）。1グループが複数項目を持つ場合
+   （MA の5期間、BB の7本など）は項目数と同じ行数になる
+   （旧実装は1グループ=1行に複数項目を詰めており判読しづらかった）。
 ---------------------------------------- */
 .chart-legend .legend-row {
   display: flex;
-  flex-wrap: wrap;
   align-items: baseline;
-  column-gap: 10px;
-}
-
-.chart-legend .legend-item {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 3px;
+  gap: 5px;
 }
 
 .chart-legend .legend-label {
@@ -1191,6 +1185,36 @@ button:disabled {
 .chart-legend .legend-value {
   font-family: var(--font-numeric);
   font-variant-numeric: tabular-nums;
+}
+
+/* ----------------------------------------
+   O/H/L/C 行（2026-09 追加）
+   ラベル行「O/H/L/C」と値行を上下2段に分ける。
+   どちらも左揃え（block要素の既定）で描画するため、
+   ラベル行の先頭文字（O）と値行の先頭文字（始値）の左端が揃う。
+---------------------------------------- */
+.chart-legend .legend-row--stacked {
+  align-items: flex-start;
+}
+
+.chart-legend .legend-ohlc {
+  display: flex;
+  flex-direction: column;
+}
+
+.chart-legend .legend-ohlc .legend-label {
+  margin-bottom: 1px;
+}
+
+/* ----------------------------------------
+   インジケータグループの区切り（2026-09 追加）
+   出来高とMA、MA(100)と+3σ のように、分類が変わる先頭行に
+   区切り線を入れる。日付→ローソク足の間にも同様に入る。
+---------------------------------------- */
+.chart-legend .legend-group-start {
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px solid var(--color-border-legend, rgba(0, 0, 0, 0.12));
 }
 
 /* HUD凡例（.chart-legend）を絶対配置するための基準 */
@@ -1556,7 +1580,12 @@ button:disabled {
   }
 
   .chart-legend .legend-row {
-    column-gap: 6px;
+    gap: 4px;
+  }
+
+  .chart-legend .legend-group-start {
+    margin-top: 3px;
+    padding-top: 3px;
   }
 
   /* ----------------------------------------
