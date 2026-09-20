@@ -13,8 +13,11 @@
 // 2026-09 追加改修：
 //   ・1行1項目とする（旧実装は MA(5) と MA(25) が同じ行に並ぶなど、
 //     1つのグループの全項目を1行へ詰め込んでおり判読しづらかった）
-//   ・O/H/L/C はラベル行「O/H/L/C」と値行を上下に分け、両方を左揃えにする
-//     ことで、O の値の左端が O の左端と揃うようにする
+//   ・O/H/L/C は当初「ラベル行＋値行」の2段組で1項目にまとめていたが、
+//     値がスラッシュ区切りで横に長くなる問題があったため、
+//     O / H / L / C を独立した4項目（4行）へ分割した
+//     （chart-price.js 側の記述子変更。本ファイルは特別扱いをせず、
+//      通常項目と同じ描画パスで4行になる）
 //   ・インジケータグループが切り替わる境目に区切り線を挟む
 //
 // DOM 取得フックは data-legend-group / data-legend-item / data-legend-value を
@@ -28,13 +31,8 @@ import { formatDateJst } from "./chart-theme.js";
  * HUD凡例を生成する。
  *
  * @param {HTMLElement} container 凡例を載せる要素（position: relative であること）
- * @param {Array<{key: string, legend: Array<LegendItem>}>} groups
- *        インジケータグループ配列（表示トグルの単位）。
- *        LegendItem は次のいずれか：
- *          - 通常項目: { key, label, color, valueAt(time) }
- *          - O/H/L/C のような複数値項目: { key, label, color, ohlc: true,
- *            valueAt(time) }（valueAt は "始値/高値/安値/終値" 形式の
- *            スラッシュ区切り文字列、または null を返す）
+ * @param {Array<{key: string, legend: Array<{key: string, label: string, color: ?string, valueAt: function(number): ?string}>}>} groups
+ *        インジケータグループ配列（表示トグルの単位）
  * @returns {{update: function(number): void, setGroupVisible: function(string, boolean): void, setSide: function(string): void, destroy: function(): void}}
  */
 export function createLegend(container, groups) {
@@ -50,42 +48,35 @@ export function createLegend(container, groups) {
   let lastGroupKey = null;
 
   // ------------------------------
-  // 行の生成ヘルパ
+  // 行の生成
+  // 1行 = 1項目（■ ラベル 値）。
   // グループが直前の行と異なる場合、先頭行に legend-group-start を付け
   // CSS 側で区切り線を描画する（date → candle → volume → ma → bb →
   // ichimoku → rci → macd の境目すべてに入る）。
   // ------------------------------
-  function createRow(groupKey, itemKey, extraClass = "") {
+  function renderItem(groupKey, item) {
     const row = document.createElement("div");
-    row.className = extraClass ? `legend-row ${extraClass}` : "legend-row";
+    row.className = "legend-row";
     row.dataset.legendGroup = groupKey;
-    row.dataset.legendItem = itemKey;
+    row.dataset.legendItem = item.key;
 
     if (lastGroupKey !== null && groupKey !== lastGroupKey) {
       row.classList.add("legend-group-start");
     }
     lastGroupKey = groupKey;
 
-    if (!groupRows.has(groupKey)) groupRows.set(groupKey, []);
-    groupRows.get(groupKey).push(row);
-
-    legend.appendChild(row);
-    return row;
-  }
-
-  function appendSwatch(row, color) {
-    if (!color) return;
+    // スワッチは色がある項目のみ表示する（例：O/H/L/C は O 行にのみ表示し、
+    // H/L/C 行は非表示にする。2026-09 変更）。
+    // ただし同じグループ内でラベルの左端を揃えるため、色が無い項目でも
+    // スワッチの領域そのものは常に確保する（.legend-swatch の min-width。
+    // 空のまま出力し、色・記号は付けない）。
     const swatch = document.createElement("span");
     swatch.className = "legend-swatch";
-    swatch.style.color = color;    // 値は chart-theme.js のリテラルのみ
-    swatch.textContent = "■";
+    if (item.color) {
+      swatch.style.color = item.color;    // 値は chart-theme.js のリテラルのみ
+      swatch.textContent = "■";
+    }
     row.appendChild(swatch);
-  }
-
-  // 通常項目（1行 = ラベル + 値）
-  function renderSimpleItem(groupKey, item) {
-    const row = createRow(groupKey, item.key);
-    appendSwatch(row, item.color);
 
     const label = document.createElement("span");
     label.className = "legend-label";
@@ -98,48 +89,22 @@ export function createLegend(container, groups) {
     value.textContent = "-";
     row.appendChild(value);
 
-    valueEls.set(item.key, value);
-    itemsFlat.push({ key: item.key, valueAt: item.valueAt });
-  }
+    legend.appendChild(row);
 
-  // O/H/L/C 項目（1行内でラベル行「O/H/L/C」と値行を上下2段にする）
-  function renderOhlcItem(groupKey, item) {
-    const row = createRow(groupKey, item.key, "legend-row--stacked");
-    appendSwatch(row, item.color);
-
-    const stack = document.createElement("div");
-    stack.className = "legend-ohlc";
-
-    const label = document.createElement("div");
-    label.className = "legend-label";
-    label.textContent = item.label;   // "O/H/L/C"
-
-    const value = document.createElement("div");
-    value.className = "legend-value";
-    value.dataset.legendValue = item.key;
-    value.textContent = "-";
-
-    // ラベル行・値行とも左揃え（block要素の既定）で描画するため、
-    // O（ラベル行の先頭文字）と値行の先頭文字（始値）の左端は自然に揃う。
-    stack.append(label, value);
-    row.appendChild(stack);
+    if (!groupRows.has(groupKey)) groupRows.set(groupKey, []);
+    groupRows.get(groupKey).push(row);
 
     valueEls.set(item.key, value);
     itemsFlat.push({ key: item.key, valueAt: item.valueAt });
   }
 
   // 日付行（常時表示・先頭）
-  renderSimpleItem("date", { key: "date", label: "日付", color: null, valueAt: null });
+  renderItem("date", { key: "date", label: "日付", color: null, valueAt: null });
 
   for (const group of groups) {
     if (!group.legend || group.legend.length === 0) continue;
-
     for (const item of group.legend) {
-      if (item.ohlc) {
-        renderOhlcItem(group.key, item);
-      } else {
-        renderSimpleItem(group.key, item);
-      }
+      renderItem(group.key, item);
     }
   }
 
@@ -197,7 +162,7 @@ export function createLegend(container, groups) {
     /**
      * グループ単位で凡例の行ごと表示／非表示を切り替える。
      * 非表示にしたインジケータの値を HUD に残さないためのもの。
-     * 1グループが複数行（例：MA は5行）になった場合も、
+     * 1グループが複数行（例：MA は5行、O/H/L/C は4行）になった場合も、
      * そのグループの全行をまとめて切り替える。
      * @param {string} groupKey
      * @param {boolean} visible

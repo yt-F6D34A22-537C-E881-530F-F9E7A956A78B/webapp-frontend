@@ -371,17 +371,39 @@ export const PRICE_INDICATORS = [
         primitives: [],
         legend: [
           {
-            key: "ohlc",
-            label: "O/H/L/C",
-            // chart-legend.js へ「ラベル行と値行を上下2段で描画する」ことを
-            // 伝えるフラグ（2026-09 追加）。値は始値/高値/安値/終値の
-            // スラッシュ区切り1文字列のまま渡し、表示のみ2段組にする。
-            ohlc: true,
-            color: T.candleUp,
+            key: "ohlcOpen",
+            label: "O",
+            color: T.candleUp,   // スワッチは O 行にのみ表示する（H/L/C は非表示）
             valueAt: (time) => {
               const c = candleMap.get(time);
-              if (!c) return null;
-              return `${c.open} / ${c.high} / ${c.low} / ${c.close}`;
+              return c ? String(c.open) : null;
+            },
+          },
+          {
+            key: "ohlcHigh",
+            label: "H",
+            color: null,
+            valueAt: (time) => {
+              const c = candleMap.get(time);
+              return c ? String(c.high) : null;
+            },
+          },
+          {
+            key: "ohlcLow",
+            label: "L",
+            color: null,
+            valueAt: (time) => {
+              const c = candleMap.get(time);
+              return c ? String(c.low) : null;
+            },
+          },
+          {
+            key: "ohlcClose",
+            label: "C",
+            color: null,
+            valueAt: (time) => {
+              const c = candleMap.get(time);
+              return c ? String(c.close) : null;
             },
           },
         ],
