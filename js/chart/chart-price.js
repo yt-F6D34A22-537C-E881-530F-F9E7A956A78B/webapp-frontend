@@ -373,6 +373,10 @@ export const PRICE_INDICATORS = [
           {
             key: "ohlc",
             label: "O/H/L/C",
+            // chart-legend.js へ「ラベル行と値行を上下2段で描画する」ことを
+            // 伝えるフラグ（2026-09 追加）。値は始値/高値/安値/終値の
+            // スラッシュ区切り1文字列のまま渡し、表示のみ2段組にする。
+            ohlc: true,
             color: T.candleUp,
             valueAt: (time) => {
               const c = candleMap.get(time);
