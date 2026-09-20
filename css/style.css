@@ -1155,12 +1155,37 @@ button:disabled {
   line-height: 1.4;
   color: var(--color-text-legend);
   z-index: var(--z-chart-legend);
-  pointer-events: none;
+  /* 2026-09：クリック／タップで折りたたみ・展開できるようにするため、
+     旧 pointer-events: none（マウスイベントを下のチャートへ透過させる設定）
+     から auto へ変更した。これにより凡例の上ではチャートの十字カーソルは
+     更新されなくなるが、凡例は画面の一角を占める小さな要素のため
+     実用上の影響は小さいと判断した。 */
+  pointer-events: auto;
+  cursor: pointer;
   box-shadow: var(--shadow-legend);
   white-space: nowrap;
   /* チャートの横半分を超えないようにする（超えると裏のローソク足が読めなくなる）。
      行はフレックスで折り返すため、幅に収まらない項目は縦方向へ伸びる。 */
   max-width: 50%;
+}
+
+/* ----------------------------------------
+   凡例の折りたたみ・展開（2026-09 追加）
+   凡例（.chart-legend）をクリック／タップすると本体（.legend-body）を隠し、
+   代わりに短いラベル（.legend-collapsed-label）のみを表示する。
+   ラベルを再度クリック／タップすると元の展開状態へ戻る。
+   実際のクリックハンドラは chart-legend.js が legend 要素へ直接付与する。
+---------------------------------------- */
+.chart-legend .legend-collapsed-label {
+  display: none;
+}
+
+.chart-legend.is-collapsed .legend-collapsed-label {
+  display: block;
+}
+
+.chart-legend.is-collapsed .legend-body {
+  display: none;
 }
 
 /* ----------------------------------------
