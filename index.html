@@ -131,6 +131,10 @@
           <span>値上がり率ランキング</span>
         </label>
         <label class="mode-tab">
+          <input type="radio" name="searchMode" value="dateDown">
+          <span>値下がり率ランキング</span>
+        </label>
+        <label class="mode-tab">
           <input type="radio" name="searchMode" value="compare">
           <span>CSV・証券コード比較</span>
         </label>
@@ -141,6 +145,10 @@
         <label class="mode-tab">
           <input type="radio" name="searchMode" value="block">
           <span>超大口検出</span>
+        </label>
+        <label class="mode-tab">
+          <input type="radio" name="searchMode" value="marginBb">
+          <span>信用倍率×ボリンジャー</span>
         </label>
       </div>
 
@@ -179,6 +187,15 @@
           <div class="mode-conditions" id="dateConditions">
             <label>日付
               <select id="dateSelect" disabled></select>
+            </label>
+          </div>
+        </div>
+
+        <!-- モード：値下がり率ランキング（API は date_ranking + ranking_direction=down。値上がり率ランキングの逆順） -->
+        <div class="mode-panel" data-mode="dateDown">
+          <div class="mode-conditions" id="dateDownConditions">
+            <label>日付
+              <select id="dateDownSelect" disabled></select>
             </label>
           </div>
         </div>
@@ -257,6 +274,33 @@
           </div>
         </div>
 
+        <!-- モード：信用倍率 × ボリンジャーバンド（信用の実値は最新の margin アーカイブを参照） -->
+        <div class="mode-panel" data-mode="marginBb">
+          <div class="mode-conditions" id="marginBbConditions">
+            <label>信用倍率以上（倍）
+              <input id="marginBbRatio" type="number" value="5" step="0.5" min="0.1" disabled>
+            </label>
+
+            <label>買残以上（株）
+              <input id="marginBbMinBuyBalance" type="number" value="100000" step="10000" min="0" disabled>
+            </label>
+
+            <label>ボリンジャーバンドのエリア
+              <select id="marginBbZoneSelect" disabled>
+                <option value="upper3" selected>+3σ以上</option>
+                <option value="upper2">+2σ以上</option>
+                <option value="upper1">+1σ以上</option>
+              </select>
+            </label>
+
+            <label>日付
+              <select id="marginBbDateSelect" disabled></select>
+            </label>
+
+            <div data-exclude-markets-slot></div>
+          </div>
+        </div>
+
       </div>
       
       <div class="buttons-row">
@@ -318,6 +362,7 @@
 
       <p class="hint">行をタップ／クリックするとチャートを表示します。</p>
       <p class="hint">heuristics モードでは ○＝一致、×＝不一致 を表示します。</p>
+      <p class="hint">信用倍率×ボリンジャーモードでは、制度信用の ○＝建て可能、×＝建て不可（規制等）を表示します。</p>
     </section>
 
     <!-- ============================
