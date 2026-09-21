@@ -159,30 +159,26 @@
       ============================ -->
       <div class="mode-panels">
 
-        <!-- モード A：出来高 × 上髭 -->
+        <!-- モード：出来高 × 上髭 -->
         <div class="mode-panel" data-mode="ratio">
           <div class="mode-conditions" id="ratioConditions">
             <label>出来高倍率以上
               <input id="volumeRatio" type="number" value="5" step="0.5">
             </label>
-
             <label>上髭実体比以上
               <input id="shadowRatio" type="number" value="1" step="0.5">
             </label>
-
             <label>出来高以上
               <input id="minVolume" type="number" value="1000000" step="100000" min="0">
             </label>
-
             <label>日付
               <select id="ratioDateSelect"></select>
             </label>
-
             <div data-exclude-markets-slot></div>
           </div>
         </div>
 
-        <!-- モード B：値上がり率ランキング -->
+        <!-- モード：値上がり率ランキング -->
         <div class="mode-panel" data-mode="date">
           <div class="mode-conditions" id="dateConditions">
             <label>日付
@@ -200,45 +196,26 @@
           </div>
         </div>
 
-        <!-- モード D：CSV/証券コード比較 -->
-        <div class="mode-panel" data-mode="compare">
-          <div class="mode-conditions" id="compareConditions">
-
-            <fieldset class="compare-source-fieldset" disabled>
-              <legend>入力方法</legend>
-            
-              <label class="compare-source-option">
-                <input type="radio" name="compareSource" value="csv" checked>
-                <span class="compare-source-label">CSVアップロード</span>
-                <input type="file" id="compareCsvFile" accept=".csv">
-              </label>
-            
-              <label class="compare-source-option">
-                <input type="radio" name="compareSource" value="code">
-                <span class="compare-source-label">証券コード指定</span>
-                <input type="text" id="compareCodes" placeholder="例: 7203,9984">
-              </label>
-            </fieldset>
-
-            <fieldset class="compare-date-fieldset" disabled>
-              <legend>比較期間</legend>
-
-              <label>比較元日付
-                <select id="compareFromDate"></select>
-              </label>
-
-              <span class="compare-date-arrow">→</span>
-
-              <label>比較先日付
-                <select id="compareToDateSelect"></select>
-              </label>
-
-              <label class="compare-all-market-days-option">
-                <input type="checkbox" id="compareAllMarketDays">
-                比較先日付までの全営業日と比較する
-              </label>
-            </fieldset>
-
+        <!-- モード：信用倍率 × ボリンジャーバンド（信用の実値は最新の margin アーカイブを参照） -->
+        <div class="mode-panel" data-mode="marginBb">
+          <div class="mode-conditions" id="marginBbConditions">
+            <label>信用倍率以上（倍）
+              <input id="marginBbRatio" type="number" value="5" step="0.5" min="0.1" disabled>
+            </label>
+            <label>買残以上（株）
+              <input id="marginBbMinBuyBalance" type="number" value="100000" step="10000" min="0" disabled>
+            </label>
+            <label>ボリンジャーバンドのエリア
+              <select id="marginBbZoneSelect" disabled>
+                <option value="upper3" selected>+3σ以上</option>
+                <option value="upper2">+2σ以上</option>
+                <option value="upper1">+1σ以上</option>
+              </select>
+            </label>
+            <label>日付
+              <select id="marginBbDateSelect" disabled></select>
+            </label>
+            <div data-exclude-markets-slot></div>
           </div>
         </div>
 
@@ -255,52 +232,54 @@
           </div>
         </div>
 
+        <!-- モード：CSV/証券コード比較 -->
+        <div class="mode-panel" data-mode="compare">
+          <div class="mode-conditions" id="compareConditions">
+            <fieldset class="compare-source-fieldset" disabled>
+              <legend>入力方法</legend>
+              <label class="compare-source-option">
+                <input type="radio" name="compareSource" value="csv" checked>
+                <span class="compare-source-label">CSVアップロード</span>
+                <input type="file" id="compareCsvFile" accept=".csv">
+              </label>
+              <label class="compare-source-option">
+                <input type="radio" name="compareSource" value="code">
+                <span class="compare-source-label">証券コード指定</span>
+                <input type="text" id="compareCodes" placeholder="例: 7203,9984">
+              </label>
+            </fieldset>
+            <fieldset class="compare-date-fieldset" disabled>
+              <legend>比較期間</legend>
+              <label>比較元日付
+                <select id="compareFromDate"></select>
+              </label>
+              <span class="compare-date-arrow">→</span>
+              <label>比較先日付
+                <select id="compareToDateSelect"></select>
+              </label>
+              <label class="compare-all-market-days-option">
+                <input type="checkbox" id="compareAllMarketDays">
+                比較先日付までの全営業日と比較する
+              </label>
+            </fieldset>
+          </div>
+        </div>
+
         <!-- モード：超大口検出 -->
         <div class="mode-panel" data-mode="block">
           <div class="mode-conditions" id="blockConditions">
             <label>日付（1分足の取得制約上、直近の取引日のみ選択可）
               <select id="blockDateSelect" disabled></select>
             </label>
-
             <label>検出しきい値（億円）以上
               <input id="blockThresholdYen" type="number" value="1" step="0.1" min="0.1" disabled>
             </label>
-
             <label>事前絞り込み候補数（日次売買代金の上位）
               <input id="blockCandidateLimit" type="number" value="50" step="10" min="1" disabled>
             </label>
-
             <div data-exclude-markets-slot></div>
           </div>
         </div>
-
-        <!-- モード：信用倍率 × ボリンジャーバンド（信用の実値は最新の margin アーカイブを参照） -->
-        <div class="mode-panel" data-mode="marginBb">
-          <div class="mode-conditions" id="marginBbConditions">
-            <label>信用倍率以上（倍）
-              <input id="marginBbRatio" type="number" value="5" step="0.5" min="0.1" disabled>
-            </label>
-
-            <label>買残以上（株）
-              <input id="marginBbMinBuyBalance" type="number" value="100000" step="10000" min="0" disabled>
-            </label>
-
-            <label>ボリンジャーバンドのエリア
-              <select id="marginBbZoneSelect" disabled>
-                <option value="upper3" selected>+3σ以上</option>
-                <option value="upper2">+2σ以上</option>
-                <option value="upper1">+1σ以上</option>
-              </select>
-            </label>
-
-            <label>日付
-              <select id="marginBbDateSelect" disabled></select>
-            </label>
-
-            <div data-exclude-markets-slot></div>
-          </div>
-        </div>
-
       </div>
       
       <div class="buttons-row">
