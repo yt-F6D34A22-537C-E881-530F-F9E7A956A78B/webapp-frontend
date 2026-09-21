@@ -46,7 +46,8 @@ export const THEMES = {
     ma100: "#6B7C8C",   // スレート
 
     // ボリンジャーバンド（2026-09：±1σ / ±2σ / ±3σ の3本構成へ拡張）
-    // σ が外側になるほど濃くし、線種（LINE_STYLE）と合わせて判別できるようにする
+    // σ が外側になるほど濃くして判別できるようにする
+    // （線種は ±1σ / ±2σ / ±3σ で共通。getLineStyles() を参照）
     bbMid:  "#9C7E1E",
     bb1:    "#DCC98A",
     bb2:    "#C9A227",
@@ -138,7 +139,9 @@ export function getTheme() {
 // MA・ボリンジャーバンド・一目均衡表で最大17本の線が重なるため、
 // 色だけでなく線種でも判別できるようにする。
 // ・MA は要望により必ず実線（Solid）
-// ・ボリンジャーバンドは σ が外側になるほど破線の間隔を広げる
+// ・ボリンジャーバンドの ±1σ / ±2σ / ±3σ は同一の線種（Dashed）とし、σ の判別は
+//   色の濃さ（bb1 < bb2 < bb3）で行う（2026-09 変更。当初は σ ごとに線種を分けていた）。
+//   中心線のみ別の線種（SparseDotted）とし、バンドと区別する
 // ・一目均衡表は MA と区別するため実線を使わない
 // LightweightCharts.LineStyle を参照するため、モジュール読み込み時ではなく
 // 呼び出し時に解決する関数として公開する。
@@ -149,9 +152,11 @@ export function getLineStyles() {
     ma:     S.Solid,          // MA（5/25/50/75/100）はすべて実線
 
     bbMid:  S.SparseDotted,   // BB 中心線
-    bb1:    S.Dotted,         // ±1σ
+    // ±1σ / ±2σ / ±3σ は同一の線種。キーを σ ごとに残しているのは、
+    // chart-price.js が LS[`bb${sigma}`] で参照しているため（σ ごとに分ける場合も値を変えるだけで済む）
+    bb1:    S.Dashed,         // ±1σ
     bb2:    S.Dashed,         // ±2σ
-    bb3:    S.LargeDashed,    // ±3σ
+    bb3:    S.Dashed,         // ±3σ
 
     tenkan: S.Dashed,         // 転換線
     kijun:  S.LargeDashed,    // 基準線
