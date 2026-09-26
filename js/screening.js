@@ -10,6 +10,30 @@ const blockDateSelect = document.getElementById("blockDateSelect");           //
 const dateDownSelect = document.getElementById("dateDownSelect");             // 値下がり率ランキング用
 const marginBbDateSelect = document.getElementById("marginBbDateSelect");     // 信用倍率×ボリンジャー用
 
+// お気に入りモードで実行できるモードの一覧（表示順もこの並びに従う）。
+// heuristics・compare は対象外（理由は main.py の ALLOWED_FAVORITE_MODES を参照）。
+const FAVORITE_MODES = ["ratio", "date", "dateDown", "block", "marginBb"];
+
+const FAVORITE_MODE_LABELS = {
+  ratio: "出来高×上髭",
+  date: "値上がり率ランキング",
+  dateDown: "値下がり率ランキング",
+  block: "超大口検出",
+  marginBb: "信用倍率×ボリンジャー",
+};
+
+// お気に入り実行時、モードごとに「最新の日付」を取得する日付セレクタ。
+// 各セレクタは日付降順（新しい日付が先頭）で構築されるため、options[0]（先頭の
+// option。ユーザーがそのパネルで選択を変えていても影響されない）を「最新日付」
+// として用いる（.value ではなく options[0].value を使う点に注意）。
+const FAVORITE_MODE_DATE_SELECT = {
+  ratio: ratioDateSelect,
+  date: dateSelect,
+  dateDown: dateDownSelect,
+  block: blockDateSelect,
+  marginBb: marginBbDateSelect,
+};
+
 const loadingOverlay = document.getElementById("loadingOverlay");
 
 let abortController = null;
@@ -20,9 +44,57 @@ let sortState = {};
 // 再現するため、startScreening() が設定する（2026-07 追加）。
 let currentCompareDateList = [];
 let elapsedSeconds = 0;
+
+// お気に入り（モード → 保存済みパラメータ）。{} は「1件も登録されていない」を表す。
+// data/favorites.json（webapp-frontend リポジトリ）の内容をそのまま保持する。
+let favoritesState = {};
 let timerId = null;
 
 const API_BASE_URL = "https://yfinance-api-fe86988c-d3b4-f1c6-640d.onrender.com";
+
+// ------------------------------------------------------------------
+// お気に入りモード（2026-09 追加）
+//
+// review.js の「復習ページ」機能（しおり・メモ）が確立した「読み取りは
+// GitHub Raw に直接、書き込みは合言葉付きで Render 経由」というパターンを
+// そのまま踏襲する。書き込みトークン（REVIEW_GITHUB_TOKEN）・合言葉
+// （REVIEW_API_SECRET）はいずれも review 機能と共用（バックエンドの
+// main.py 側で共用していることに対応。新規のトークン・環境変数は発行していない）。
+// REVIEW_REPO_OWNER / REVIEW_REPO_NAME / REVIEW_REPO_BRANCH・
+// REVIEW_SECRET_STORAGE_KEY・getReviewSecret()/clearReviewSecret() は
+// review.js に定義されているものと同じ値・同じロジックだが、review.html と
+// index.html は別ページ（別スクリプトファイル）であるため、review.js の
+// コメントに合わせてここでも二重管理する（リポジトリ名やブランチ・合言葉の
+// 保存キーを変更する場合は両ファイルを修正すること）。
+// ------------------------------------------------------------------
+const REVIEW_REPO_OWNER = "yt-f6d34a22-537c-e881-530f-f9e7a956a78b";
+const REVIEW_REPO_NAME = "webapp-frontend";
+const REVIEW_REPO_BRANCH = "main";
+
+const FAVORITES_RAW_URL =
+  `https://raw.githubusercontent.com/${REVIEW_REPO_OWNER}/${REVIEW_REPO_NAME}` +
+  `/refs/heads/${REVIEW_REPO_BRANCH}/data/favorites.json`;
+
+// review.js の getReviewSecret() と同じ localStorage キー。同じ合言葉を
+// 使い回す（review.html で一度入力済みなら index.html 側での再入力は不要）。
+const REVIEW_SECRET_STORAGE_KEY = "reviewApiSecret";
+
+function getReviewSecret() {
+  let secret = localStorage.getItem(REVIEW_SECRET_STORAGE_KEY);
+  if (!secret) {
+    secret = window.prompt(
+      "お気に入りの保存には合言葉が必要です。合言葉を入力してください（この端末に保存され、次回以降は不要です）。"
+    );
+    if (secret) {
+      localStorage.setItem(REVIEW_SECRET_STORAGE_KEY, secret);
+    }
+  }
+  return secret || null;
+}
+
+function clearReviewSecret() {
+  localStorage.removeItem(REVIEW_SECRET_STORAGE_KEY);
+}
 
 // heuristicsの種別
 const HEURISTICS_TYPES = [
@@ -837,7 +909,36 @@ window.onload = () => {
   loadDates();
   loadTradingDates();
   loadHeuristicsDates();
+  initFavorites();
 };
+
+/**
+ * お気に入り機能の初期化。data/favorites.json の読み込みと、
+ * 各モードの条件パネルにある ☆ボタンへのイベント登録を行う。
+ * ☆ボタン自体は index.html に静的に配置済み（screening.js からは
+ * 生成しない。conventions に合わせ data-role/data-favorite-mode で特定する）。
+ */
+async function initFavorites() {
+  document.querySelectorAll('[data-role="favorite-toggle-btn"]').forEach(btn => {
+    btn.addEventListener("click", () => toggleFavorite(btn.dataset.favoriteMode));
+  });
+  await loadFavoritesRaw();
+  renderFavoriteToggleButtons();
+  renderFavoritePanel();
+}
+
+/**
+ * favorite モードの結果表示と、他モード共通の単一テーブル表示を切り替える。
+ * #favoriteResultsContainer は favorite モード専用、既存の
+ * #singleResultWell（従来からある単一テーブル一式）はそれ以外のモード用。
+ * 単一テーブル用の #csvDownloadBtn は favorite モードでは意味を持たない
+ * （セクションごとに個別のCSVボタンを持つため）ため、あわせて隠す。
+ */
+function toggleResultDisplayMode(isFavorite) {
+  document.getElementById("singleResultWell")?.classList.toggle("hidden", isFavorite);
+  document.getElementById("favoriteResultsContainer")?.classList.toggle("hidden", !isFavorite);
+  csvDownloadBtn?.classList.toggle("hidden", isFavorite);
+}
 
 /* ============================
    モード切替
@@ -1204,6 +1305,496 @@ function makeDateLabel(d) {
   return `${y}/${m}/${day}（${w}）`;
 }
 
+/* ============================
+   お気に入り（2026-09 追加）
+============================ */
+
+/**
+ * data/favorites.json を GitHub Raw から直接取得する（review.js の
+ * loadNotes() と同じ方針。Render を経由しない読み取り専用アクセス）。
+ * ファイルが未作成（一度も保存されていない）の場合は 404 になるため、
+ * 空のお気に入り状態のまま続行する。
+ */
+async function loadFavoritesRaw() {
+  try {
+    const res = await fetch(FAVORITES_RAW_URL);
+    if (res.status === 404) {
+      favoritesState = {};
+      return;
+    }
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    favoritesState = await res.json();
+  } catch (e) {
+    console.error("お気に入りの読み込みに失敗しました:", e);
+  }
+}
+
+/**
+ * 合言葉付きで /favorites へ書き込みリクエストを送る。
+ * review.js の requestWithSecret() と同じロジック（合言葉の入力・401時の
+ * 再入力誘導・ローディング表示）をこちらでも独立して持つ（二重管理。
+ * review.js 側のコメントを参照）。
+ */
+async function favoritesRequestWithSecret(method, path, body) {
+  const secret = getReviewSecret();
+  if (!secret) {
+    return { error: "合言葉が入力されなかったため、保存を中止しました。" };
+  }
+  loadingOverlay.classList.remove("hidden");
+  try {
+    const res = await fetch(`${API_BASE_URL}${path}`, {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+        "X-Review-Secret": secret,
+      },
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    });
+    if (res.status === 401) {
+      clearReviewSecret();
+      return { error: "合言葉が違うようです。もう一度お試しください。" };
+    }
+    const data = await res.json();
+    if (data.error) {
+      return { error: data.detail || data.error };
+    }
+    return data;
+  } catch (e) {
+    return { error: String(e) };
+  } finally {
+    loadingOverlay.classList.add("hidden");
+  }
+}
+
+/**
+ * 指定モードの条件パネルから、お気に入り保存用のパラメータを読み取る。
+ * target_date は含めない（実行のたびに最新日付を使うため）。
+ * startScreening() の URL 組み立てと対になっている（キー名は
+ * buildFavoriteQueryParams() が対応する query パラメータ名へ変換する）。
+ */
+function collectFavoriteParams(mode) {
+  if (mode === "ratio") {
+    return {
+      volume_ratio: parseFloat(document.getElementById("volumeRatio").value),
+      shadow_ratio: parseFloat(document.getElementById("shadowRatio").value),
+      min_volume: parseFloat(document.getElementById("minVolume").value),
+      exclude_markets: getExcludeMarkets("ratioConditions"),
+    };
+  }
+  if (mode === "date" || mode === "dateDown") {
+    return {};  // 日付以外に条件を持たないモード
+  }
+  if (mode === "block") {
+    return {
+      threshold_yen: Math.round(parseFloat(document.getElementById("blockThresholdYen").value) * 1e8),
+      candidate_limit: parseInt(document.getElementById("blockCandidateLimit").value, 10),
+      exclude_markets: getExcludeMarkets("blockConditions"),
+    };
+  }
+  if (mode === "marginBb") {
+    return {
+      margin_ratio: parseFloat(document.getElementById("marginBbRatio").value),
+      min_buy_balance: parseFloat(document.getElementById("marginBbMinBuyBalance").value),
+      bb_zone: document.getElementById("marginBbZoneSelect").value,
+      exclude_markets: getExcludeMarkets("marginBbConditions"),
+    };
+  }
+  return {};
+}
+
+/**
+ * collectFavoriteParams() の値を検証する。startScreening() 側の各モードの
+ * 検証と同じ内容（意図的な重複。理由は README 相当のコメントを参照）。
+ * @returns {string|null} エラーメッセージ（問題なければ null）
+ */
+function validateFavoriteParams(mode, p) {
+  if (mode === "block") {
+    if (isNaN(p.threshold_yen) || p.threshold_yen <= 0) return "検出しきい値は0より大きい数値で入力してください。";
+    if (isNaN(p.candidate_limit) || p.candidate_limit <= 0) return "事前絞り込み候補数は1以上の整数で入力してください。";
+  }
+  if (mode === "marginBb") {
+    if (isNaN(p.margin_ratio) || p.margin_ratio <= 0) return "信用倍率は0より大きい数値で入力してください。";
+    if (isNaN(p.min_buy_balance) || p.min_buy_balance < 0) return "買残は0以上の数値で入力してください。";
+  }
+  if (mode === "ratio") {
+    if (isNaN(p.volume_ratio) || isNaN(p.shadow_ratio) || isNaN(p.min_volume)) return "条件の数値が正しく入力されていません。";
+  }
+  return null;
+}
+
+/**
+ * ☆ボタンの押下時：未登録なら現在の入力値で保存、登録済みなら解除する。
+ */
+async function toggleFavorite(mode) {
+  const alreadySaved = Object.prototype.hasOwnProperty.call(favoritesState, mode);
+
+  let result;
+  if (alreadySaved) {
+    result = await favoritesRequestWithSecret("DELETE", `/favorites?mode=${encodeURIComponent(mode)}`);
+  } else {
+    const params = collectFavoriteParams(mode);
+    const validationError = validateFavoriteParams(mode, params);
+    if (validationError) {
+      alert(validationError);
+      return;
+    }
+    result = await favoritesRequestWithSecret("POST", "/favorites", { mode, params });
+  }
+
+  if (result.error) {
+    alert((alreadySaved ? "お気に入りの解除に失敗しました：" : "お気に入りの登録に失敗しました：") + result.error);
+    return;
+  }
+
+  favoritesState = result.favorites;
+  renderFavoriteToggleButtons();
+  renderFavoritePanel();
+}
+
+/**
+ * 各モードの条件パネルにある ☆ボタンの見た目（登録済みかどうか）を更新する。
+ */
+function renderFavoriteToggleButtons() {
+  document.querySelectorAll('[data-role="favorite-toggle-btn"]').forEach(btn => {
+    const mode = btn.dataset.favoriteMode;
+    const saved = Object.prototype.hasOwnProperty.call(favoritesState, mode);
+    btn.classList.toggle("is-favorited", saved);
+    btn.textContent = saved ? "★ お気に入り登録済み（クリックで解除）" : "☆ お気に入りに登録";
+  });
+}
+
+/**
+ * favorite モードの条件パネル（#favoriteConditions）に、現在登録されている
+ * お気に入りの一覧を表示する。ここからも解除できる（toggleFavorite を再利用）。
+ */
+function renderFavoritePanel() {
+  const listEl = document.getElementById("favoriteList");
+  const emptyEl = document.getElementById("favoriteEmpty");
+  if (!listEl || !emptyEl) return;
+
+  const savedModes = FAVORITE_MODES.filter(m => Object.prototype.hasOwnProperty.call(favoritesState, m));
+  emptyEl.classList.toggle("hidden", savedModes.length > 0);
+  listEl.innerHTML = "";
+
+  savedModes.forEach(mode => {
+    const item = document.createElement("div");
+    item.className = "favorite-list-item";
+
+    const labelEl = document.createElement("span");
+    labelEl.textContent = FAVORITE_MODE_LABELS[mode];
+    item.appendChild(labelEl);
+
+    const removeBtn = document.createElement("button");
+    removeBtn.type = "button";
+    removeBtn.className = "btn ghost";
+    removeBtn.textContent = "解除";
+    removeBtn.addEventListener("click", () => toggleFavorite(mode));
+    item.appendChild(removeBtn);
+
+    listEl.appendChild(item);
+  });
+}
+
+/**
+ * 保存済みパラメータ（collectFavoriteParams() と同じキー）から /screening 用の
+ * URLSearchParams を組み立てる。startScreening() の該当モードの分岐と対になる
+ * ロジックだが、お気に入り実行専用に独立して持つ（意図的な重複。startScreening()
+ * 側は生の DOM 入力値を直接読むのに対し、こちらは保存済みオブジェクトを読むため、
+ * 両者を無理に1本化すると DOM 読み取りと純粋なパラメータ変換が混在し、
+ * かえって読みにくくなると判断した）。
+ */
+function buildFavoriteQueryParams(mode, targetDate, p) {
+  const params = new URLSearchParams();
+
+  if (mode === "ratio") {
+    params.set("mode", "ratio");
+    params.set("volume_ratio", p.volume_ratio);
+    params.set("shadow_ratio", p.shadow_ratio);
+    params.set("min_volume", p.min_volume);
+    params.set("target_date", targetDate);
+    if (p.exclude_markets) params.set("exclude_markets", p.exclude_markets);
+
+  } else if (mode === "date") {
+    params.set("mode", "date_ranking");
+    params.set("target_date", targetDate);
+
+  } else if (mode === "dateDown") {
+    params.set("mode", "date_ranking");
+    params.set("ranking_direction", "down");
+    params.set("target_date", targetDate);
+
+  } else if (mode === "block") {
+    params.set("mode", "block");
+    params.set("target_date", targetDate);
+    params.set("threshold_yen", p.threshold_yen);
+    params.set("candidate_limit", p.candidate_limit);
+    if (p.exclude_markets) params.set("exclude_markets", p.exclude_markets);
+
+  } else if (mode === "marginBb") {
+    params.set("mode", "margin_bb");
+    params.set("target_date", targetDate);
+    params.set("margin_ratio", p.margin_ratio);
+    params.set("min_buy_balance", p.min_buy_balance);
+    params.set("bb_zone", p.bb_zone);
+    if (p.exclude_markets) params.set("exclude_markets", p.exclude_markets);
+  }
+
+  return params;
+}
+
+/**
+ * 1モードぶんのお気に入り条件を実行し、抽出済みの results 配列を返す。
+ * 例外・APIエラーはここで吸収し、呼び出し元（renderFavoriteResults）が
+ * セクションごとのエラー表示に変換する。
+ */
+async function runFavoriteQuery(mode, params) {
+  const dateSelectEl = FAVORITE_MODE_DATE_SELECT[mode];
+  const targetDate = dateSelectEl?.options[0]?.value;
+  if (!targetDate) {
+    return { error: "日付を取得できませんでした（/dates の読み込みが完了していない可能性があります）。" };
+  }
+
+  const url = new URL("/screening", API_BASE_URL);
+  for (const [k, v] of buildFavoriteQueryParams(mode, targetDate, params)) {
+    url.searchParams.set(k, v);
+  }
+
+  try {
+    const res = await fetch(url.toString());
+    const data = await res.json();
+    if (!data.status || data.status !== "ok") {
+      return { error: data.detail || data.error || `HTTP ${res.status}` };
+    }
+    return { results: data.data, targetDate, marginDate: data.margin_date };
+  } catch (e) {
+    return { error: String(e) };
+  }
+}
+
+/**
+ * favorite モードの実行本体。保存済みの全モードを並列実行し、モードごとに
+ * 見出し付きの表を #favoriteResultsContainer へ縦に並べる。
+ */
+async function runFavoriteScreening() {
+  const savedModes = FAVORITE_MODES.filter(m => Object.prototype.hasOwnProperty.call(favoritesState, m));
+  const countLabel = document.getElementById("resultCount");
+
+  if (savedModes.length === 0) {
+    if (countLabel) countLabel.textContent = "検索結果：0 件（お気に入り登録された条件がありません）";
+    renderFavoriteResults([]);
+    return;
+  }
+
+  elapsedSeconds = 0;
+  elapsedTimeEl.textContent = "スクリーニング時間：0秒";
+  timerId = setInterval(() => {
+    elapsedSeconds++;
+    elapsedTimeEl.textContent = `スクリーニング時間：${elapsedSeconds}秒`;
+  }, 1000);
+
+  startBtn.disabled = true;
+  cancelBtn.disabled = true;  // favorite モードは1リクエストずつのキャンセルに対応していないため無効化する
+  loadingOverlay.classList.remove("hidden");
+
+  try {
+    const sections = await Promise.all(savedModes.map(async mode => {
+      const outcome = await runFavoriteQuery(mode, favoritesState[mode]);
+      return { mode, ...outcome };
+    }));
+
+    renderFavoriteResults(sections);
+
+    const totalCount = sections.reduce((sum, s) => sum + (s.results?.length ?? 0), 0);
+    if (countLabel) {
+      countLabel.textContent = `検索結果：${totalCount} 件（${sections.length} 条件）`;
+    }
+
+    const target = document.getElementById("resultSection");
+    const offset = -10;
+    window.scrollTo({
+      top: target.getBoundingClientRect().top + window.pageYOffset + offset,
+      behavior: "smooth",
+    });
+  } finally {
+    clearInterval(timerId);
+    loadingOverlay.classList.add("hidden");
+    startBtn.disabled = false;
+    cancelBtn.disabled = true;
+  }
+}
+
+/**
+ * favorite モード専用の描画。モードごとに列構成が異なる（ratio と marginBb は
+ * 列がまったく別）ため、既存の単一テーブル（#resultTable 等）には統合せず、
+ * 独立したテーブルをモード数ぶん #favoriteResultsContainer へ積み上げる。
+ *
+ * 縦スクロール時に見出しが隠れないようにする仕組み（要件）は、既存の
+ * 固定列付き横スクロール用の複雑な同期（syncColumnWidths/syncFixedColumns/
+ * スクロール同期）を favorite モードでは使わず、CSS の position: sticky を
+ * 各セクションの <thead> の <th> に直接適用するだけの単純な方式にしている
+ * （style.css の .favorite-section thead th を参照）。ブラウザの標準機能で
+ * 「そのセクションが画面内にある間だけヘッダーが上部に張り付き、次の
+ * セクションに入ると自然に入れ替わる」動きが得られるため、JSでの同期処理が
+ * 不要になる。トレードオフとして、横スクロール時の左固定列（コード・銘柄名を
+ * 常に見せる機能）は favorite モードの表では対応していない（他モードほど
+ * 横に長い表が少ないことと、今回の要件が縦スクロールの見出し固定のみだった
+ * ため、意図的にスコープ外とした）。
+ */
+function renderFavoriteResults(sections) {
+  const container = document.getElementById("favoriteResultsContainer");
+  if (!container) return;
+  container.innerHTML = "";
+
+  if (sections.length === 0) {
+    const emptyEl = document.createElement("p");
+    emptyEl.className = "hint";
+    emptyEl.textContent = "お気に入り登録された条件がありません。各モードの条件パネルにある☆ボタンから登録してください。";
+    container.appendChild(emptyEl);
+    return;
+  }
+
+  sections.forEach(section => {
+    container.appendChild(buildFavoriteSectionEl(section));
+  });
+}
+
+/** favorite モードの1セクション（1モードぶん）のDOM要素を組み立てる。 */
+function buildFavoriteSectionEl({ mode, results, error, targetDate, marginDate }) {
+  const label = targetDate ? makeDateLabel(targetDate) : "";
+  const columns = favoriteColumnsForMode(mode, label);
+
+  const wrapEl = document.createElement("section");
+  wrapEl.className = "favorite-section";
+
+  const headingEl = document.createElement("div");
+  headingEl.className = "favorite-section-heading";
+
+  const titleEl = document.createElement("h3");
+  titleEl.textContent = FAVORITE_MODE_LABELS[mode] + (label ? `（${label}）` : "");
+  headingEl.appendChild(titleEl);
+
+  if (!error) {
+    const countEl = document.createElement("span");
+    countEl.className = "result-count";
+    countEl.textContent = `${results.length} 件`;
+    if (mode === "marginBb" && marginDate) {
+      countEl.textContent += `（信用取引データ：${makeDateLabel(marginDate)}分）`;
+    }
+    headingEl.appendChild(countEl);
+
+    if (results.length > 0) {
+      const csvBtn = document.createElement("button");
+      csvBtn.type = "button";
+      csvBtn.className = "btn ghost favorite-section-csv-btn";
+      csvBtn.textContent = "CSV";
+      csvBtn.addEventListener("click", () => downloadFavoriteSectionCsv(mode, label, results));
+      headingEl.appendChild(csvBtn);
+    }
+  }
+  wrapEl.appendChild(headingEl);
+
+  if (error) {
+    const errEl = document.createElement("p");
+    errEl.className = "hint";
+    errEl.textContent = `このモードの実行に失敗しました：${error}`;
+    wrapEl.appendChild(errEl);
+    return wrapEl;
+  }
+
+  const scrollEl = document.createElement("div");
+  scrollEl.className = "table-scroll-outer favorite-section-scroll";
+
+  const tableEl = document.createElement("table");
+  tableEl.className = "result-table";
+
+  const theadEl = document.createElement("thead");
+  theadEl.innerHTML = renderHeaderRow(columns);
+  tableEl.appendChild(theadEl);
+
+  const tbodyEl = document.createElement("tbody");
+  results.forEach(r => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = renderDataCells(columns, r);
+    tbodyEl.appendChild(tr);
+  });
+  tableEl.appendChild(tbodyEl);
+
+  scrollEl.appendChild(tableEl);
+  wrapEl.appendChild(scrollEl);
+
+  if (results.length === 0) {
+    const emptyEl = document.createElement("p");
+    emptyEl.className = "hint";
+    emptyEl.textContent = "条件に一致する銘柄はありませんでした。";
+    wrapEl.appendChild(emptyEl);
+  }
+
+  return wrapEl;
+}
+
+/**
+ * favorite セクション用の列定義。updateTableHeader()/showResults() の
+ * 対応モード分岐と同じ COLUMNS の組み合わせを用いる（意図的な重複。
+ * 理由は updateTableHeader() 側のコメントに準じる）。
+ */
+function favoriteColumnsForMode(mode, label) {
+  if (mode === "ratio") {
+    return [
+      COLUMNS.code, COLUMNS.name, COLUMNS.marketCap,
+      COLUMNS.ratioClose, COLUMNS.ratioVolume, COLUMNS.ratioVolumePrev, COLUMNS.ratioVolumeChange,
+      COLUMNS.ratioTradingValue, COLUMNS.ratioShadowRatio, COLUMNS.ratioShadowUpper, COLUMNS.ratioShadowBody,
+    ];
+  }
+  if (mode === "date" || mode === "dateDown") {
+    return [
+      COLUMNS.code, COLUMNS.name, COLUMNS.marketCap,
+      col(COLUMNS.dateChangeRate, { label: mode === "dateDown" ? "値下がり率" : COLUMNS.dateChangeRate.label }),
+      col(COLUMNS.dateTodayClose, { label: `${label}終値` }),
+      COLUMNS.datePrevClose,
+    ];
+  }
+  if (mode === "block") {
+    return [
+      COLUMNS.code, COLUMNS.name, COLUMNS.marketCap,
+      COLUMNS.blockDetectCount, COLUMNS.blockMaxValue, COLUMNS.blockDetectTime,
+      COLUMNS.blockPriceChange, COLUMNS.blockType, COLUMNS.blockDailyValue,
+    ];
+  }
+  if (mode === "marginBb") {
+    return [
+      COLUMNS.code, COLUMNS.name, COLUMNS.marketCap,
+      col(COLUMNS.marginBbClose, { label: `${label}終値` }),
+      COLUMNS.marginBbPosition, COLUMNS.marginBbRatio,
+      COLUMNS.marginBbBuyBalance, COLUMNS.marginBbSellBalance,
+      COLUMNS.marginBbBuy, COLUMNS.marginBbSell, COLUMNS.marginBbRegulation,
+    ];
+  }
+  return [];
+}
+
+/**
+ * favorite セクション単体のCSVダウンロード。既存の downloadCsv() と同じ
+ * 組み立て方（buildCsvHeaders/buildCsvRow・RFC 4180・BOM付きUTF-8）を用いる
+ * が、対象が currentResults（シングルトンの検索結果）ではなくセクション
+ * ごとの results 配列であるため、downloadCsv() 本体は呼ばずに同じ手順を
+ * ここで再現する（意図的な重複。理由は updateTableHeader() 側のコメントに準じる）。
+ */
+function downloadFavoriteSectionCsv(mode, label, results) {
+  const headers = buildCsvHeaders(mode, label);
+  const rows = results.map(r => buildCsvRow(r, mode));
+  const csvLines = [headers, ...rows]
+    .map(cells => cells.map(escapeCsvCell).join(","))
+    .join("\r\n");
+
+  const blob = new Blob(["\uFEFF" + csvLines], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `screening_favorite_${mode}_${label ? label.replace(/[^\d]/g, "").slice(0, 8) : "latest"}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 /**
  * 比較元・比較先終値から上昇/下降の結果を算出する
  * @param {number} fromClose - 比較元終値
@@ -1457,6 +2048,17 @@ function updateTableHeader(mode, label = "", compareFromLabel = "", compareDateL
 ============================ */
 async function startScreening() {
   const mode = document.querySelector('input[name="searchMode"]:checked').value;
+
+  // favorite モードは他モードと入出力の形（1リクエストではなく複数モードの
+  // 並列実行・多段テーブル表示）が大きく異なるため、以降の共通処理（各モードの
+  // 入力値読み取り・検証・URL組み立て・showResults）には合流させず、
+  // 専用の runFavoriteScreening() へ委譲する。
+  if (mode === "favorite") {
+    toggleResultDisplayMode(true);
+    await runFavoriteScreening();
+    return;
+  }
+  toggleResultDisplayMode(false);
 
   const volumeRatio = parseFloat(document.getElementById("volumeRatio").value);
   const shadowRatio = parseFloat(document.getElementById("shadowRatio").value);
