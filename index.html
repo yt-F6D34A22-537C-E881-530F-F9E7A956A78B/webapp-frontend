@@ -123,7 +123,11 @@
       ============================ -->
       <div class="mode-tabs" role="tablist">
         <label class="mode-tab">
-          <input type="radio" name="searchMode" value="ratio" checked>
+          <input type="radio" name="searchMode" value="favorite" checked>
+          <span>★ お気に入り</span>
+        </label>
+        <label class="mode-tab">
+          <input type="radio" name="searchMode" value="ratio">
           <span>出来高×上髭</span>
         </label>
         <label class="mode-tab">
@@ -149,10 +153,6 @@
         <label class="mode-tab">
           <input type="radio" name="searchMode" value="block">
           <span>超大口検出</span>
-        </label>
-        <label class="mode-tab">
-          <input type="radio" name="searchMode" value="favorite">
-          <span>★ お気に入り</span>
         </label>
       </div>
 
@@ -366,16 +366,17 @@
       </div>
 
       <!-- お気に入りモード専用の結果表示エリア（2026-09 追加）。
-           条件ごとに見出し付きの表を縦に並べる。#resultTableWell（上記）は使わず、
-           startScreening() が favorite モード時に container を空にしてから
-           renderFavoriteSection() で1条件につき1つの table-well 相当のブロックを追加する。
-           各ブロックの <thead> は position: sticky; top: 0 とし（.favorite-table-scroll
+           条件ごとに見出し付きの表を縦に並べる。#singleResultWell（上記）は使わず、
+           screening.js の runFavoriteScreening() が renderFavoriteResults() を通じて
+           buildFavoriteSectionEl() で1条件につき1つの favorite-section ブロックを追加する。
+           各ブロックの <thead> は position: sticky; top: 0 とし（.favorite-section-scroll
            内で完結する単純なCSS指定のみで、#resultTableStickyWrap のような固定ヘッダ専用の
            二重テーブル・JSでの列幅/横スクロール同期は行わない）、複数ブロックが縦に並んでも
            ブラウザの sticky の標準動作により、スクロール中は各ブロックの見出しが上部に留まり、
            次のブロックへ差し掛かると自然に入れ替わる。
            トレードオフとして、通常の結果テーブルにある「コード・銘柄名列の横スクロール中の
-           固定表示」はお気に入りモードでは提供しない（横スクロールすると隠れる）。 -->
+           固定表示」はお気に入りモードでは提供しない（横スクロールすると隠れる）。詳細は
+           仕様書.md の scripts.screening.ui.modes.favorite を参照。 -->
       <div id="favoriteResultsContainer" class="favorite-results-container hidden"></div>
 
       <p class="hint">行をタップ／クリックするとチャートを表示します。</p>
