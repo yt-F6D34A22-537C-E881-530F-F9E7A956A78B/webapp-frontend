@@ -1723,3 +1723,106 @@ button:disabled {
 .app-header-nav a:hover {
   color: var(--color-accent-primary);
 }
+
+/* ============================================================
+   お気に入り（2026-09 追加）
+   ============================================================ */
+
+/* 各モードの条件パネルに置く ☆ボタン。.btn.ghost（font-size: 20px）は
+   アイコンのみのボタン向けのため、ラベル付きのこのボタンでは上書きする。 */
+.favorite-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  padding: 6px 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  border-radius: var(--radius-input);
+  box-shadow: var(--shadow-neumo-outset);
+}
+
+.favorite-toggle-btn:hover {
+  color: var(--color-accent-primary);
+}
+
+.favorite-toggle-btn.is-favorited {
+  color: var(--color-accent-primary);
+  box-shadow: var(--shadow-neumo-inset);
+}
+
+/* お気に入りモードのパネル内、登録済み条件の一覧 */
+.favorite-list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px;
+  margin-top: 6px;
+  background: var(--color-bg-mode-block);
+  border-radius: var(--radius-input);
+  box-shadow: var(--shadow-neumo-inset);
+}
+
+/* お気に入りモードの結果：モードごとに独立した table-well 相当のブロックを
+   縦に並べる。.table-well 自体（凹型のニューモーフィズム・角丸）はそのまま
+   流用し、内部だけ複数モード分割り当てる形にする。 */
+.favorite-results-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.favorite-section {
+  background: var(--color-bg-mode-block);
+  border-radius: var(--radius-input);
+  box-shadow: var(--shadow-neumo-inset);
+  padding: 10px;
+}
+
+.favorite-section-heading {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0 4px 8px;
+}
+
+.favorite-section-heading h3 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.favorite-section-csv-btn {
+  margin-left: auto;
+  padding: 4px 10px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  border-radius: var(--radius-csv-btn);
+}
+
+.favorite-section-csv-btn:hover {
+  color: var(--color-accent-primary);
+}
+
+/* 横スクロール用のラッパー（既存の .table-scroll-outer をそのまま利用）。
+   固定列（コード・銘柄名の横スクロール中の固定表示）は行わない
+   （screening.js の renderFavoriteResults のコメントを参照）。 */
+.favorite-section-scroll {
+  border-radius: var(--radius-input);
+  overflow-x: auto;
+}
+
+/* 縦スクロール時に見出しが隠れないようにする対応（要件）。
+   #resultTableStickyWrap のような二重テーブル・JSでの幅同期は用いず、
+   単一テーブルの <thead> に position: sticky を直接指定するだけで済ませている。
+   これにより、複数の .favorite-section が縦に並んでいても、ブラウザ標準の
+   sticky動作でセクションごとに見出しが独立して上部に留まり、
+   次のセクションに入ると自然に入れ替わる。 */
+.favorite-section thead th {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-table-header);
+  background: var(--color-bg-mode-block);
+}
