@@ -1,0 +1,8 @@
+{
+  "ratio": {
+    "volume_ratio": 5,
+    "shadow_ratio": 1,
+    "min_volume": 1000000,
+    "exclude_markets": "ETF・ETN"
+  }
+}
