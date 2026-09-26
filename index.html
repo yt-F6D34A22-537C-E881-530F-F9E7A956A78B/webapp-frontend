@@ -150,6 +150,10 @@
           <input type="radio" name="searchMode" value="block">
           <span>超大口検出</span>
         </label>
+        <label class="mode-tab">
+          <input type="radio" name="searchMode" value="favorite">
+          <span>★ お気に入り</span>
+        </label>
       </div>
 
       <!-- ============================
@@ -175,6 +179,8 @@
               <select id="ratioDateSelect"></select>
             </label>
             <div data-exclude-markets-slot></div>
+
+            <button type="button" id="ratioFavoriteBtn" class="btn ghost favorite-toggle-btn" data-favorite-mode="ratio" data-role="favorite-toggle-btn">☆ お気に入りに登録</button>
           </div>
         </div>
 
@@ -184,6 +190,8 @@
             <label>日付
               <select id="dateSelect" disabled></select>
             </label>
+
+            <button type="button" id="dateFavoriteBtn" class="btn ghost favorite-toggle-btn" data-favorite-mode="date" data-role="favorite-toggle-btn">☆ お気に入りに登録</button>
           </div>
         </div>
 
@@ -193,6 +201,8 @@
             <label>日付
               <select id="dateDownSelect" disabled></select>
             </label>
+
+            <button type="button" id="dateDownFavoriteBtn" class="btn ghost favorite-toggle-btn" data-favorite-mode="dateDown" data-role="favorite-toggle-btn">☆ お気に入りに登録</button>
           </div>
         </div>
 
@@ -216,6 +226,8 @@
               <select id="marginBbDateSelect" disabled></select>
             </label>
             <div data-exclude-markets-slot></div>
+
+            <button type="button" id="marginBbFavoriteBtn" class="btn ghost favorite-toggle-btn" data-favorite-mode="marginBb" data-role="favorite-toggle-btn">☆ お気に入りに登録</button>
           </div>
         </div>
 
@@ -278,6 +290,20 @@
               <input id="blockCandidateLimit" type="number" value="50" step="10" min="1" disabled>
             </label>
             <div data-exclude-markets-slot></div>
+
+            <button type="button" id="blockFavoriteBtn" class="btn ghost favorite-toggle-btn" data-favorite-mode="block" data-role="favorite-toggle-btn">☆ お気に入りに登録</button>
+          </div>
+        </div>
+
+        <!-- モード：お気に入り（2026-09 追加。各モードの☆ボタンで保存した条件を、
+             実行のたびに最新の日付で一括実行する。対象外のモード（compare・
+             heuristics）とその理由は screening.js の FAVORITE_MODES 定義・
+             main.py の ALLOWED_FAVORITE_MODES を参照。 -->
+        <div class="mode-panel" data-mode="favorite">
+          <div class="mode-conditions" id="favoriteConditions">
+            <p class="hint">各モードの条件パネルにある☆ボタンで登録した条件を、実行のたびに最新の日付で一括実行します（保存した日付そのものではなく、実行時点の最新日付を使用します）。</p>
+            <p id="favoriteEmpty" class="hint">お気に入り登録された条件がありません。各モードの条件パネルにある☆ボタンから登録してください。</p>
+            <div id="favoriteList" class="favorite-list"></div>
           </div>
         </div>
       </div>
@@ -320,7 +346,7 @@
              #resultTableScrollOuter の id・構造・screening.js からの
              参照方法は変更していない）
       ============================ -->
-      <div class="table-well">
+      <div class="table-well" id="singleResultWell">
 
         <!-- 固定ヘッダ専用テーブル -->
         <div class="table-header-sticky" id="resultTableStickyWrap">
@@ -338,6 +364,19 @@
         </div>
 
       </div>
+
+      <!-- お気に入りモード専用の結果表示エリア（2026-09 追加）。
+           条件ごとに見出し付きの表を縦に並べる。#resultTableWell（上記）は使わず、
+           startScreening() が favorite モード時に container を空にしてから
+           renderFavoriteSection() で1条件につき1つの table-well 相当のブロックを追加する。
+           各ブロックの <thead> は position: sticky; top: 0 とし（.favorite-table-scroll
+           内で完結する単純なCSS指定のみで、#resultTableStickyWrap のような固定ヘッダ専用の
+           二重テーブル・JSでの列幅/横スクロール同期は行わない）、複数ブロックが縦に並んでも
+           ブラウザの sticky の標準動作により、スクロール中は各ブロックの見出しが上部に留まり、
+           次のブロックへ差し掛かると自然に入れ替わる。
+           トレードオフとして、通常の結果テーブルにある「コード・銘柄名列の横スクロール中の
+           固定表示」はお気に入りモードでは提供しない（横スクロールすると隠れる）。 -->
+      <div id="favoriteResultsContainer" class="favorite-results-container hidden"></div>
 
       <p class="hint">行をタップ／クリックするとチャートを表示します。</p>
       <p class="hint">heuristics モードでは ○＝一致、×＝不一致 を表示します。</p>
