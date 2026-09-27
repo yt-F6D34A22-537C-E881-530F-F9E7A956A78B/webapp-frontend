@@ -128,19 +128,19 @@
         </label>
         <label class="mode-tab">
           <input type="radio" name="searchMode" value="ratio">
-          <span>出来高×上髭</span>
+          <span>出来高×上髭<span data-role="favorite-tab-mark" data-favorite-mode="ratio"></span></span>
         </label>
         <label class="mode-tab">
           <input type="radio" name="searchMode" value="date">
-          <span>値上がり率ランキング</span>
+          <span>値上がり率ランキング<span data-role="favorite-tab-mark" data-favorite-mode="date"></span></span>
         </label>
         <label class="mode-tab">
           <input type="radio" name="searchMode" value="dateDown">
-          <span>値下がり率ランキング</span>
+          <span>値下がり率ランキング<span data-role="favorite-tab-mark" data-favorite-mode="dateDown"></span></span>
         </label>
         <label class="mode-tab">
           <input type="radio" name="searchMode" value="marginBb">
-          <span>信用倍率×ボリンジャー</span>
+          <span>信用倍率×ボリンジャー<span data-role="favorite-tab-mark" data-favorite-mode="marginBb"></span></span>
         </label>
         <label class="mode-tab">
           <input type="radio" name="searchMode" value="heuristics">
@@ -152,7 +152,7 @@
         </label>
         <label class="mode-tab">
           <input type="radio" name="searchMode" value="block">
-          <span>超大口検出</span>
+          <span>超大口検出<span data-role="favorite-tab-mark" data-favorite-mode="block"></span></span>
         </label>
       </div>
 
@@ -180,7 +180,7 @@
             </label>
             <div data-exclude-markets-slot></div>
 
-            <button type="button" id="ratioFavoriteBtn" class="btn ghost favorite-toggle-btn" data-favorite-mode="ratio" data-role="favorite-toggle-btn">☆ お気に入りに登録</button>
+            <button type="button" id="ratioFavoriteBtn" class="btn ghost favorite-toggle-btn" data-favorite-mode="ratio" data-role="favorite-toggle-btn" title="お気に入りに登録">☆</button>
           </div>
         </div>
 
@@ -191,7 +191,7 @@
               <select id="dateSelect" disabled></select>
             </label>
 
-            <button type="button" id="dateFavoriteBtn" class="btn ghost favorite-toggle-btn" data-favorite-mode="date" data-role="favorite-toggle-btn">☆ お気に入りに登録</button>
+            <button type="button" id="dateFavoriteBtn" class="btn ghost favorite-toggle-btn" data-favorite-mode="date" data-role="favorite-toggle-btn" title="お気に入りに登録">☆</button>
           </div>
         </div>
 
@@ -202,7 +202,7 @@
               <select id="dateDownSelect" disabled></select>
             </label>
 
-            <button type="button" id="dateDownFavoriteBtn" class="btn ghost favorite-toggle-btn" data-favorite-mode="dateDown" data-role="favorite-toggle-btn">☆ お気に入りに登録</button>
+            <button type="button" id="dateDownFavoriteBtn" class="btn ghost favorite-toggle-btn" data-favorite-mode="dateDown" data-role="favorite-toggle-btn" title="お気に入りに登録">☆</button>
           </div>
         </div>
 
@@ -227,7 +227,7 @@
             </label>
             <div data-exclude-markets-slot></div>
 
-            <button type="button" id="marginBbFavoriteBtn" class="btn ghost favorite-toggle-btn" data-favorite-mode="marginBb" data-role="favorite-toggle-btn">☆ お気に入りに登録</button>
+            <button type="button" id="marginBbFavoriteBtn" class="btn ghost favorite-toggle-btn" data-favorite-mode="marginBb" data-role="favorite-toggle-btn" title="お気に入りに登録">☆</button>
           </div>
         </div>
 
@@ -291,7 +291,7 @@
             </label>
             <div data-exclude-markets-slot></div>
 
-            <button type="button" id="blockFavoriteBtn" class="btn ghost favorite-toggle-btn" data-favorite-mode="block" data-role="favorite-toggle-btn">☆ お気に入りに登録</button>
+            <button type="button" id="blockFavoriteBtn" class="btn ghost favorite-toggle-btn" data-favorite-mode="block" data-role="favorite-toggle-btn" title="お気に入りに登録">☆</button>
           </div>
         </div>
 
