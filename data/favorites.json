@@ -10,5 +10,6 @@
     "min_buy_balance": 100000,
     "bb_zone": "upper3",
     "exclude_markets": "ETF・ETN"
-  }
+  },
+  "date": {}
 }
