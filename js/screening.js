@@ -1452,14 +1452,22 @@ async function toggleFavorite(mode) {
 }
 
 /**
- * 各モードの条件パネルにある ☆ボタンの見た目（登録済みかどうか）を更新する。
+ * 各モードの条件パネルにある ☆/★ボタンと、対応するタブラベル末尾の★マークを、
+ * 現在の登録状況（favoritesState）に合わせて更新する。
  */
 function renderFavoriteToggleButtons() {
   document.querySelectorAll('[data-role="favorite-toggle-btn"]').forEach(btn => {
     const mode = btn.dataset.favoriteMode;
     const saved = Object.prototype.hasOwnProperty.call(favoritesState, mode);
     btn.classList.toggle("is-favorited", saved);
-    btn.textContent = saved ? "★ お気に入り登録済み（クリックで解除）" : "☆ お気に入りに登録";
+    btn.textContent = saved ? "★" : "☆";
+    btn.title = saved ? "お気に入り登録済み（クリックで解除）" : "お気に入りに登録";
+  });
+
+  document.querySelectorAll('[data-role="favorite-tab-mark"]').forEach(mark => {
+    const mode = mark.dataset.favoriteMode;
+    const saved = Object.prototype.hasOwnProperty.call(favoritesState, mode);
+    mark.textContent = saved ? "★" : "";
   });
 }
 
@@ -1628,17 +1636,22 @@ async function runFavoriteScreening() {
  * 列がまったく別）ため、既存の単一テーブル（#resultTable 等）には統合せず、
  * 独立したテーブルをモード数ぶん #favoriteResultsContainer へ積み上げる。
  *
- * 縦スクロール時に見出しが隠れないようにする仕組み（要件）は、既存の
- * 固定列付き横スクロール用の複雑な同期（syncColumnWidths/syncFixedColumns/
- * スクロール同期）を favorite モードでは使わず、CSS の position: sticky を
- * 各セクションの <thead> の <th> に直接適用するだけの単純な方式にしている
- * （style.css の .favorite-section thead th を参照）。ブラウザの標準機能で
- * 「そのセクションが画面内にある間だけヘッダーが上部に張り付き、次の
- * セクションに入ると自然に入れ替わる」動きが得られるため、JSでの同期処理が
- * 不要になる。トレードオフとして、横スクロール時の左固定列（コード・銘柄名を
- * 常に見せる機能）は favorite モードの表では対応していない（他モードほど
- * 横に長い表が少ないことと、今回の要件が縦スクロールの見出し固定のみだった
- * ため、意図的にスコープ外とした）。
+ * 各セクションは、単一テーブル（他モード共通）とまったく同じ DOM 構造
+ * （.table-well > .table-header-sticky + .table-scroll-outer の2テーブル構成）を
+ * id だけ変えて複製し、updateTableHeader()/showResults()/syncColumnWidths()/
+ * syncFixedColumns()/setupScrollSync() をそのまま呼び出す（2026-09、単一テーブル用
+ * 関数を target id 引数付きで汎用化した）。これにより、固定列（横スクロール中の
+ * コード・銘柄名の固定表示）・行ホバー・行クリックでのチャート表示・縦スクロール時の
+ * ヘッダ固定（position: sticky を用いた独立した仕組みで、ブラウザ標準の動作により
+ * 「そのセクションが画面内にある間だけヘッダーが上部に張り付き、次のセクションに
+ * 入ると自然に入れ替わる」動きになる）のすべてが、他モードの結果グリッドと同一の
+ * 挙動になる（2026-09、要望を受けて単純化した独自実装から差し替えた）。
+ *
+ * なお window.setScreeningResults(results)（チャートモーダルの前後移動用グローバル
+ * 状態）は showResults() 呼び出しのたびに上書きされるため、複数セクションを描画すると
+ * 最後に描画したセクションの一覧が「前後移動」の対象になる。行クリックで該当銘柄の
+ * チャートが開くこと自体には影響しない（クリックされた行の銘柄コードは各行が個別に
+ * 保持しているため）。
  */
 function renderFavoriteResults(sections) {
   const container = document.getElementById("favoriteResultsContainer");
@@ -1653,15 +1666,36 @@ function renderFavoriteResults(sections) {
     return;
   }
 
-  sections.forEach(section => {
-    container.appendChild(buildFavoriteSectionEl(section));
+  sections.forEach((section, i) => {
+    const { sectionEl, populate } = buildFavoriteSectionEl(section, i);
+    // getElementById で内部要素を参照する updateTableHeader()/showResults() 等を
+    // 呼び出す前に、必ず sectionEl を DOM ツリーへ接続しておく必要がある
+    // （接続前は getElementById が id 付き要素を見つけられないため）。
+    container.appendChild(sectionEl);
+    populate();
   });
 }
 
-/** favorite モードの1セクション（1モードぶん）のDOM要素を組み立てる。 */
-function buildFavoriteSectionEl({ mode, results, error, targetDate, marginDate }) {
+/**
+ * favorite モードの1セクション（1モードぶん）のDOM要素を組み立てる。
+ * @param {object} section - { mode, results, error, targetDate, marginDate }
+ * @param {number} index - #favoriteResultsContainer 内での通し番号（id の一意化に使用）
+ * @returns {{ sectionEl: HTMLElement, populate: () => void }}
+ *   sectionEl：DOM へ接続するための骨組み（見出し・空のテーブル構造）。
+ *   populate：sectionEl を DOM へ接続した後に呼び出す、ヘッダ・行の描画関数
+ *   （updateTableHeader()/showResults() 等が内部で document.getElementById() を
+ *   使うため、呼び出し時点で sectionEl が DOM に接続されている必要がある）。
+ */
+function buildFavoriteSectionEl({ mode, results, error, targetDate, marginDate }, index) {
   const label = targetDate ? makeDateLabel(targetDate) : "";
-  const columns = favoriteColumnsForMode(mode, label);
+
+  // 単一テーブルの id 命名規則（resultXxx）に合わせつつ、セクションごとに一意にする
+  const stickyWrapId = `favStickyWrap-${index}`;
+  const stickyTableId = `favSticky-${index}`;
+  const stickyTheadId = `favHeaderSticky-${index}`;
+  const scrollOuterId = `favScrollOuter-${index}`;
+  const bodyTableId = `favTable-${index}`;
+  const bodyTheadId = `favHeaderBody-${index}`;
 
   const wrapEl = document.createElement("section");
   wrapEl.className = "favorite-section";
@@ -1682,14 +1716,15 @@ function buildFavoriteSectionEl({ mode, results, error, targetDate, marginDate }
     }
     headingEl.appendChild(countEl);
 
-    if (results.length > 0) {
-      const csvBtn = document.createElement("button");
-      csvBtn.type = "button";
-      csvBtn.className = "btn ghost favorite-section-csv-btn";
-      csvBtn.textContent = "CSV";
-      csvBtn.addEventListener("click", () => downloadFavoriteSectionCsv(mode, label, results));
-      headingEl.appendChild(csvBtn);
-    }
+    // 単一テーブルの #csvDownloadBtn と同じ見た目（アイコン・class）のボタンを複製する
+    const csvBtn = document.createElement("button");
+    csvBtn.type = "button";
+    csvBtn.className = "btn ghost csv-download-btn";
+    csvBtn.title = "CSVダウンロード";
+    csvBtn.disabled = results.length === 0;
+    csvBtn.innerHTML = csvDownloadBtn.querySelector("svg").outerHTML;
+    csvBtn.addEventListener("click", () => downloadFavoriteSectionCsv(mode, label, results));
+    headingEl.appendChild(csvBtn);
   }
   wrapEl.appendChild(headingEl);
 
@@ -1698,78 +1733,48 @@ function buildFavoriteSectionEl({ mode, results, error, targetDate, marginDate }
     errEl.className = "hint";
     errEl.textContent = `このモードの実行に失敗しました：${error}`;
     wrapEl.appendChild(errEl);
-    return wrapEl;
+    return { sectionEl: wrapEl, populate: () => {} };
   }
 
-  const scrollEl = document.createElement("div");
-  scrollEl.className = "table-scroll-outer favorite-section-scroll";
+  // 単一テーブルと同じ二重テーブル構成（.table-well > .table-header-sticky + .table-scroll-outer）
+  const tableWellEl = document.createElement("div");
+  tableWellEl.className = "table-well";
 
-  const tableEl = document.createElement("table");
-  tableEl.className = "result-table";
-
-  const theadEl = document.createElement("thead");
-  theadEl.innerHTML = renderHeaderRow(columns);
-  tableEl.appendChild(theadEl);
-
-  const tbodyEl = document.createElement("tbody");
-  results.forEach(r => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = renderDataCells(columns, r);
-    tbodyEl.appendChild(tr);
-  });
-  tableEl.appendChild(tbodyEl);
-
-  scrollEl.appendChild(tableEl);
-  wrapEl.appendChild(scrollEl);
+  tableWellEl.innerHTML = `
+    <div class="table-header-sticky" id="${stickyWrapId}">
+      <table id="${stickyTableId}" class="result-table">
+        <thead id="${stickyTheadId}"></thead>
+      </table>
+    </div>
+    <div class="table-scroll-outer" id="${scrollOuterId}">
+      <table id="${bodyTableId}" class="result-table">
+        <thead id="${bodyTheadId}" aria-hidden="true"></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  `;
+  wrapEl.appendChild(tableWellEl);
 
   if (results.length === 0) {
     const emptyEl = document.createElement("p");
     emptyEl.className = "hint";
     emptyEl.textContent = "条件に一致する銘柄はありませんでした。";
     wrapEl.appendChild(emptyEl);
+    return { sectionEl: wrapEl, populate: () => {} };
   }
 
-  return wrapEl;
-}
+  // ヘッダ・行の描画は sectionEl が DOM に接続された後（呼び出し元の
+  // renderFavoriteResults() を参照）に実行する必要があるため、
+  // ここでは関数として返すだけにとどめる。
+  const populate = () => {
+    updateTableHeader(mode, label, "", [], stickyTheadId, bodyTheadId);
+    showResults(results, mode, [], document.getElementById(bodyTableId).querySelector("tbody"));
+    setupScrollSync(stickyWrapId, scrollOuterId);
+    // 単一テーブルと同様、幅・固定列オフセットの実測が必要なため描画完了後に同期する
+    requestAnimationFrame(() => afterTableRendered(stickyTableId, bodyTableId));
+  };
 
-/**
- * favorite セクション用の列定義。updateTableHeader()/showResults() の
- * 対応モード分岐と同じ COLUMNS の組み合わせを用いる（意図的な重複。
- * 理由は updateTableHeader() 側のコメントに準じる）。
- */
-function favoriteColumnsForMode(mode, label) {
-  if (mode === "ratio") {
-    return [
-      COLUMNS.code, COLUMNS.name, COLUMNS.marketCap,
-      COLUMNS.ratioClose, COLUMNS.ratioVolume, COLUMNS.ratioVolumePrev, COLUMNS.ratioVolumeChange,
-      COLUMNS.ratioTradingValue, COLUMNS.ratioShadowRatio, COLUMNS.ratioShadowUpper, COLUMNS.ratioShadowBody,
-    ];
-  }
-  if (mode === "date" || mode === "dateDown") {
-    return [
-      COLUMNS.code, COLUMNS.name, COLUMNS.marketCap,
-      col(COLUMNS.dateChangeRate, { label: mode === "dateDown" ? "値下がり率" : COLUMNS.dateChangeRate.label }),
-      col(COLUMNS.dateTodayClose, { label: `${label}終値` }),
-      COLUMNS.datePrevClose,
-    ];
-  }
-  if (mode === "block") {
-    return [
-      COLUMNS.code, COLUMNS.name, COLUMNS.marketCap,
-      COLUMNS.blockDetectCount, COLUMNS.blockMaxValue, COLUMNS.blockDetectTime,
-      COLUMNS.blockPriceChange, COLUMNS.blockType, COLUMNS.blockDailyValue,
-    ];
-  }
-  if (mode === "marginBb") {
-    return [
-      COLUMNS.code, COLUMNS.name, COLUMNS.marketCap,
-      col(COLUMNS.marginBbClose, { label: `${label}終値` }),
-      COLUMNS.marginBbPosition, COLUMNS.marginBbRatio,
-      COLUMNS.marginBbBuyBalance, COLUMNS.marginBbSellBalance,
-      COLUMNS.marginBbBuy, COLUMNS.marginBbSell, COLUMNS.marginBbRegulation,
-    ];
-  }
-  return [];
+  return { sectionEl: wrapEl, populate };
 }
 
 /**
@@ -1870,9 +1875,9 @@ function setCompareFromDate(dateStr) {
 /* ============================
    テーブルヘッダ更新
 ============================ */
-function updateTableHeader(mode, label = "", compareFromLabel = "", compareDateList = []) {
-  const stickyThead = document.getElementById("resultHeaderSticky");
-  const bodyThead   = document.getElementById("resultHeaderBody");
+function updateTableHeader(mode, label = "", compareFromLabel = "", compareDateList = [], stickyId = "resultHeaderSticky", bodyId = "resultHeaderBody") {
+  const stickyThead = document.getElementById(stickyId);
+  const bodyThead   = document.getElementById(bodyId);
 
   // ratio
   if (mode === "ratio") {
@@ -2378,7 +2383,17 @@ function cancelScreening() {
 /* ============================
    結果表示
 ============================ */
-function showResults(results, mode, compareDateList = currentCompareDateList) {
+/**
+ * @param {Array} results
+ * @param {string} mode
+ * @param {Array} compareDateList
+ * @param {HTMLTableSectionElement} tbodyEl 描画先の <tbody>。既定は単一テーブル（他モード共通）の
+ *   #resultTable の tbody。favorite モードは、セクションごとに生成した独自の tbody を渡す
+ *   （2026-09 追加。同名の外側 const tbody を関数内で意図的にシャドーイングし、内部の実装
+ *   （行クリック・CSVボタン有効化等）はそのまま tbody を参照し続けられるようにしている）
+ */
+function showResults(results, mode, compareDateList = currentCompareDateList, tbodyEl = tbody) {
+  const tbody = tbodyEl;
   tbody.innerHTML = "";
 
   // compare モードのみ、縦持ちの results を1銘柄1行の横持ちへ変換してから描画する。
@@ -2712,9 +2727,9 @@ document.addEventListener("click", e => {
 /* ============================
    固定ヘッダと本体テーブルの列幅同期
 ============================ */
-function syncColumnWidths() {
-  const headerTable = document.getElementById("resultTableSticky");
-  const bodyTable   = document.getElementById("resultTable");
+function syncColumnWidths(headerTableId = "resultTableSticky", bodyTableId = "resultTable") {
+  const headerTable = document.getElementById(headerTableId);
+  const bodyTable   = document.getElementById(bodyTableId);
   if (!headerTable || !bodyTable) return;
 
   // querySelectorAll("tbody tr") は本体テーブル全行を走査してからその件数を数えるため、
@@ -2767,8 +2782,8 @@ function syncColumnWidths() {
 /* ============================
    固定列同期
 ============================ */
-function syncFixedColumns() {
-  const bodyTable = document.getElementById("resultTable");
+function syncFixedColumns(bodyTableId = "resultTable", headerTableId = "resultTableSticky") {
+  const bodyTable = document.getElementById(bodyTableId);
   if (!bodyTable) return;
 
   // tBodies[0].rows はライブコレクション。querySelectorAll("tbody tr") と異なり
@@ -2808,7 +2823,7 @@ function syncFixedColumns() {
   //    2行目のセル位置が本体テーブルの列インデックスとずれるため、
   //    nth-child（DOM上の位置）ではなく [data-fixed-col] の出現順
   //    （本体と同じ左→右の並び）で対応付ける。固定列は少数のため走査コストも小さい。
-  const headerFixedCols = document.querySelectorAll("#resultTableSticky [data-fixed-col]");
+  const headerFixedCols = document.querySelectorAll(`#${headerTableId} [data-fixed-col]`);
   headerFixedCols.forEach((th, i) => {
     if (offsets[i]) th.style.left = `${offsets[i].left}px`;
   });
@@ -2820,7 +2835,7 @@ function syncFixedColumns() {
   //    data-fixed-col を持たせて③で対応付け、1行目には代わりに
   //    [data-fixed-col-group="<本体側offsetsのインデックス>"] を付与し、
   //    同じ left オフセットを明示的に適用する（2026-07 追加）。
-  document.querySelectorAll("#resultTableSticky [data-fixed-col-group]").forEach(th => {
+  document.querySelectorAll(`#${headerTableId} [data-fixed-col-group]`).forEach(th => {
     const offset = offsets[Number(th.dataset.fixedColGroup)];
     if (offset) th.style.left = `${offset.left}px`;
   });
@@ -2829,10 +2844,17 @@ function syncFixedColumns() {
 /* ============================
    スクロール同期
 ============================ */
-const stickyHeader = document.getElementById("resultTableStickyWrap");
-const scrollOuter = document.getElementById("resultTableScrollOuter");
+/**
+ * ヘッダ側（横スクロール）と本体側（横スクロール）の scrollLeft を双方向に同期する。
+ * 単一テーブル（他モード共通）は #resultTableStickyWrap / #resultTableScrollOuter に
+ * 対して1回だけ呼び出す（後述、従来通りの動作）。favorite モードはセクションごとに
+ * 生成した専用の id ペアに対して呼び出す（2026-09、関数化して汎用化）。
+ */
+function setupScrollSync(stickyWrapId, scrollOuterId) {
+  const stickyHeader = document.getElementById(stickyWrapId);
+  const scrollOuter = document.getElementById(scrollOuterId);
+  if (!stickyHeader || !scrollOuter) return;
 
-if (stickyHeader && scrollOuter) {
   stickyHeader.addEventListener("scroll", () => {
     scrollOuter.scrollLeft = stickyHeader.scrollLeft;
   });
@@ -2842,14 +2864,16 @@ if (stickyHeader && scrollOuter) {
   });
 }
 
+setupScrollSync("resultTableStickyWrap", "resultTableScrollOuter");
+
 /* ============================
    afterTableRendered
 ============================ */
-function afterTableRendered() {
+function afterTableRendered(headerTableId = "resultTableSticky", bodyTableId = "resultTable") {
   setTimeout(() => {
-    syncColumnWidths();
+    syncColumnWidths(headerTableId, bodyTableId);
     setTimeout(() => {
-      syncFixedColumns();
+      syncFixedColumns(bodyTableId, headerTableId);
     }, 0);
   }, 0);
 }
@@ -2913,8 +2937,15 @@ if (resultTableEl && typeof ResizeObserver !== "undefined") {
 ------------------------------ */
 (function patchShowResults() {
   const original = showResults;
-  showResults = function(results, mode) {
-    original(results, mode);
+  // 2026-09 修正：showResults(results, mode) の2引数のみを転送していたため、
+  // favorite モード対応で追加した第3引数（compareDateList）・第4引数
+  // （tbodyEl。描画先の <tbody> を明示指定するためのもの）が、このパッチを
+  // 経由すると常に既定値（compareDateList=currentCompareDateList・
+  // tbodyEl=単一テーブルの tbody）へ差し替わってしまい、favorite モードの
+  // 各セクションが単一テーブル側へ誤って描画される不具合があった。
+  // 呼び出し元が渡した引数をそのまま透過させるよう、レスト構文へ変更した。
+  showResults = function(...args) {
+    original(...args);
     // afterTableRendered() 内で 2段階遅延同期するため、ここでは呼ばない
   };
 })();
