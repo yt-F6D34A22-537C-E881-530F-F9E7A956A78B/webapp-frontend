@@ -4,5 +4,11 @@
     "shadow_ratio": 1,
     "min_volume": 1000000,
     "exclude_markets": "ETF・ETN"
+  },
+  "marginBb": {
+    "margin_ratio": 5,
+    "min_buy_balance": 100000,
+    "bb_zone": "upper3",
+    "exclude_markets": "ETF・ETN"
   }
 }
