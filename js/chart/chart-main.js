@@ -182,6 +182,9 @@ function closeModal() {
 
   // モーダルを開いている間だけ保持していた取得結果を破棄する
   clearChartDataCache();
+
+  // 信用取引パネル（js/margin-panel.js）へモーダルが閉じたことを通知する
+  document.dispatchEvent(new CustomEvent("chartModalClosed"));
 }
 
 closeBtn.addEventListener("click", closeModal);
@@ -197,6 +200,11 @@ function waitForHeight(callback) {
 // モーダルを開く
 window.openChartModal = function(ticker, name, index) {
   currentIndex = index;
+
+  // 信用取引パネル（js/margin-panel.js。2026-09 追加）へ銘柄切替を通知する。
+  // 前へ/次へ（showPrev/showNext）は本関数を再呼び出しする実装のため、
+  // パネルを開いたままでも自動的に銘柄が追従する。
+  document.dispatchEvent(new CustomEvent("chartModalOpened", { detail: { ticker, name } }));
 
   // 銘柄名は data.json（JPX 由来）の値であり、innerHTML でそのまま
   // 埋め込むと HTML として解釈されうるため textContent で描画する
