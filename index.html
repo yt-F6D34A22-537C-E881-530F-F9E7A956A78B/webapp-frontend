@@ -76,6 +76,9 @@
        スクリーニング処理
   ============================ -->
   <script defer src="js/screening.js"></script>
+  <!-- 信用取引パネル（チャートモーダル内。2026-09 追加）。chart-main.js が発火する
+       chartModalOpened / chartModalClosed イベントで連動する（screening.js には依存しない） -->
+  <script defer src="js/margin-panel.js"></script>
 
   <!-- ============================
        チャート関連
@@ -382,6 +385,7 @@
       <p class="hint">行をタップ／クリックするとチャートを表示します。</p>
       <p class="hint">heuristics モードでは ○＝一致、×＝不一致 を表示します。</p>
       <p class="hint">信用倍率×ボリンジャーモードでは、制度信用の ○＝建て可能、×＝建て不可（規制等）を表示します。</p>
+      <p class="hint">チャート画面の「信用」ボタンで、その銘柄の信用取引状況（信用残・信用倍率・規制）を確認できます。</p>
     </section>
 
     <!-- ============================
@@ -402,6 +406,9 @@
               <label><input type="radio" name="timeframe" value="1mo"> 月足</label>
             </div>
 
+            <button id="marginInfoBtn" type="button" class="btn small"
+                    aria-expanded="false" aria-controls="marginInfoPanel"
+                    title="信用残・信用倍率・規制の状況を表示">信用</button>
             <button id="prevChartBtn" class="btn small">前へ</button>
             <button id="nextChartBtn" class="btn small">次へ</button>
           </div>
@@ -420,6 +427,12 @@
                3ペインへ統合したため、#rciContainer / #macdContainer を廃止した。
                （時間軸の3重描画・十字カーソルの非同期・価格軸幅の不揃いを解消） -->
           <div id="chartContainer"></div>
+
+          <!-- 信用取引パネル（2026-09 追加）。JS からは id でのみ取得する。
+               表示切替は class="hidden"（chartSettingsModal と同じ方式） -->
+          <section id="marginInfoPanel" class="margin-info-panel hidden" aria-label="信用取引情報">
+            <div id="marginInfoBody"></div>
+          </section>
 
           <div id="chartSettingsBtn" class="chart-settings-btn">⚙️</div>
 
