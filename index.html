@@ -130,6 +130,10 @@
           <span>★ お気に入り</span>
         </label>
         <label class="mode-tab">
+          <input type="radio" name="searchMode" value="symbolSearch">
+          <span>銘柄検索</span>
+        </label>
+        <label class="mode-tab">
           <input type="radio" name="searchMode" value="ratio">
           <span>出来高×上髭<span data-role="favorite-tab-mark" data-favorite-mode="ratio"></span></span>
         </label>
@@ -231,6 +235,20 @@
             <div data-exclude-markets-slot></div>
 
             <button type="button" id="marginBbFavoriteBtn" class="btn ghost favorite-toggle-btn" data-favorite-mode="marginBb" data-role="favorite-toggle-btn" title="お気に入りに登録">☆</button>
+          </div>
+        </div>
+
+        <!-- モード：銘柄検索（証券コード完全一致・銘柄名あいまい検索。両方入力時は OR 条件）。
+             結果の列構成は marginBb と同一。基準日は常に最新日（日付セレクタなし）。
+             詳細は仕様書.md の scripts.screening.ui.modes.symbolSearch を参照 -->
+        <div class="mode-panel" data-mode="symbolSearch">
+          <div class="mode-conditions" id="symbolSearchConditions">
+            <label>証券コード（4桁・カンマ区切りで複数可・完全一致）
+              <input id="symbolSearchCodes" type="text" placeholder="例: 7203,9984" autocomplete="off" disabled>
+            </label>
+            <label>銘柄名（あいまい検索）
+              <input id="symbolSearchName" type="text" placeholder="例: トヨタ" maxlength="50" autocomplete="off" disabled>
+            </label>
           </div>
         </div>
 
@@ -385,6 +403,7 @@
       <p class="hint">行をタップ／クリックするとチャートを表示します。</p>
       <p class="hint">heuristics モードでは ○＝一致、×＝不一致 を表示します。</p>
       <p class="hint">信用倍率×ボリンジャーモードでは、制度信用の ○＝建て可能、×＝建て不可（規制等）を表示します。</p>
+      <p class="hint">銘柄検索モードでは、最新日の終値・ボリンジャーバンド位置・信用取引状況を表示します（証券コードと銘柄名を両方入力した場合は、いずれかに合致する銘柄が対象。データが無い項目は「-」）。</p>
       <p class="hint">チャート画面の「信用」ボタンで、その銘柄の信用取引状況（信用残・信用倍率・規制）を確認できます。</p>
     </section>
 
