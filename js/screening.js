@@ -342,6 +342,31 @@ function escapeHtml(value) {
     .replaceAll('"', "&quot;").replaceAll("'", "&#39;");
 }
 
+/**
+ * 銘柄検索（symbolSearch）は結果の列構成が信用倍率×ボリンジャー（marginBb）と同一。
+ * 列構成を複製せず同じ分岐で扱うための判定関数。
+ * marginBb と同じ列を使うモードが増えた場合は、ここへ追加する。
+ */
+function usesMarginBbColumns(mode) {
+  return mode === "marginBb" || mode === "symbolSearch";
+}
+
+/** 値が欠損（null/undefined）の場合は "-"、そうでなければ fn(value) の結果を返す。 */
+function formatOrDash(value, fn) {
+  return value == null ? "-" : fn(value);
+}
+
+/**
+ * 銘柄検索の基準日（常に最新日）を返す。
+ * #marginBbDateSelect は BB 算出に必要な履歴（MARGIN_BB_PERIOD 営業日）を確保できる日付のみを
+ * 降順で保持しているため、options[0] が「BB を算出できる最新日」になる
+ * （favorite モードの resolveLatestDate と同じ考え方。.value ではなく options[0] を使う）。
+ * 日付一覧の読み込み前・失敗時は "" を返す。
+ */
+function resolveSymbolSearchDate() {
+  return marginBbDateSelect.options[0]?.value ?? "";
+}
+
 /* ============================================================
    CSV ダウンロード
 ============================================================ */
@@ -475,17 +500,22 @@ const COLUMNS = {
     format: r => `${(r.日次売買代金 / 1e8).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}億円` },
 
   // --- marginBb モード（信用倍率 × ボリンジャーバンド） ---
-  marginBbClose:    { label: "終値", align: "num", format: r => r.終値.toLocaleString() },   // ヘッダーは呼び出し側で検索日付ラベルへ差し替える
-  marginBbPosition: { label: "BB位置（σ）", align: "num", format: r => `${r.BB位置 > 0 ? "+" : ""}${r.BB位置.toFixed(2)}σ` },
-  // 信用倍率 null は「売残0」（倍率∞）を表す（バックエンドは JSON で∞を表現できないため null で返す）
+  // 2026-10 変更：銘柄検索（symbolSearch）は信用データ・日足が無い銘柄も結果に含めるため、
+  // 欠損（null）を「-」表示にする。marginBb は絞り込み条件で欠損が除外済みのため従来と同一の表示。
+  marginBbClose:    { label: "終値", align: "num", format: r => formatOrDash(r.終値, v => v.toLocaleString()) },   // ヘッダーは呼び出し側で検索日付ラベルへ差し替える
+  marginBbPosition: { label: "BB位置（σ）", align: "num",
+    format: r => formatOrDash(r.BB位置, v => `${v > 0 ? "+" : ""}${v.toFixed(2)}σ`) },
+  // 信用倍率 null は「売残0」（倍率∞）を表す（バックエンドは JSON で∞を表現できないため null で返す）。
+  // ただし売残自体が null の場合は信用データなし（銘柄検索でのみ発生）のため「-」とする。
   marginBbRatio:    { label: "信用倍率", align: "num",
-    format: r => r.信用倍率 == null ? "∞（売残0）"
+    format: r => r.信用売残 == null ? "-"
+      : r.信用倍率 == null ? "∞（売残0）"
       : `${r.信用倍率.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}倍` },
-  marginBbBuyBalance:  { label: "買残（株）", align: "num", format: r => r.信用買残.toLocaleString() },
-  marginBbSellBalance: { label: "売残（株）", align: "num", format: r => r.信用売残.toLocaleString() },
+  marginBbBuyBalance:  { label: "買残（株）", align: "num", format: r => formatOrDash(r.信用買残, v => v.toLocaleString()) },
+  marginBbSellBalance: { label: "売残（株）", align: "num", format: r => formatOrDash(r.信用売残, v => v.toLocaleString()) },
   marginBbBuy:      { label: "制度信用（買い建て）", format: r => boolMark(r.制度信用買い建て) },
   marginBbSell:     { label: "制度信用（売り建て）", format: r => boolMark(r.制度信用売り建て) },
-  marginBbRegulation: { label: "規制内容", align: "text", format: r => escapeHtml(r.規制.join("、")) },
+  marginBbRegulation: { label: "規制内容", align: "text", format: r => escapeHtml((r.規制 ?? []).join("、")) },
 };
 
 /** COLUMNS の定義に fixed（固定列）等の表示用オーバーライドを重ねた列オブジェクトを返す。 */
@@ -552,7 +582,7 @@ function buildCsvHeaders(mode, label, compareDateList = []) {
     return ["コード", "銘柄名", "時価総額（円）", "検出件数", "最大売買代金（円）", "検出時刻", "価格変化率", "タイプ", "日次売買代金（円）"];
   }
 
-  if (mode === "marginBb") {
+  if (usesMarginBbColumns(mode)) {
     return ["コード", "銘柄名", "時価総額（円）", `${label}終値`, "BB位置（σ）", "信用倍率", "買残（株）", "売残（株）",
             "制度信用（買い建て）", "制度信用（売り建て）", "規制内容"];
   }
@@ -651,19 +681,19 @@ function buildCsvRow(r, mode, compareDateList = []) {
     ].map(String);
   }
 
-  if (mode === "marginBb") {
+  if (usesMarginBbColumns(mode)) {
     return [
       r.コード,
       r.銘柄名,
       r.時価総額 ?? "",
-      r.終値,
-      r.BB位置,
-      r.信用倍率 ?? "∞",   // 売残0（倍率∞）は null で返る
-      r.信用買残,
-      r.信用売残,
+      r.終値 ?? "",
+      r.BB位置 ?? "",
+      r.信用売残 == null ? "" : (r.信用倍率 ?? "∞"),   // 売残0（倍率∞）は null で返る。売残自体が null は信用データなし（銘柄検索のみ）
+      r.信用買残 ?? "",
+      r.信用売残 ?? "",
       boolMark(r.制度信用買い建て),
       boolMark(r.制度信用売り建て),
-      r.規制.join("、")
+      (r.規制 ?? []).join("、")
     ].map(String);
   }
 
@@ -736,9 +766,10 @@ function downloadCsv() {
     label = `${y}/${m}/${day}（${w}）`;
   }
 
-  // dateDown / marginBb も「検索日付の終値」列のヘッダにラベルを使用する
+  // dateDown / marginBb / symbolSearch も「検索日付の終値」列のヘッダにラベルを使用する
   if (mode === "dateDown") label = makeDateLabel(dateDownSelect.value);
   if (mode === "marginBb") label = makeDateLabel(marginBbDateSelect.value);
+  if (mode === "symbolSearch") label = makeDateLabel(resolveSymbolSearchDate());
 
   // compare モードは currentResults（縦持ち）を画面表示と同一の横持ちへ変換してから出力する。
   // currentCompareDateList は showResults() と同じ比較先日付一覧（列構成）を保持している。
@@ -768,6 +799,7 @@ function downloadCsv() {
     block:      blockDateSelect ? blockDateSelect.value : "",
     dateDown:   dateDownSelect.value,
     marginBb:   marginBbDateSelect.value,
+    symbolSearch: resolveSymbolSearchDate(),
     compare:    (compareFromDateInput.value && document.getElementById("compareToDateSelect").value)
       ? `${compareFromDateInput.value}-${document.getElementById("compareToDateSelect").value}`
       : "",
@@ -956,6 +988,7 @@ function initSearchMode() {
   const dateDownInputs = document.querySelectorAll("#dateDownConditions select");
   const marginBbInputs = document.querySelectorAll("#marginBbConditions input:not([type='checkbox']), #marginBbConditions select");
   const marginBbFieldset = document.querySelectorAll("#marginBbConditions fieldset");
+  const symbolSearchInputs = document.querySelectorAll("#symbolSearchConditions input");
 
   function updateMode() {
     const mode = document.querySelector('input[name="searchMode"]:checked').value;
@@ -978,6 +1011,7 @@ function initSearchMode() {
     dateDownInputs.forEach(i => i.disabled = (mode !== "dateDown"));
     marginBbInputs.forEach(i => i.disabled = (mode !== "marginBb"));
     marginBbFieldset.forEach(i => i.disabled = (mode !== "marginBb"));
+    symbolSearchInputs.forEach(i => i.disabled = (mode !== "symbolSearch"));
 
     updateCompareSourceInputs();
   }
@@ -1932,8 +1966,8 @@ function updateTableHeader(mode, label = "", compareFromLabel = "", compareDateL
     return;
   }
 
-  // marginBb（信用倍率 × ボリンジャーバンド）
-  if (mode === "marginBb") {
+  // marginBb（信用倍率 × ボリンジャーバンド）／symbolSearch（銘柄検索。列構成は marginBb と同一）
+  if (usesMarginBbColumns(mode)) {
     const html = renderHeaderRow([
       col(COLUMNS.code, { fixed: true }),
       col(COLUMNS.name, { fixed: true }),
@@ -2084,6 +2118,9 @@ async function startScreening() {
   const targetDateBlock = blockDateSelect ? blockDateSelect.value : "";
   const blockThresholdYen = parseFloat(document.getElementById("blockThresholdYen").value);
   const blockCandidateLimit = parseInt(document.getElementById("blockCandidateLimit").value, 10);
+  const symbolSearchCodes = document.getElementById("symbolSearchCodes").value.trim();
+  const symbolSearchName = document.getElementById("symbolSearchName").value.trim();
+  const targetDateSymbolSearch = resolveSymbolSearchDate();
 
   if (mode === "ratio" && !targetDateRatio) {
     alert("日付を選択してください。");
@@ -2116,6 +2153,17 @@ async function startScreening() {
     }
     if (isNaN(marginBbMinBuyBalance) || marginBbMinBuyBalance < 0) {
       alert("買残は0以上の数値で入力してください。");
+      return;
+    }
+  }
+
+  if (mode === "symbolSearch") {
+    if (!symbolSearchCodes && !symbolSearchName) {
+      alert("証券コードまたは銘柄名のいずれかを入力してください。");
+      return;
+    }
+    if (!targetDateSymbolSearch) {
+      alert("日付データを取得できていません。ページを再読み込みしてください。");
       return;
     }
   }
@@ -2165,9 +2213,10 @@ async function startScreening() {
     label = `${y}/${m}/${day}（${w}）`;
   }
 
-  // dateDown / marginBb：「検索日付の終値」列ヘッダ用の日付ラベル
+  // dateDown / marginBb / symbolSearch：「検索日付の終値」列ヘッダ用の日付ラベル
   if (mode === "dateDown") label = makeDateLabel(targetDateRankingDown);
   if (mode === "marginBb") label = makeDateLabel(targetDateMarginBb);
+  if (mode === "symbolSearch") label = makeDateLabel(targetDateSymbolSearch);
 
   // compare モード：ヘッダ用日付ラベル・横持ち列展開用の比較先日付一覧を組み立て、
   // 証券コード直接入力時はスコアマップをリセット
@@ -2276,6 +2325,13 @@ async function startScreening() {
       if (excludeMarkets) {
         url.searchParams.set("exclude_markets", excludeMarkets);
       }
+    } else if (mode === "symbolSearch") {
+      url.searchParams.set("mode", "symbol_search");
+      url.searchParams.set("target_date", targetDateSymbolSearch);
+
+      // 入力されたものだけ送信する（両方入力時はバックエンドが OR 条件で判定する）
+      if (symbolSearchCodes) url.searchParams.set("codes", symbolSearchCodes);
+      if (symbolSearchName)  url.searchParams.set("name", symbolSearchName);
     } else if (mode === "compare") {
       url.searchParams.set("mode", "compare");
       url.searchParams.set("from_date", fromDate);
@@ -2329,9 +2385,14 @@ async function startScreening() {
     const countLabel = document.getElementById("resultCount");
     if (countLabel) {
       countLabel.textContent = `検索結果：${results.length} 件`;
-      // marginBb：参照した信用取引データ（最新アーカイブ）の日付を明示する
-      if (mode === "marginBb" && data.margin_date) {
+      // marginBb / symbolSearch：参照した信用取引データ（最新アーカイブ）の日付を明示する
+      if (usesMarginBbColumns(mode) && data.margin_date) {
         countLabel.textContent += `（信用取引データ：${makeDateLabel(data.margin_date)}分）`;
+      }
+      // symbolSearch：件数上限による打ち切り・該当なしのコードを明示する（textContent のみ使用）
+      if (mode === "symbolSearch") {
+        if (data.truncated) countLabel.textContent += `（上限${results.length}件で打ち切り）`;
+        if (data.not_found_codes?.length) countLabel.textContent += `（該当なし：${data.not_found_codes.join(",")}）`;
       }
     }
 
@@ -2456,9 +2517,9 @@ function showResults(results, mode, compareDateList = currentCompareDateList, tb
     }
 
     /* ------------------------------
-       marginBb モード（信用倍率 × ボリンジャーバンド）
+       marginBb モード（信用倍率 × ボリンジャーバンド）／symbolSearch モード（列構成は同一）
     ------------------------------ */
-    else if (mode === "marginBb") {
+    else if (usesMarginBbColumns(mode)) {
       tr.innerHTML = renderDataCells([
         col(COLUMNS.code, { fixed: true }),
         col(COLUMNS.name, { fixed: true }),
