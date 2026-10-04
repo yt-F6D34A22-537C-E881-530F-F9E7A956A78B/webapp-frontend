@@ -1820,6 +1820,8 @@ thead[aria-hidden="true"] th {
    最後尾（変更前と同じ位置）のまま、見た目だけをアイコンボタン化している。 */
 .favorite-toggle-btn {
   align-self: center;
+  justify-content: center;   /* 2026-10 追加：横方向の中央寄せが未指定で、
+                                 既定値 flex-start のまま☆/★が左に寄っていたため */
   width: 34px;
   height: 34px;
   padding: 0;
