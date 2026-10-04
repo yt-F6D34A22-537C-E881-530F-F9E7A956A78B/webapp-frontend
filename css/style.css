@@ -287,7 +287,8 @@ body {
 .mode-tabs:has(input[value="heuristics"]:checked) ~ .mode-panels .mode-panel[data-mode="heuristics"],
 .mode-tabs:has(input[value="block"]:checked) ~ .mode-panels .mode-panel[data-mode="block"],
 .mode-tabs:has(input[value="dateDown"]:checked) ~ .mode-panels .mode-panel[data-mode="dateDown"],
-.mode-tabs:has(input[value="marginBb"]:checked) ~ .mode-panels .mode-panel[data-mode="marginBb"] {
+.mode-tabs:has(input[value="marginBb"]:checked) ~ .mode-panels .mode-panel[data-mode="marginBb"],
+.mode-tabs:has(input[value="symbolSearch"]:checked) ~ .mode-panels .mode-panel[data-mode="symbolSearch"] {
   display: block;
 }
 
@@ -482,6 +483,14 @@ body {
 
 #heuristicsCodes {
   width: 180px;
+}
+
+/* ============================================================
+   銘柄検索：証券コード・銘柄名の入力欄
+   ============================================================ */
+#symbolSearchCodes,
+#symbolSearchName {
+  width: 220px;
 }
 
 /* ratioConditions と同様、除外市場・商品区分は日付・証券コードと同じ行に
@@ -1343,6 +1352,15 @@ thead[aria-hidden="true"] th {
   }
 
   #heuristicsCodes {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* ----------------------------------------
+     条件設定：銘柄検索 入力欄
+  ---------------------------------------- */
+  #symbolSearchCodes,
+  #symbolSearchName {
     width: 100%;
     box-sizing: border-box;
   }
