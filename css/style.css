@@ -1976,4 +1976,12 @@ thead[aria-hidden="true"] th {
 /* 600px は本ファイル既定のモバイルブレークポイント（--bp-mobile）と同じ値 */
 @media (max-width: 600px) {
   .margin-info-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+  /* buildMetricGrid() の生成順（1:信用買残 2:信用売残 3:信用倍率 4:制度信用買い建て
+     5:制度信用売り建て）のままだと、2列グリッドの自動配置により「買い建て」が
+     3行目ではなく2行目2列目（信用売残の下）に流れ込んでしまう。
+     4番目・5番目を3行目へ明示配置することで、3番目（信用倍率）は自動配置のまま
+     2行目1列目に収まり、2行目2列目は空欄になる（2026-09 追加） */
+  .margin-info-grid > .margin-info-item:nth-child(4) { grid-column: 1; grid-row: 3; }
+  .margin-info-grid > .margin-info-item:nth-child(5) { grid-column: 2; grid-row: 3; }
 }
