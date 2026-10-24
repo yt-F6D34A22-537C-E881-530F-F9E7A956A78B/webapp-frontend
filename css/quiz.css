@@ -1,0 +1,182 @@
+/* ============================================================
+   quiz.html 専用スタイル（2026-10 新規）
+   ・色・フォント・シャドウ等のトークンは style.css の :root を再利用する
+     （新規に色のハードコード値は定義しない）。
+   ・style.css 自体は変更していない（本ファイルは追加のみ）。
+   ・本ファイルは quiz.html でのみ読み込む。#prevChartBtn などチャートモーダルの
+     要素に対する上書きは、index.html（スクリーニング画面）には影響しない。
+   ============================================================ */
+
+/* --- ローディングオーバーレイの基準位置 --- */
+.quiz-conditions-card,
+.quiz-question-card {
+  position: relative;
+}
+
+/* --- 出題条件 --- */
+/* .mode-conditions（style.css）を条件欄の見た目に流用している。
+   ratio モードの #ratioConditions と同様、折り返しを許可する。 */
+#quizConditions {
+  flex-wrap: wrap;
+}
+
+.quiz-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+/* --- 問題・成績 --- */
+.quiz-status {
+  margin: 0 0 8px;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--color-text-secondary);
+}
+
+.quiz-score {
+  margin: 12px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+/* --- 結果表示（ページ側・モーダル側で共通）---
+   data-result（correct / wrong / draw）と、変化率部分の data-direction（up / down / flat）は
+   JS が付与する CSS 専用フック（conventions.domHookAttributes の data-<用途名> パターン）。 */
+.quiz-result {
+  margin: 8px 0 0;
+  padding: 8px 12px;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--color-text-primary);
+  background: var(--color-bg-card);
+  border-left: 4px solid var(--color-border-input);
+  border-radius: var(--radius-input);
+}
+
+.quiz-result[data-result="correct"] {
+  background: var(--color-accent-primary-bg);
+  border-left-color: var(--color-accent-primary);
+}
+
+.quiz-result[data-result="wrong"] {
+  border-left-color: var(--color-text-muted);
+}
+
+.quiz-result-label {
+  font-weight: 700;
+  margin-right: 0.5em;
+}
+
+.quiz-change {
+  font-weight: 700;
+}
+
+.quiz-change[data-direction="up"] {
+  color: var(--color-trend-up-border);
+}
+
+.quiz-change[data-direction="down"] {
+  color: var(--color-trend-down-border);
+}
+
+.quiz-notice {
+  flex: 1 1 100%;
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-accent-primary);
+}
+
+/* .hidden（display: none）は本来どのクラスより優先させたいユーティリティだが、
+   上の .quiz-result 等が後方で display を持つ場合に打ち消されないよう、
+   id を含めた詳細度で明示する（style.css の .favorite-results-container.hidden と同じ考え方）。 */
+#quizQuestionCard .hidden,
+#quizAnswerBar .hidden {
+  display: none;
+}
+
+/* --- チャートモーダル内の回答バー --- */
+.quiz-answer-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  width: 100%;
+  padding: 8px 2px 4px;
+}
+
+.quiz-answer-prompt {
+  flex: 1 1 240px;
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.6;
+  color: var(--color-text-secondary);
+}
+
+.quiz-answer-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.quiz-answer-bar .quiz-result {
+  flex: 1 1 280px;
+  margin: 0;
+}
+
+.quiz-guess-btn {
+  font-weight: 700;
+  color: var(--color-text-primary);
+  border: 2px solid var(--color-border-input);
+}
+
+.quiz-guess-up {
+  background: var(--color-trend-up-bg);
+  border-color: var(--color-trend-up-border);
+}
+
+.quiz-guess-down {
+  background: var(--color-trend-down-bg);
+  border-color: var(--color-trend-down-border);
+}
+
+.quiz-guess-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* --- チャートモーダルの既存要素のうち、クイズでは不要なもの --- */
+/* 「前へ」「次へ」：出題は常に1問のため不要（要件）。要素自体は chart-main.js が
+   onclick を代入するため HTML には残し、表示だけを消している。 */
+#prevChartBtn,
+#nextChartBtn {
+  display: none;
+}
+
+/* ヘッダーの「（現在位置/全件数）」（chart-main.js が .page の span で描画）。
+   クイズでは常に「（1/1）」となり意味を持たないため非表示にする。 */
+#chartHeaderLeft .page {
+  display: none;
+}
+
+/* --- スマホ（style.css の --bp-mobile: 600px に合わせる）--- */
+@media (max-width: 600px) {
+  .quiz-answer-prompt {
+    flex-basis: 100%;
+    font-size: 12px;
+  }
+
+  .quiz-answer-buttons {
+    flex: 1 1 100%;
+  }
+
+  .quiz-answer-buttons .btn {
+    flex: 1 1 0;
+  }
+
+  .quiz-result {
+    font-size: 13px;
+  }
+}

@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>値動きクイズ ｜ スクリーニング</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <link rel="icon" href="../assets/favicon.ico">
+
+  <!-- 既存アプリと同じデザイントークン（色・フォント・シャドウ等）を再利用する -->
+  <link rel="stylesheet" href="../assets/fonts/fonts.css">
+  <link rel="stylesheet" href="../css/style.css">
+  <!-- 本ページ固有のレイアウトのみ、別ファイルへ分離する（style.css自体は変更しない） -->
+  <link rel="stylesheet" href="../css/quiz.css">
+
+  <!-- チャート描画ライブラリ（index.html と同じもの）。xlsx は本ページでは不要 -->
+  <script src="../libs/lightweight-charts.standalone.production.js"></script>
+
+  <!-- クイズの進行（classic script。review.js / screening.js と同じ扱い） -->
+  <script defer src="../js/quiz.js"></script>
+
+  <!-- チャート機能は index.html と同じ chart-main.js をそのまま使う（type="module"）。
+       信用取引パネル（js/margin-panel.js）は読み込まない：信用取引データは常に
+       「最新1日分」であり、出題日時点の情報ではないため、出題日以降の情報が
+       混ざってクイズが成立しなくなる（仕様書 scripts.quiz.chartReuse を参照）。 -->
+  <script type="module" src="../js/chart/chart-main.js"></script>
+</head>
+
+<body>
+  <div class="app-container">
+
+    <header class="app-header">
+      <h1>値動きクイズ</h1>
+      <nav class="app-header-nav">
+        <a href="../index.html">← スクリーニングへ戻る</a>
+      </nav>
+    </header>
+
+    <!-- ============================
+         出題条件
+         すべて未指定可（空欄・「未指定」＝その条件では絞り込まない）。
+         既定値：日付＝現在日付の1か月前（直近の出題可能日）／出来高＝200万株以上／
+         売買金額＝1億円以上／時価総額帯・銘柄＝未指定
+    ============================ -->
+    <section id="quizConditionsCard" class="card quiz-conditions-card">
+
+      <div id="quizConditionsLoadingOverlay" class="loading-overlay hidden">
+        <div class="spinner"></div>
+        <p>読み込み中…</p>
+      </div>
+
+      <h2>出題条件</h2>
+
+      <div class="mode-conditions" id="quizConditions">
+        <label>日付
+          <select id="quizDateSelect"></select>
+        </label>
+        <label>出来高（株）以上
+          <input id="quizMinVolume" type="number" value="2000000" step="100000" min="0" placeholder="未指定">
+        </label>
+        <label>売買金額（億円）以上
+          <input id="quizMinTradeValue" type="number" value="1" step="0.1" min="0" placeholder="未指定">
+        </label>
+        <!-- value は backend の app/quiz.py の MARKET_CAP_BANDS のキーと一致させること -->
+        <label>時価総額帯
+          <select id="quizMarketCapBand">
+            <option value="">未指定</option>
+            <option value="mega">超大型（1兆円以上）</option>
+            <option value="large">大型（3,000億円〜1兆円）</option>
+            <option value="mid">中型（1,000億円〜3,000億円）</option>
+            <option value="small">小型（300億円〜1,000億円）</option>
+            <option value="micro">超小型（300億円未満）</option>
+          </select>
+        </label>
+        <label>銘柄（証券コード または 銘柄名）
+          <input id="quizSymbol" type="text" maxlength="200" placeholder="未指定　例：7203 / トヨタ">
+        </label>
+      </div>
+
+      <div class="quiz-actions">
+        <button id="quizStartBtn" type="button" class="btn primary" disabled>出題する</button>
+      </div>
+
+      <p class="hint">出題日時点までのチャートを表示します。その後に株価が上がるか下がるかを回答してください。</p>
+      <p class="hint">日付を未指定にすると、出題可能な日付からランダムに選びます。証券コードはカンマ区切りで複数指定できます。</p>
+    </section>
+
+    <!-- ============================
+         問題・結果・成績
+    ============================ -->
+    <section id="quizQuestionCard" class="card quiz-question-card">
+      <h2>問題</h2>
+
+      <p id="quizStatusEl" class="quiz-status" aria-live="polite">条件を設定して「出題する」を押してください。</p>
+      <p id="quizResultEl" class="quiz-result hidden" aria-live="polite"></p>
+
+      <div class="quiz-actions">
+        <button id="quizOpenChartBtn" type="button" class="btn secondary hidden">チャートを開く</button>
+        <button id="quizNextBtn" type="button" class="btn primary hidden">次の問題</button>
+      </div>
+
+      <p id="quizScoreEl" class="quiz-score"></p>
+    </section>
+
+    <!-- ============================
+         チャートモーダル（index.html のチャートモーダルと同じ構造）
+         chart-main.js が id で直接取得する要素（chartModal / chartModalBackdrop /
+         closeChartBtn / chartHeaderLeft / prevChartBtn / nextChartBtn /
+         chartContainer / chartLoadingOverlay / chartSettingsBtn / chartSettingsModal）は
+         すべて残すこと（欠けると chart-main.js の初期化が例外で止まる）。
+         「前へ」「次へ」はクイズでは不要のため quiz.css で非表示にしている
+         （要素自体は chart-main.js が onclick を代入するため残す）。
+         「信用」ボタン・信用取引パネルは設けない（上の読み込みコメントを参照）。
+    ============================ -->
+    <div id="chartModal" class="modal">
+      <div class="modal-backdrop" id="chartModalBackdrop"></div>
+
+      <div class="modal-content">
+
+        <div class="modal-header">
+          <div id="chartHeaderLeft"></div>
+
+          <div id="chartHeaderNav">
+            <div class="timeframe-selector">
+              <label><input type="radio" name="timeframe" value="1d" checked> 日足</label>
+              <label><input type="radio" name="timeframe" value="1wk"> 週足</label>
+              <label><input type="radio" name="timeframe" value="1mo"> 月足</label>
+            </div>
+
+            <button id="prevChartBtn" class="btn small">前へ</button>
+            <button id="nextChartBtn" class="btn small">次へ</button>
+          </div>
+
+          <button id="closeChartBtn" class="btn ghost">✕</button>
+        </div>
+
+        <!-- 回答バー（クイズ専用）。回答前は上がる／下がるの2択、回答後は結果と「次の問題へ」を表示する。 -->
+        <div id="quizAnswerBar" class="quiz-answer-bar">
+          <p id="quizAnswerPromptEl" class="quiz-answer-prompt"></p>
+          <div id="quizGuessButtons" class="quiz-answer-buttons">
+            <button id="quizGuessUpBtn" type="button" class="btn quiz-guess-btn quiz-guess-up">上がる ↗</button>
+            <button id="quizGuessDownBtn" type="button" class="btn quiz-guess-btn quiz-guess-down">下がる ↘</button>
+          </div>
+          <p id="quizAnswerResultEl" class="quiz-result hidden" aria-live="polite"></p>
+          <button id="quizModalNextBtn" type="button" class="btn primary small hidden">次の問題へ</button>
+          <p id="quizAnswerNoticeEl" class="quiz-notice hidden" role="alert"></p>
+        </div>
+
+        <div class="modal-body">
+
+          <div id="chartLoadingOverlay">
+            <div class="spinner"></div>
+            <p>チャートデータ取得中…</p>
+          </div>
+
+          <div id="chartContainer"></div>
+
+          <div id="chartSettingsBtn" class="chart-settings-btn">⚙️</div>
+
+          <div id="chartSettingsModal" class="chart-settings-modal hidden">
+            <!-- data-indicator-group の値は chart-price.js のインジケータ記述子の key と一致させること。
+                 表示状態は index.html と同じ localStorage（chartIndicatorVisibility）を共有する。 -->
+            <div class="settings-content">
+              <label><input type="checkbox" id="toggleCandles" data-indicator-group="candle" checked> ローソク足を表示</label>
+              <label><input type="checkbox" id="toggleVolume" data-indicator-group="volume" checked> 出来高を表示</label>
+              <label><input type="checkbox" id="toggleMA" data-indicator-group="ma" checked> 移動平均線（MA）を表示</label>
+              <label><input type="checkbox" id="toggleBB" data-indicator-group="bb"> ボリンジャーバンドを表示</label>
+              <label><input type="checkbox" id="toggleIchimoku" data-indicator-group="ichimoku"> 一目均衡表を表示</label>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- 回答の判定中・次の問題の取得中に表示する（モーダルの内側。ページ側の
+             #quizConditionsLoadingOverlay はモーダルの背面に隠れてしまうため別に持つ） -->
+        <div id="quizModalLoadingOverlay" class="loading-overlay hidden">
+          <div class="spinner"></div>
+          <p>読み込み中…</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>

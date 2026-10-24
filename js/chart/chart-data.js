@@ -15,8 +15,10 @@ const FETCH_RETRY_BASE_MS = 1500; // 初回リトライ待機時間（ms）。�
 // 同一銘柄で足種（日足／週足／月足）を切り替えるたびに同じ銘柄へ再アクセスし、
 // Render のコールドスタート待ち（最大3回試行・最長約4.5秒の待機）を
 // 繰り返し引き当てていたため、モーダルを開いている間だけ結果を保持する。
-// キーは "<ticker>:<timeframe>"。モーダルを閉じる際に
-// clearChartDataCache() で破棄するため、古い日足を掴み続けることはない。
+// キーは "<ticker>:<timeframe>:<endDate>"（endDate 未指定時は末尾が空）。
+// モーダルを閉じる際に clearChartDataCache() で破棄するため、古い日足を掴み続けることはない。
+// （2026-10：値動きクイズが同じ銘柄・足種で「出題日まで」と「答え合わせ後」の
+//  2通りを取得するため、endDate をキーに含めた。）
 // --------------------------------------
 const chartDataCache = new Map();
 
@@ -41,12 +43,14 @@ function sleep(ms) {
  * 不正レスポンス・ネットワークエラー時は指数バックオフでリトライする。
  * @param {string} ticker     銘柄コード（例: "7203"）
  * @param {string} timeframe  足種（"1d" | "1wk" | "1mo"）
+ * @param {?string} endDate   この日付（YYYY-MM-DD）以前のデータだけを取得する（2026-10 追加。
+ *                            値動きクイズ用。省略／null は従来どおり最新まで）
  * @returns {Promise<Array|null>} candleData 配列、取得失敗時は null
  */
-export async function fetchChartData(ticker, timeframe = "1d") {
+export async function fetchChartData(ticker, timeframe = "1d", endDate = null) {
   const API_BASE_URL = "https://yfinance-api-fe86988c-d3b4-f1c6-640d.onrender.com";
 
-  const cacheKey = `${ticker}:${timeframe}`;
+  const cacheKey = `${ticker}:${timeframe}:${endDate ?? ""}`;
   if (chartDataCache.has(cacheKey)) {
     return chartDataCache.get(cacheKey);
   }
@@ -55,7 +59,8 @@ export async function fetchChartData(ticker, timeframe = "1d") {
   // クエリ文字列はパラメータ汚染を避けるため必ずエンコードする（2026-09 追加）
   const url = `${API_BASE_URL}/chart`
     + `?ticker=${encodeURIComponent(ticker)}`
-    + `&timeframe=${encodeURIComponent(timeframe)}`;
+    + `&timeframe=${encodeURIComponent(timeframe)}`
+    + (endDate ? `&end_date=${encodeURIComponent(endDate)}` : "");
 
   for (let attempt = 1; attempt <= FETCH_MAX_RETRIES; attempt++) {
     try {

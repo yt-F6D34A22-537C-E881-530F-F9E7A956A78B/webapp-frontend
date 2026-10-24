@@ -61,6 +61,12 @@ const INITIAL_BAR_COUNT = 125;
 const timeframeRadios = document.querySelectorAll('input[name="timeframe"]');
 let currentTimeframe = "1d";   // 初期値（日足）
 
+// 表示するデータの終端日（YYYY-MM-DD。2026-10 追加）。
+// 値動きクイズ（pages/quiz.html）が「出題日まで」しか見せないために
+// window.setChartEndDate() で設定する。スクリーニング画面（index.html）では
+// 誰も設定しないため null のまま＝従来どおり最新までを表示する。
+let chartEndDate = null;
+
 // 初期状態ではモーダル非表示
 modal.style.display = "none";
 
@@ -87,6 +93,13 @@ let screeningResults = [];
 // screening.js から結果を受け取る
 window.setScreeningResults = function(results) {
   screeningResults = results;
+};
+
+// 値動きクイズ（js/quiz.js）からチャートの終端日を受け取る（2026-10 追加）。
+// null／空文字で解除（最新まで表示）。次に drawChart() が走る時点から有効になる
+// （openChartModal の再呼び出し、または足種切替）。
+window.setChartEndDate = function(endDate) {
+  chartEndDate = endDate || null;
 };
 
 // --------------------------------------
@@ -300,7 +313,7 @@ async function drawChart(ticker, name) {
 
   try {
     // 足種をバックエンドへ渡す
-    const data = await fetchChartData(ticker, currentTimeframe);
+    const data = await fetchChartData(ticker, currentTimeframe, chartEndDate);
 
     if (!data) {
       alert("チャートデータが取得できませんでした。");
