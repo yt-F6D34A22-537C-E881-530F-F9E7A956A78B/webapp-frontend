@@ -65,6 +65,8 @@
   <link rel="stylesheet" href="assets/fonts/fonts.css">
 
   <link rel="stylesheet" href="css/style.css">
+  <!-- 情報モーダル（エントリーチェックリスト・強制決済期日）用。style.css は変更しない（2026-10 追加） -->
+  <link rel="stylesheet" href="css/info-modal.css">
 
   <!-- ============================
        外部ライブラリ（必須）
@@ -91,6 +93,8 @@
        出現順で実行）であり、旧来の defer 構成と読み込みタイミングは変わらない。
   ============================ -->
   <script type="module" src="js/chart/chart-main.js"></script>
+  <!-- 情報モーダル（2026-10 追加）。chart-main.js とは互いに依存しない -->
+  <script type="module" src="js/info/info-main.js"></script>
 </head>
 
 <body>
@@ -107,6 +111,17 @@
         <a href="pages/review.html">学びの棚（復習ページ）</a>
         ｜
         <a href="pages/quiz.html">値動きクイズ</a>
+      </nav>
+      <!-- 情報モーダルの起動ボタン（2026-10 追加。ページ遷移ではなくモーダルを開くため、リンクとは別の行に置く）。
+           data-role="info-modal-open" / data-modal-target はフック属性（class はスタイル専用） -->
+      <nav class="app-header-nav" aria-label="情報モーダル">
+        <button id="entryChecklistOpenBtn" type="button" class="app-header-nav-btn"
+                data-role="info-modal-open" data-modal-target="entryChecklistModal"
+                aria-haspopup="dialog">エントリーチェックリスト</button>
+        ｜
+        <button id="marginDeadlineOpenBtn" type="button" class="app-header-nav-btn"
+                data-role="info-modal-open" data-modal-target="marginDeadlineModal"
+                aria-haspopup="dialog">信用 強制決済期日</button>
       </nav>
     </header>
 
@@ -475,6 +490,50 @@
             </div>
           </div>
 
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================
+         エントリーチェックリスト（2026-10 追加）
+         JS からは id / data-* のみで取得する。開閉は data-open 属性（CSS 専用フック）。
+         表示内容は js/info/entry-checklist-data.js の定数から描画される。
+    ============================ -->
+    <div id="entryChecklistModal" class="modal info-modal" data-role="info-modal"
+         role="dialog" aria-modal="true" aria-labelledby="entryChecklistTitle" tabindex="-1">
+      <div class="modal-backdrop" data-role="info-modal-close"></div>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 id="entryChecklistTitle" class="info-modal-title">エントリーチェックリスト</h2>
+          <button type="button" class="btn ghost" data-role="info-modal-close" aria-label="閉じる">✕</button>
+        </div>
+        <div class="modal-body info-modal-body">
+          <section id="entryChecklistSummary" class="entry-checklist-summary" aria-live="polite"></section>
+          <div id="entryChecklistBody"></div>
+          <div class="info-modal-actions">
+            <button id="entryChecklistResetBtn" type="button" class="btn secondary small">チェックをすべて解除</button>
+          </div>
+          <p class="info-modal-hint">自分で決めた基準に照らした確認用の表示であり、売買の推奨ではありません。チェックはリロードすると初期状態に戻ります。</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================
+         信用取引 強制決済期日（2026-10 追加）
+         表示内容は js/info/margin-deadline-data.js の定数から描画される。
+    ============================ -->
+    <div id="marginDeadlineModal" class="modal info-modal" data-role="info-modal"
+         role="dialog" aria-modal="true" aria-labelledby="marginDeadlineTitle" tabindex="-1">
+      <div class="modal-backdrop" data-role="info-modal-close"></div>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 id="marginDeadlineTitle" class="info-modal-title">信用取引 強制決済期日</h2>
+          <button type="button" class="btn ghost" data-role="info-modal-close" aria-label="閉じる">✕</button>
+        </div>
+        <div class="modal-body info-modal-body">
+          <p id="marginDeadlineUpdatedEl" class="info-modal-hint"></p>
+          <div id="marginDeadlineBody"></div>
+          <p class="info-modal-hint">掲載内容は各社の公式情報を自分で確認した時点のものです。条件は変更されることがあるため、取引前に必ず各社の公式ページでご確認ください。</p>
         </div>
       </div>
     </div>
