@@ -1682,10 +1682,11 @@ async function runFavoriteScreening() {
  * 挙動になる（2026-09、要望を受けて単純化した独自実装から差し替えた）。
  *
  * なお window.setScreeningResults(results)（チャートモーダルの前後移動用グローバル
- * 状態）は showResults() 呼び出しのたびに上書きされるため、複数セクションを描画すると
- * 最後に描画したセクションの一覧が「前後移動」の対象になる。行クリックで該当銘柄の
- * チャートが開くこと自体には影響しない（クリックされた行の銘柄コードは各行が個別に
- * 保持しているため）。
+ * 状態）は showResults() 呼び出しのたびに上書きされるため、描画完了時点では最後に
+ * 描画したセクションの一覧が入っている。ただし showResults() は行クリックの直前にも
+ * setScreeningResults() を呼び直すため、前後移動・「（現在位置/全件数）」表示の対象は
+ * 常に「クリックした行が属するセクション（モード）」の一覧になる（2026-10 修正。
+ * 前後移動はモードをまたがない）。
  */
 function renderFavoriteResults(sections) {
   const container = document.getElementById("favoriteResultsContainer");
@@ -2717,6 +2718,15 @@ function showResults(results, mode, compareDateList = currentCompareDateList, tb
     }
 
     tr.addEventListener("click", () => {
+      // チャートモーダルの前後移動の対象リストを、クリックされた表（モード）の
+      // 結果へ切り替えてから開く（2026-10 修正）。favorite モードは複数の表を
+      // 同時に描画するため、描画時の setScreeningResults() だけでは「最後に描画した
+      // 表」のリストが残り、index（行番号）と食い違っていた。
+      // results・index はこの showResults() 呼び出し（＝1つの表）のクロージャで
+      // 束縛されているため、クリック時点で常にその表のものになる。
+      if (typeof window.setScreeningResults === "function") {
+        window.setScreeningResults(results);
+      }
       openChartModal(r.コード, r.銘柄名, index);
     });
 
