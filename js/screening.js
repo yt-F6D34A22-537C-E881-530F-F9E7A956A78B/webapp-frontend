@@ -303,6 +303,26 @@ function formatMarketCap(yen) {
 }
 
 /**
+ * 市場区分（API の r.市場区分 ＝ data_j.xlsx「市場・商品区分」の元の区分名）の表示用ラベル。
+ * プライム／スタンダード／グロースのみを対象とし（内国株式・外国株式は同一ラベル）、
+ * ETF・REIT 等の対象外区分および欠損は formatMarketSegment() が "-" を返す。
+ * 表示対象の区分を増やす場合は、この Map へ1行追加する。
+ */
+const MARKET_SEGMENT_LABELS = new Map([
+  ["プライム（内国株式）",     "プライム"],
+  ["プライム（外国株式）",     "プライム"],
+  ["スタンダード（内国株式）", "スタンダード"],
+  ["スタンダード（外国株式）", "スタンダード"],
+  ["グロース（内国株式）",     "グロース"],
+  ["グロース（外国株式）",     "グロース"],
+]);
+
+/** 市場区分の画面表示用文字列。対象外・欠損は "-"（時価総額列と同じ表記）。 */
+function formatMarketSegment(segment) {
+  return MARKET_SEGMENT_LABELS.get(segment) ?? "-";
+}
+
+/**
  * 増減を表す数値・パーセント値の符号付き文字列を生成する。
  * 正の値には "+" を付与し、0・負の値はそのまま表示する（負の値は数値自体に "-" を含むため）。
  * 2026-07追加: 従来 compare モードの増減（円/％）列にのみ符号を付与しており、
@@ -463,6 +483,7 @@ const COLUMNS = {
   // --- 複数モード共通の固定列 ---
   code:      { label: "コード",   format: r => r.コード },
   name:      { label: "銘柄名",   align: "text", format: r => r.銘柄名 },
+  marketSegment: { label: "市場区分", align: "text", format: r => formatMarketSegment(r.市場区分) },
   marketCap: { label: "時価総額", align: "num",  format: r => formatMarketCap(r.時価総額) },
   score:     { label: "スコア",   align: "num",  format: r => r.スコア },
 
@@ -570,26 +591,26 @@ function renderDataCells(columns, r) {
  */
 function buildCsvHeaders(mode, label, compareDateList = []) {
   if (mode === "ratio") {
-    return ["コード", "銘柄名", "時価総額（円）", "終値", "出来高", "前日出来高", "出来高前日比（％）", "売買代金", "上髭実体比（％）", "上髭", "実体"];
+    return ["コード", "銘柄名", "市場区分", "時価総額（円）", "終値", "出来高", "前日出来高", "出来高前日比（％）", "売買代金", "上髭実体比（％）", "上髭", "実体"];
   }
 
   if (mode === "date" || mode === "dateDown") {
     // dateDown は同一データキー r.値上がり率（符号付き騰落率）を使い、列名のみ差し替える
-    return ["コード", "銘柄名", "時価総額（円）", mode === "dateDown" ? "値下がり率" : "値上がり率", `${label}終値`, "前日終値"];
+    return ["コード", "銘柄名", "市場区分", "時価総額（円）", mode === "dateDown" ? "値下がり率" : "値上がり率", `${label}終値`, "前日終値"];
   }
 
   if (mode === "block") {
-    return ["コード", "銘柄名", "時価総額（円）", "検出件数", "最大売買代金（円）", "検出時刻", "価格変化率", "タイプ", "日次売買代金（円）"];
+    return ["コード", "銘柄名", "市場区分", "時価総額（円）", "検出件数", "最大売買代金（円）", "検出時刻", "価格変化率", "タイプ", "日次売買代金（円）"];
   }
 
   if (usesMarginBbColumns(mode)) {
-    return ["コード", "銘柄名", "時価総額（円）", `${label}終値`, "BB位置（σ）", "信用倍率", "買残（株）", "売残（株）",
+    return ["コード", "銘柄名", "市場区分", "時価総額（円）", `${label}終値`, "BB位置（σ）", "信用倍率", "買残（株）", "売残（株）",
             "制度信用（買い建て）", "制度信用（売り建て）", "規制内容"];
   }
 
   if (mode === "heuristics") {
     // 固定列（rowspan=2 なので 1行目のみ）
-    const headers = ["コード", "銘柄名", "時価総額（円）", "トレンド", "スコア"];
+    const headers = ["コード", "銘柄名", "市場区分", "時価総額（円）", "トレンド", "スコア"];
 
     for (const typeObj of HEURISTICS_TYPES) {
       const itemCount = typeObj.items.length;
@@ -616,11 +637,11 @@ function buildCsvHeaders(mode, label, compareDateList = []) {
 
   if (mode === "compare") {
     // 画面表示（横持ち）と同一の列構成に合わせる。
-    // 固定列（コード・銘柄名・時価総額・スコア・上昇/下降の予測・比較元終値）＋
+    // 固定列（コード・銘柄名・市場区分・時価総額・スコア・上昇/下降の予測・比較元終値）＋
     // 比較先日付ごとに「YYYY/MM/DD（曜）終値」「YYYY/MM/DD（曜）増減（円）」
     // 「YYYY/MM/DD（曜）増減（％）」の3列を横展開する（heuristics の
     // 「グループ名（item.label）」と同様、2行ヘッダ相当を1セルへ連結する方式）。
-    const headers = ["コード", "銘柄名", "時価総額（円）", "スコア", "上昇/下降の予測", "比較元終値"];
+    const headers = ["コード", "銘柄名", "市場区分", "時価総額（円）", "スコア", "上昇/下降の予測", "比較元終値"];
     for (const targetDate of compareDateList) {
       const dateLabel = makeDateLabel(targetDate);
       headers.push(`${dateLabel}終値`, `${dateLabel}増減（円）`, `${dateLabel}増減（％）`);
@@ -644,6 +665,7 @@ function buildCsvRow(r, mode, compareDateList = []) {
     return [
       r.コード,
       r.銘柄名,
+      r.市場区分 ?? "",
       r.時価総額 ?? "",
       r.終値,
       r.出来高,
@@ -660,6 +682,7 @@ function buildCsvRow(r, mode, compareDateList = []) {
     return [
       r.コード,
       r.銘柄名,
+      r.市場区分 ?? "",
       r.時価総額 ?? "",
       formatSignedPercent(r.値上がり率),
       r.当日終値,
@@ -671,6 +694,7 @@ function buildCsvRow(r, mode, compareDateList = []) {
     return [
       r.コード,
       r.銘柄名,
+      r.市場区分 ?? "",
       r.時価総額 ?? "",
       r.検出件数,
       r.最大売買代金,
@@ -685,6 +709,7 @@ function buildCsvRow(r, mode, compareDateList = []) {
     return [
       r.コード,
       r.銘柄名,
+      r.市場区分 ?? "",
       r.時価総額 ?? "",
       r.終値 ?? "",
       r.BB位置 ?? "",
@@ -701,6 +726,7 @@ function buildCsvRow(r, mode, compareDateList = []) {
     const cells = [
       r.コード,
       r.銘柄名,
+      r.市場区分 ?? "",
       r.時価総額 ?? "",
       formatDirectionMark(r.トレンド),
       r.スコア
@@ -722,6 +748,7 @@ function buildCsvRow(r, mode, compareDateList = []) {
     const cells = [
       r.コード,
       r.銘柄名,
+      r.市場区分 ?? "",
       r.時価総額 ?? "",
       score,
       formatDirectionMark(r.予測) || "-",
@@ -1865,7 +1892,7 @@ function buildCompareWideRows(results, dateList) {
   for (const r of results) {
     let row = rowByCode.get(r.コード);
     if (!row) {
-      row = { コード: r.コード, 銘柄名: r.銘柄名, 時価総額: r.時価総額 ?? null, 予測: null, 比較元終値: null, dates: {} };
+      row = { コード: r.コード, 銘柄名: r.銘柄名, 市場区分: r.市場区分 ?? null, 時価総額: r.時価総額 ?? null, 予測: null, 比較元終値: null, dates: {} };
       rowByCode.set(r.コード, row);
       rows.push(row);
     }
@@ -1919,6 +1946,7 @@ function updateTableHeader(mode, label = "", compareFromLabel = "", compareDateL
     const html = renderHeaderRow([
       col(COLUMNS.code, { fixed: true }),
       col(COLUMNS.name, { fixed: true }),
+      COLUMNS.marketSegment,
       COLUMNS.marketCap,
       COLUMNS.ratioClose,
       COLUMNS.ratioVolume,
@@ -1939,6 +1967,7 @@ function updateTableHeader(mode, label = "", compareFromLabel = "", compareDateL
     const html = renderHeaderRow([
       col(COLUMNS.code, { fixed: true }),
       col(COLUMNS.name, { fixed: true }),
+      COLUMNS.marketSegment,
       COLUMNS.marketCap,
       col(COLUMNS.dateChangeRate, { label: mode === "dateDown" ? "値下がり率" : COLUMNS.dateChangeRate.label }),
       col(COLUMNS.dateTodayClose, { label: `${label}終値` }),   // ヘッダーのみ当日日付ラベルへ差し替え
@@ -1954,6 +1983,7 @@ function updateTableHeader(mode, label = "", compareFromLabel = "", compareDateL
     const html = renderHeaderRow([
       col(COLUMNS.code, { fixed: true }),
       col(COLUMNS.name, { fixed: true }),
+      COLUMNS.marketSegment,
       COLUMNS.marketCap,
       COLUMNS.blockDetectCount,
       COLUMNS.blockMaxValue,
@@ -1972,6 +2002,7 @@ function updateTableHeader(mode, label = "", compareFromLabel = "", compareDateL
     const html = renderHeaderRow([
       col(COLUMNS.code, { fixed: true }),
       col(COLUMNS.name, { fixed: true }),
+      COLUMNS.marketSegment,
       COLUMNS.marketCap,
       col(COLUMNS.marginBbClose, { label: `${label}終値` }),   // ヘッダーのみ検索日付ラベルへ差し替え
       COLUMNS.marginBbPosition,
@@ -1997,6 +2028,7 @@ function updateTableHeader(mode, label = "", compareFromLabel = "", compareDateL
       <tr>
         <th class="fixed-col" data-fixed-col rowspan="2">${COLUMNS.code.label}</th>
         <th class="fixed-col" data-fixed-col rowspan="2">${COLUMNS.name.label}</th>
+        <th class="fixed-col" data-fixed-col rowspan="2">${COLUMNS.marketSegment.label}</th>
         <th class="fixed-col" data-fixed-col rowspan="2">${COLUMNS.marketCap.label}</th>
         <th class="fixed-col" data-fixed-col data-heuristics-trend-col rowspan="2">トレ<br class="mobile-line-break">ンド</th>
         <th class="fixed-col" data-fixed-col data-fixed-col-last data-heuristics-score-col rowspan="2">${COLUMNS.score.label}</th>
@@ -2055,18 +2087,19 @@ function updateTableHeader(mode, label = "", compareFromLabel = "", compareDateL
     // パターンで統一する。1つの固定列がヘッダ側で2セルに分かれるため、
     // [data-fixed-col] の出現順による本体列との対応付け（syncFixedColumns）が
     // 崩れないよう、1行目セルには data-fixed-col ではなく data-fixed-col-group="5"
-    // （本体側の6番目＝インデックス5の固定列であることの明示。時価総額列の追加により
-    // 4→5へ変更。2026-07）を用いる（詳細は screening.js の syncFixedColumns を参照）。
+    // （本体側の7番目＝インデックス6の固定列であることの明示。時価総額列の追加により
+    // 4→5へ、市場区分列の追加により5→6へ変更。2026-10）を用いる（詳細は screening.js の syncFixedColumns を参照）。
     // ヘッダーは列の種類によらず常に中央寄せとする方針（2026-07）のため、固定列も
     // データ行と異なりalignClass（cell-num/cell-text）は付与しない。
     const row1 = `
       <tr>
         <th class="fixed-col" data-fixed-col rowspan="2">${COLUMNS.code.label}</th>
         <th class="fixed-col" data-fixed-col rowspan="2">${COLUMNS.name.label}</th>
+        <th class="fixed-col" data-fixed-col rowspan="2">${COLUMNS.marketSegment.label}</th>
         <th class="fixed-col" data-fixed-col rowspan="2">${COLUMNS.marketCap.label}</th>
         <th class="fixed-col" data-fixed-col rowspan="2">${COLUMNS.score.label}</th>
         <th class="fixed-col" data-fixed-col rowspan="2">上昇/下降の予測</th>
-        <th class="fixed-col" data-fixed-col-group="5">${fromHeaderLine1}</th>
+        <th class="fixed-col" data-fixed-col-group="6">${fromHeaderLine1}</th>
         ${dateGroupHeaders}
       </tr>
     `;
@@ -2474,6 +2507,7 @@ function showResults(results, mode, compareDateList = currentCompareDateList, tb
       tr.innerHTML = renderDataCells([
         col(COLUMNS.code, { fixed: true }),
         col(COLUMNS.name, { fixed: true }),
+        COLUMNS.marketSegment,
         COLUMNS.marketCap,
         COLUMNS.ratioClose,
         COLUMNS.ratioVolume,
@@ -2493,6 +2527,7 @@ function showResults(results, mode, compareDateList = currentCompareDateList, tb
       tr.innerHTML = renderDataCells([
         col(COLUMNS.code, { fixed: true }),
         col(COLUMNS.name, { fixed: true }),
+        COLUMNS.marketSegment,
         COLUMNS.marketCap,
         COLUMNS.dateChangeRate,
         COLUMNS.dateTodayClose,
@@ -2507,6 +2542,7 @@ function showResults(results, mode, compareDateList = currentCompareDateList, tb
       tr.innerHTML = renderDataCells([
         col(COLUMNS.code, { fixed: true }),
         col(COLUMNS.name, { fixed: true }),
+        COLUMNS.marketSegment,
         COLUMNS.marketCap,
         COLUMNS.blockDetectCount,
         COLUMNS.blockMaxValue,
@@ -2524,6 +2560,7 @@ function showResults(results, mode, compareDateList = currentCompareDateList, tb
       tr.innerHTML = renderDataCells([
         col(COLUMNS.code, { fixed: true }),
         col(COLUMNS.name, { fixed: true }),
+        COLUMNS.marketSegment,
         COLUMNS.marketCap,
         COLUMNS.marginBbClose,
         COLUMNS.marginBbPosition,
@@ -2551,6 +2588,7 @@ function showResults(results, mode, compareDateList = currentCompareDateList, tb
       let html = `
         <td class="fixed-col" data-fixed-col>${COLUMNS.code.format(r)}</td>
         <td class="fixed-col ${alignClass(COLUMNS.name)}" data-fixed-col>${COLUMNS.name.format(r)}</td>
+        <td class="fixed-col ${alignClass(COLUMNS.marketSegment)}" data-fixed-col>${COLUMNS.marketSegment.format(r)}</td>
         <td class="fixed-col ${alignClass(COLUMNS.marketCap)}" data-fixed-col>${COLUMNS.marketCap.format(r)}</td>
         <td class="fixed-col" data-fixed-col data-heuristics-trend-col>${formatDirectionMark(r.トレンド)}</td>
         <td class="fixed-col ${alignClass(COLUMNS.score)}" data-fixed-col data-fixed-col-last data-heuristics-score-col>${COLUMNS.score.format(r)}</td>
@@ -2709,6 +2747,7 @@ function showResults(results, mode, compareDateList = currentCompareDateList, tb
       tr.innerHTML = `
         <td class="fixed-col" data-fixed-col>${COLUMNS.code.format(r)}</td>
         <td class="fixed-col ${alignClass(COLUMNS.name)}" data-fixed-col>${COLUMNS.name.format(r)}</td>
+        <td class="fixed-col ${alignClass(COLUMNS.marketSegment)}" data-fixed-col>${COLUMNS.marketSegment.format(r)}</td>
         <td class="fixed-col ${alignClass(COLUMNS.marketCap)}" data-fixed-col>${COLUMNS.marketCap.format(r)}</td>
         <td class="fixed-col ${alignClass(COLUMNS.score)}" data-fixed-col>${score}</td>
         <td class="fixed-col" data-fixed-col>${formatDirectionMark(r.予測) || "-"}</td>

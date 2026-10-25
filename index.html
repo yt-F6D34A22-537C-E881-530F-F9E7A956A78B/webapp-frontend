@@ -107,14 +107,13 @@
       <h1>スクリーニング</h1>
       <!-- 復習ページへの導線（2026-09 追加。学びの棚：目次・しおり・メモ機能） -->
       <!-- 値動きクイズへの導線（2026-10 追加） -->
+      <!-- 情報モーダルの起動ボタン（2026-10 追加）。
+           data-role="info-modal-open" / data-modal-target はフック属性（class はスタイル専用） -->
       <nav class="app-header-nav">
         <a href="pages/review.html">学びの棚（復習ページ）</a>
         ｜
         <a href="pages/quiz.html">値動きクイズ</a>
-      </nav>
-      <!-- 情報モーダルの起動ボタン（2026-10 追加。ページ遷移ではなくモーダルを開くため、リンクとは別の行に置く）。
-           data-role="info-modal-open" / data-modal-target はフック属性（class はスタイル専用） -->
-      <nav class="app-header-nav" aria-label="情報モーダル">
+        ｜
         <button id="entryChecklistOpenBtn" type="button" class="app-header-nav-btn"
                 data-role="info-modal-open" data-modal-target="entryChecklistModal"
                 aria-haspopup="dialog">エントリーチェックリスト</button>
