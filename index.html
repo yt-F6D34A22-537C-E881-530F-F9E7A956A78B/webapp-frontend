@@ -167,6 +167,10 @@
           <span>信用倍率×ボリンジャー<span data-role="favorite-tab-mark" data-favorite-mode="marginBb"></span></span>
         </label>
         <label class="mode-tab">
+          <input type="radio" name="searchMode" value="shortEntry">
+          <span>空売りエントリー</span>
+        </label>
+        <label class="mode-tab">
           <input type="radio" name="searchMode" value="heuristics">
           <span>経験則判定（heuristics）</span>
         </label>
@@ -252,6 +256,24 @@
             <div data-exclude-markets-slot></div>
 
             <button type="button" id="marginBbFavoriteBtn" class="btn ghost favorite-toggle-btn" data-favorite-mode="marginBb" data-role="favorite-toggle-btn" title="お気に入りに登録">☆</button>
+          </div>
+        </div>
+
+        <!-- モード：空売りエントリー検出（ヘッド・アンド・ショルダーズ・トップ形成後に50日線で反発が失敗した日を検出）。
+             scripts/short_entry.js が生成した日次アーカイブ（data/short_entry/）を参照する。
+             favorite 対象外（☆ボタンなし）。詳細は仕様書.md を参照 -->
+        <div class="mode-panel" data-mode="shortEntry">
+          <div class="mode-conditions" id="shortEntryConditions">
+            <label>日付
+              <select id="shortEntryDateSelect" disabled></select>
+            </label>
+            <label>表示対象
+              <select id="shortEntryStageSelect" disabled>
+                <option value="all" selected>監視＋エントリー</option>
+                <option value="entry">エントリーのみ</option>
+              </select>
+            </label>
+            <div data-exclude-markets-slot></div>
           </div>
         </div>
 
@@ -421,6 +443,7 @@
       <p class="hint">heuristics モードでは ○＝一致、×＝不一致 を表示します。</p>
       <p class="hint">信用倍率×ボリンジャーモードでは、制度信用の ○＝建て可能、×＝建て不可（規制等）を表示します。</p>
       <p class="hint">銘柄検索モードでは、最新日の終値・ボリンジャーバンド位置・信用取引状況を表示します（証券コードと銘柄名を両方入力した場合は、いずれかに合致する銘柄が対象。データが無い項目は「-」）。</p>
+      <p class="hint">空売りエントリーモードでは、ヘッド・アンド・ショルダーズ・トップ形成後に50日線での反発が失敗した日を「エントリー」、その数日前から「監視（接近／反発中）」として表示します（行の色付きはエントリー）。</p>
       <p class="hint">チャート画面の「信用」ボタンで、その銘柄の信用取引状況（信用残・信用倍率・規制）を確認できます。</p>
     </section>
 
