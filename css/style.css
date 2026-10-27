@@ -288,6 +288,7 @@ body {
 .mode-tabs:has(input[value="block"]:checked) ~ .mode-panels .mode-panel[data-mode="block"],
 .mode-tabs:has(input[value="dateDown"]:checked) ~ .mode-panels .mode-panel[data-mode="dateDown"],
 .mode-tabs:has(input[value="marginBb"]:checked) ~ .mode-panels .mode-panel[data-mode="marginBb"],
+.mode-tabs:has(input[value="shortEntry"]:checked) ~ .mode-panels .mode-panel[data-mode="shortEntry"],
 .mode-tabs:has(input[value="symbolSearch"]:checked) ~ .mode-panels .mode-panel[data-mode="symbolSearch"] {
   display: block;
 }
@@ -308,11 +309,13 @@ body {
    フィールドセットのみ折り返して次行に表示する）
    ============================================================ */
 #ratioConditions,
+#shortEntryConditions,
 #marginBbConditions {
   flex-wrap: wrap;
 }
 
 #ratioConditions [data-exclude-markets-slot],
+#shortEntryConditions [data-exclude-markets-slot],
 #marginBbConditions [data-exclude-markets-slot] {
   flex: 1 1 100%;
 }
