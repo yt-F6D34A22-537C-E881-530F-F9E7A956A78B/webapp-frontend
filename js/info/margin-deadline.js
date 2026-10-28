@@ -5,7 +5,9 @@
 // ・表示の優先順位：①追証発生から何営業日後か（相対）、②具体的な日付（月曜基準の参考例）。
 //   日付は example.days を index で引くだけで、祝日・休業日の計算はしない。
 // ・構成：日付例の見出し → スケジュール表（証券会社 × 営業日。解消期限・強制決済を色分け）
-//         → 各社の条件表（補足・確認日・公式リンク）→ トレーダー視点のメモ
+//         → 各社の条件表（スクロール可能なグリッド。見出し行と証券会社名の列は固定）
+//         → トレーダー視点のメモ
+// ・iPhone など狭い画面でも読めるよう、条件表は縦積みにせず、表の中だけ上下左右にスクロールさせる。
 // ・最終確認日が古い（STALE_AFTER_DAYS 超）／不明な証券会社は「要再確認」と表示する。
 // --------------------------------------
 import { createEl, toSafeHttpsUrl } from "./info-dom.js";
@@ -18,14 +20,6 @@ const { updatedAt, example, brokers, traderNotes } = MARGIN_DEADLINES;
 const exampleDays = example?.days ?? [];
 
 /* ---------- 整形 ---------- */
-// 「3営業日後 12:00」の形にする。day が null（会社指定など）の場合は「会社指定」
-function formatWhen(point) {
-  if (!point) return "-";
-  const dayText = point.day == null ? "会社指定" : point.day === 0 ? "発生日" : `${point.day}営業日後`;
-  const base = point.time ? `${dayText} ${point.time}` : dayText;
-  return point.approx === true ? `${base}（目安）` : base;
-}
-
 function isStale(checkedAt) {
   const t = Date.parse(checkedAt ?? "");   // 空・不正は NaN → 日付不明として「要再確認」扱い
   return Number.isNaN(t) || Date.now() - t > STALE_AFTER_DAYS * DAY_MS;
@@ -45,6 +39,15 @@ function buildExampleHeader() {
   return box;
 }
 
+/* ---------- 見出し付きの区画 ---------- */
+function buildSection(title, hint, contentEl) {
+  const section = createEl("section", "margin-deadline-section");
+  section.appendChild(createEl("h3", "margin-deadline-section-title", title));
+  if (hint) section.appendChild(createEl("p", "info-modal-hint", hint));
+  section.appendChild(contentEl);
+  return section;
+}
+
 /* ---------- スケジュール表（証券会社 × 発生日からの営業日） ---------- */
 // 解消期限・強制決済のどちらかが来る営業日の範囲だけを列にする（何も起きない日の列は作らない）
 function getColumnDays() {
@@ -57,11 +60,13 @@ function getColumnDays() {
   return Array.from({ length: last - first + 1 }, (_, i) => first + i);
 }
 
+// ラベル（解消期限／強制決済）を小さく、時刻・タイミングを大きく2段で表示する
 function buildChip(kind, label, point) {
-  const time = point.time ? ` ${point.time}` : "";
-  const approx = point.approx === true ? "（目安）" : "";
-  const chip = createEl("span", "margin-deadline-chip", `${label}${time}${approx}`);
+  const chip = createEl("span", "margin-deadline-chip");
   chip.dataset.kind = kind;   // resolve / forced（色分けの CSS 専用フック。値保持型）
+  chip.appendChild(createEl("span", "margin-deadline-chip-label", label));
+  const when = point.time ? `${point.time}${point.approx === true ? "（目安）" : ""}` : "";
+  if (when) chip.appendChild(createEl("span", "margin-deadline-chip-time", when));
   return chip;
 }
 
@@ -77,7 +82,7 @@ function buildScheduleTable() {
   if (columnDays.length === 0) return null;
 
   const table = createEl("table", "margin-deadline-table margin-deadline-schedule");
-  table.appendChild(createEl("caption", "", "追証の発生日を基準に、解消期限と強制決済が来る営業日（日付は参考例）"));
+  table.setAttribute("aria-label", "スケジュール表");
 
   const headRow = createEl("tr");
   const corner = createEl("th", "", "証券会社");
@@ -95,7 +100,7 @@ function buildScheduleTable() {
   const tbody = createEl("tbody");
   brokers.forEach((broker) => {
     const row = createEl("tr");
-    const nameCell = createEl("th", "", broker.name);
+    const nameCell = createEl("th", "", broker.shortName || broker.name);
     nameCell.scope = "row";
     if (broker.resolve?.day == null) {   // 解消期限の日数が決まらない会社は、列に置けないため名前の下に注記する
       nameCell.appendChild(createEl("span", "margin-deadline-sub", "解消期限は会社指定"));
@@ -108,24 +113,21 @@ function buildScheduleTable() {
 
   const wrap = createEl("div", "margin-deadline-table-wrap");
   wrap.appendChild(table);
-  return wrap;
+  return buildSection("スケジュール表", "追証の発生日を基準に、解消期限と強制決済が来る営業日（日付は参考例）", wrap);
 }
 
-/* ---------- 各社の条件表（補足・確認日・公式リンク） ---------- */
+/* ---------- 各社の条件表（上下左右にスクロールできるグリッド） ---------- */
 function buildBrokerNameCell(broker) {
   const th = createEl("th");
   th.scope = "row";
-  th.appendChild(createEl("span", "margin-deadline-detail-name", broker.name));
+  th.appendChild(createEl("span", "margin-deadline-detail-name", broker.shortName || broker.name));
 
-  const checked = createEl(
-    "span", "margin-deadline-checked",
-    broker.checkedAt ? `最終確認日：${broker.checkedAt}` : "最終確認日：不明"
-  );
+  th.appendChild(createEl("span", "margin-deadline-checked", `確認日 ${broker.checkedAt || "不明"}`));
   if (isStale(broker.checkedAt)) {
-    checked.dataset.stale = "";            // フラグ型 data-*（CSS 専用フック）
-    checked.textContent += "（要再確認）";
+    const stale = createEl("span", "margin-deadline-stale", "要再確認");
+    stale.dataset.stale = "";              // フラグ型 data-*（CSS 専用フック）
+    th.appendChild(stale);
   }
-  th.appendChild(checked);
 
   const href = toSafeHttpsUrl(broker.sourceUrl);
   if (href) {
@@ -138,20 +140,18 @@ function buildBrokerNameCell(broker) {
   return th;
 }
 
-// 狭い画面では表を縦積みにするため、列名を data-label に持たせる（CSS の ::before が表示。値保持型）
-function buildDetailCell(label, point, extraTexts) {
+// 条件表のセル。営業日数・時刻はスケジュール表に出しているため、ここでは補足文を表示する
+function buildDetailCell(texts) {
   const td = createEl("td");
-  td.dataset.label = label;
-  if (point) td.appendChild(createEl("span", "margin-deadline-detail-when", formatWhen(point)));
-  [point?.text, ...extraTexts].filter(Boolean).forEach((text) => {
-    td.appendChild(createEl("span", "margin-deadline-detail-text", text));
+  texts.filter(Boolean).forEach((text, index) => {
+    td.appendChild(createEl("span", index === 0 ? "margin-deadline-detail-text" : "margin-deadline-detail-sub", text));
   });
   return td;
 }
 
 function buildDetailTable() {
   const table = createEl("table", "margin-deadline-table margin-deadline-details");
-  table.appendChild(createEl("caption", "", "各社の条件"));
+  table.setAttribute("aria-label", "各社の条件");
 
   const headRow = createEl("tr");
   ["証券会社", "追証の解消期限", "強制決済", "補足"].forEach((label) => {
@@ -164,22 +164,19 @@ function buildDetailTable() {
   const tbody = createEl("tbody");
   brokers.forEach((broker) => {
     const row = createEl("tr");
-    const noteCell = createEl("td");
-    noteCell.dataset.label = "補足";
-    if (broker.note) noteCell.appendChild(createEl("span", "margin-deadline-detail-text", broker.note));
     row.append(
       buildBrokerNameCell(broker),
-      buildDetailCell("追証の解消期限", broker.resolve, []),
-      buildDetailCell("強制決済", broker.forcedClose, [broker.forcedClose?.note]),
-      noteCell
+      buildDetailCell([broker.resolve?.text]),
+      buildDetailCell([broker.forcedClose?.text, broker.forcedClose?.note]),
+      buildDetailCell([broker.note])
     );
     tbody.appendChild(row);
   });
   table.appendChild(tbody);
 
-  const wrap = createEl("div", "margin-deadline-table-wrap");
+  const wrap = createEl("div", "margin-deadline-table-wrap margin-deadline-grid");   // grid：上下左右にスクロール
   wrap.appendChild(table);
-  return wrap;
+  return buildSection("各社の条件", "表は上下左右にスクロールできます（見出しと証券会社名は固定）", wrap);
 }
 
 /* ---------- トレーダー視点のメモ ---------- */

@@ -17,6 +17,7 @@
 //             祝日を含まない週を選ぶこと（祝日があると営業日の数がずれる）
 //   brokers[] : 証券会社（表示順＝配列順）
 //     name        : 証券会社名（必須）
+//     shortName   : 表（スマホでは幅が狭い）で使う短い名前。省略すると name を使う（正式名称が必要なら note に書く）
 //     sourceUrl   : 公式情報の URL（https のみ有効。クエリ文字列などの余分な付与物は付けない。空なら非表示）
 //     checkedAt   : 公式情報を確認した日（YYYY-MM-DD）。90日超・空・不正な場合は「要再確認」と表示される
 //     resolve     : 追証の解消期限
@@ -40,13 +41,14 @@ export const MARGIN_DEADLINES = {
 
   example: {
     title: "11/9（月）に追証が発生した場合の例",
-    note: "日付は月曜日を基準にした参考例です（祝日のない週を選んでいます）。実際の日付は、追証の発生日と営業日カレンダーで確認してください。",
+    note: "月曜日を基準にした参考例です（祝日のない週）。実際の日付は営業日カレンダーで確認してください。",
     days: ["11/9（月）", "11/10（火）", "11/11（水）", "11/12（木）", "11/13（金）"],
   },
 
   brokers: [
     {
       name: "SBI証券",
+      shortName: "SBI",
       sourceUrl: "https://search.sbisec.co.jp/v2/popwin/help/trade_stock_11_04.html",
       checkedAt: "2026-10-26",
       resolve: { day: 3, time: "12:00", text: "発生日から3営業日目の正午までに解消" },
@@ -60,6 +62,7 @@ export const MARGIN_DEADLINES = {
     },
     {
       name: "楽天証券",
+      shortName: "楽天",
       sourceUrl: "https://www.rakuten-sec.co.jp/web/domestic/special/beginner/margin05.html",
       checkedAt: "2026-10-26",
       resolve: { day: 2, time: "12:00", text: "発生日の翌々営業日の正午までに解消" },
@@ -67,6 +70,7 @@ export const MARGIN_DEADLINES = {
     },
     {
       name: "マネックス証券",
+      shortName: "マネックス",
       sourceUrl: "https://info.monex.co.jp/margin-trade/rule/margin-call_02.html",
       checkedAt: "",
       resolve: { day: 2, time: "24:00", text: "追証期日の24:00までに解消" },
@@ -74,13 +78,16 @@ export const MARGIN_DEADLINES = {
     },
     {
       name: "三菱UFJ eスマート証券（旧auカブコム）",
+      shortName: "三菱UFJ eスマート",
       sourceUrl: "https://faq.kabu.com/s/article/k000352",
       checkedAt: "",
       resolve: { day: 2, time: "12:00", text: "正午までに解消" },
       forcedClose: { day: 3, time: "寄付き", text: "寄付きから強制決済" },
+      note: "正式名称：三菱UFJ eスマート証券（旧auカブコム）",
     },
     {
       name: "松井証券",
+      shortName: "松井",
       sourceUrl: "",
       checkedAt: "",
       resolve: { day: 2, time: "", text: "この日までに解消（時刻は要確認）" },
@@ -88,6 +95,7 @@ export const MARGIN_DEADLINES = {
     },
     {
       name: "野村證券",
+      shortName: "野村",
       sourceUrl: "",
       checkedAt: "",
       resolve: { day: null, time: "", text: "会社指定の期限までに解消" },
@@ -95,6 +103,7 @@ export const MARGIN_DEADLINES = {
     },
     {
       name: "SMBC日興証券",
+      shortName: "SMBC日興",
       sourceUrl: "",
       checkedAt: "",
       resolve: { day: null, time: "", text: "会社指定の期限までに解消" },
