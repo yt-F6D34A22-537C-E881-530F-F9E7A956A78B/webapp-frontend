@@ -13,7 +13,7 @@ const shortEntryDateSelect = document.getElementById("shortEntryDateSelect"); //
 
 // お気に入りモードで実行できるモードの一覧（表示順もこの並びに従う）。
 // heuristics・compare は対象外（理由は main.py の ALLOWED_FAVORITE_MODES を参照）。
-const FAVORITE_MODES = ["ratio", "date", "dateDown", "block", "marginBb"];
+const FAVORITE_MODES = ["ratio", "date", "dateDown", "block", "marginBb", "shortEntry"];
 
 const FAVORITE_MODE_LABELS = {
   ratio: "出来高×上髭",
@@ -21,6 +21,7 @@ const FAVORITE_MODE_LABELS = {
   dateDown: "値下がり率ランキング",
   block: "超大口検出",
   marginBb: "信用倍率×ボリンジャー",
+  shortEntry: "空売りエントリー",
 };
 
 // お気に入り実行時、モードごとに「最新の日付」を取得する日付セレクタ。
@@ -33,6 +34,7 @@ const FAVORITE_MODE_DATE_SELECT = {
   dateDown: dateDownSelect,
   block: blockDateSelect,
   marginBb: marginBbDateSelect,
+  shortEntry: shortEntryDateSelect,
 };
 
 const loadingOverlay = document.getElementById("loadingOverlay");
@@ -1555,6 +1557,12 @@ function collectFavoriteParams(mode) {
       exclude_markets: getExcludeMarkets("marginBbConditions"),
     };
   }
+  if (mode === "shortEntry") {
+    return {
+      stage: document.getElementById("shortEntryStageSelect").value,
+      exclude_markets: getExcludeMarkets("shortEntryConditions"),
+    };
+  }
   return {};
 }
 
@@ -1700,6 +1708,12 @@ function buildFavoriteQueryParams(mode, targetDate, p) {
     params.set("margin_ratio", p.margin_ratio);
     params.set("min_buy_balance", p.min_buy_balance);
     params.set("bb_zone", p.bb_zone);
+    if (p.exclude_markets) params.set("exclude_markets", p.exclude_markets);
+
+  } else if (mode === "shortEntry") {
+    params.set("mode", "short_entry");
+    params.set("target_date", targetDate);
+    if (p.stage) params.set("stage", p.stage);   // 省略時はバックエンドの既定（all）
     if (p.exclude_markets) params.set("exclude_markets", p.exclude_markets);
   }
 
