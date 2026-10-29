@@ -11,5 +11,9 @@
     "min_volume": 1000000,
     "exclude_markets": "ETF・ETN"
   },
-  "dateDown": {}
+  "dateDown": {},
+  "shortEntry": {
+    "stage": "all",
+    "exclude_markets": "ETF・ETN"
+  }
 }
