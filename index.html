@@ -168,7 +168,7 @@
         </label>
         <label class="mode-tab">
           <input type="radio" name="searchMode" value="shortEntry">
-          <span>空売りエントリー</span>
+          <span>空売りエントリー<span data-role="favorite-tab-mark" data-favorite-mode="shortEntry"></span></span>
         </label>
         <label class="mode-tab">
           <input type="radio" name="searchMode" value="heuristics">
@@ -261,7 +261,7 @@
 
         <!-- モード：空売りエントリー検出（ヘッド・アンド・ショルダーズ・トップ形成後に50日線で反発が失敗した日を検出）。
              scripts/short_entry.js が生成した日次アーカイブ（data/short_entry/）を参照する。
-             favorite 対象外（☆ボタンなし）。詳細は仕様書.md を参照 -->
+             favorite 対象（☆ボタンあり。表示対象・除外市場を保存し、実行時は最新の生成済み日付を使用）。詳細は仕様書.md を参照 -->
         <div class="mode-panel" data-mode="shortEntry">
           <div class="mode-conditions" id="shortEntryConditions">
             <label>日付
@@ -274,6 +274,8 @@
               </select>
             </label>
             <div data-exclude-markets-slot></div>
+
+            <button type="button" id="shortEntryFavoriteBtn" class="btn ghost favorite-toggle-btn" data-favorite-mode="shortEntry" data-role="favorite-toggle-btn" title="お気に入りに登録">☆</button>
           </div>
         </div>
 
