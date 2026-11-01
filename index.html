@@ -168,7 +168,11 @@
         </label>
         <label class="mode-tab">
           <input type="radio" name="searchMode" value="shortEntry">
-          <span>空売りエントリー<span data-role="favorite-tab-mark" data-favorite-mode="shortEntry"></span></span>
+          <span>空売りエントリー</span>
+        </label>
+        <label class="mode-tab">
+          <input type="radio" name="searchMode" value="bottomEntry">
+          <span>下げ止まり買い</span>
         </label>
         <label class="mode-tab">
           <input type="radio" name="searchMode" value="heuristics">
@@ -261,7 +265,7 @@
 
         <!-- モード：空売りエントリー検出（ヘッド・アンド・ショルダーズ・トップ形成後に50日線で反発が失敗した日を検出）。
              scripts/short_entry.js が生成した日次アーカイブ（data/short_entry/）を参照する。
-             favorite 対象（☆ボタンあり。表示対象・除外市場を保存し、実行時は最新の生成済み日付を使用）。詳細は仕様書.md を参照 -->
+             favorite 対象外（☆ボタンなし）。詳細は仕様書.md を参照 -->
         <div class="mode-panel" data-mode="shortEntry">
           <div class="mode-conditions" id="shortEntryConditions">
             <label>日付
@@ -274,8 +278,62 @@
               </select>
             </label>
             <div data-exclude-markets-slot></div>
+          </div>
+        </div>
 
-            <button type="button" id="shortEntryFavoriteBtn" class="btn ghost favorite-toggle-btn" data-favorite-mode="shortEntry" data-role="favorite-toggle-btn" title="お気に入りに登録">☆</button>
+        <!-- モード：下げ止まり買い（投げ売り後の2番底・3番底の確認を、接近・底確認中・エントリーの段階で検出）。
+             scripts/bottom_entry.js が生成した日次アーカイブ（data/bottom_entry/）を参照する。
+             favorite 対象外（☆ボタンなし）。詳細は仕様書.md を参照 -->
+        <div class="mode-panel" data-mode="bottomEntry">
+          <div class="mode-conditions" id="bottomEntryConditions">
+            <label>日付
+              <select id="bottomEntryDateSelect" disabled></select>
+            </label>
+            <label>表示対象
+              <select id="bottomEntryStageSelect" disabled>
+                <option value="all" selected>監視＋エントリー</option>
+                <option value="entry">エントリーのみ</option>
+              </select>
+            </label>
+            <label>対象の底
+              <select id="bottomEntryBottomSelect" disabled>
+                <option value="all" selected>2番底・3番底</option>
+                <option value="2">2番底のみ</option>
+                <option value="3">3番底のみ</option>
+              </select>
+            </label>
+            <label>高値からの下落率
+              <select id="bottomEntryMinDropSelect" disabled>
+                <option value="15" selected>15%以上</option>
+                <option value="20">20%以上</option>
+                <option value="25">25%以上</option>
+                <option value="30">30%以上</option>
+              </select>
+            </label>
+            <label>投げ売り時の出来高
+              <select id="bottomEntryMinClimaxRatioSelect" disabled>
+                <option value="2">2倍以上</option>
+                <option value="3" selected>3倍以上</option>
+                <option value="4">4倍以上</option>
+                <option value="5">5倍以上</option>
+              </select>
+            </label>
+            <label>投げ売り直前の急落（5日）
+              <select id="bottomEntryMinClimaxDropSelect" disabled>
+                <option value="5">5%以上</option>
+                <option value="10" selected>10%以上</option>
+                <option value="15">15%以上</option>
+                <option value="20">20%以上</option>
+              </select>
+            </label>
+            <label>再テスト時の出来高（投げ売り日比）
+              <select id="bottomEntryMaxRetestVolSelect" disabled>
+                <option value="80">80%以下</option>
+                <option value="50" selected>50%以下</option>
+                <option value="30">30%以下</option>
+              </select>
+            </label>
+            <div data-exclude-markets-slot></div>
           </div>
         </div>
 
@@ -446,6 +504,7 @@
       <p class="hint">信用倍率×ボリンジャーモードでは、制度信用の ○＝建て可能、×＝建て不可（規制等）を表示します。</p>
       <p class="hint">銘柄検索モードでは、最新日の終値・ボリンジャーバンド位置・信用取引状況を表示します（証券コードと銘柄名を両方入力した場合は、いずれかに合致する銘柄が対象。データが無い項目は「-」）。</p>
       <p class="hint">空売りエントリーモードでは、ヘッド・アンド・ショルダーズ・トップ形成後に50日線での反発が失敗した日を「エントリー」、その数日前から「監視（接近／反発中）」として表示します（行の色付きはエントリー）。</p>
+      <p class="hint">下げ止まり買いモードでは、投げ売り（大出来高の急落）の後に2番底・3番底を確認した日を「エントリー」、その手前を「監視（底へ接近／底確認中）」として表示します（行の色付きはエントリー）。投げ売りの強さなどの条件は画面で絞り込めます（アーカイブ生成時の下限より緩い条件は指定できません）。</p>
       <p class="hint">チャート画面の「信用」ボタンで、その銘柄の信用取引状況（信用残・信用倍率・規制）を確認できます。</p>
     </section>
 
