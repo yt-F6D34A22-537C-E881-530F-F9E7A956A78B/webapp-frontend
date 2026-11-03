@@ -11,6 +11,7 @@ const dateDownSelect = document.getElementById("dateDownSelect");             //
 const marginBbDateSelect = document.getElementById("marginBbDateSelect");     // 信用倍率×ボリンジャー用
 const shortEntryDateSelect = document.getElementById("shortEntryDateSelect"); // 空売りエントリー検出用
 const bottomEntryDateSelect = document.getElementById("bottomEntryDateSelect"); // 下げ止まり（買い）検出用
+const distributionDateSelect = document.getElementById("distributionDateSelect"); // 売り抜け検出（日足）用
 
 // お気に入りモードで実行できるモードの一覧（表示順もこの並びに従う）。
 // heuristics・compare は対象外（理由は main.py の ALLOWED_FAVORITE_MODES を参照）。
@@ -586,6 +587,17 @@ const COLUMNS = {
   bottomEntryClimaxVolume:  { label: "投げ売り時出来高倍率", align: "num", format: r => `${r.投げ売り時出来高倍率.toFixed(1)}倍` },
   bottomEntryRetestVolume:  { label: "再テスト出来高（投げ売り日比）", align: "num", format: r => formatOrDash(r.再テスト時出来高比, v => `${Math.round(v * 100)}%`) },
   bottomEntryNecklineGap:   { label: "ネックライン乖離率", align: "num", format: r => formatSignedPercent(r.ネックライン乖離率) },
+
+  // --- distribution モード（売り抜け検出：高値圏で出来高を伴う大陰線） ---
+  distributionClose:        { label: "終値", align: "num", format: r => r.終値.toLocaleString() },   // ヘッダーは呼び出し側で検索日付ラベルへ差し替える
+  distributionChange:       { label: "前日比", align: "num", format: r => formatSignedPercent(r.前日比) },
+  distributionBody:         { label: "実体下落率", align: "num", format: r => formatSignedPercent(-r.実体下落率) },
+  distributionVolume:       { label: "出来高倍率", align: "num", format: r => `${r.出来高倍率.toFixed(1)}倍` },
+  distributionTurnover:     { label: "売買代金", align: "num", format: r => `${(r.売買代金 / 1e8).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}億円` },
+  distributionHighPrice:    { label: "直近高値", align: "num", format: r => r.直近高値.toLocaleString() },
+  distributionHighDate:     { label: "高値日", format: r => makeDateLabel(r.高値日) },
+  distributionHighGap:      { label: "前日終値の高値乖離率", align: "num", format: r => formatSignedPercent(r.高値からの乖離率) },
+  distributionRise:         { label: "直前上昇率", align: "num", format: r => formatSignedPercent(r.直前上昇率) },
 };
 
 /** COLUMNS の定義に fixed（固定列）等の表示用オーバーライドを重ねた列オブジェクトを返す。 */
@@ -665,6 +677,11 @@ function buildCsvHeaders(mode, label, compareDateList = []) {
   if (mode === "bottomEntry") {
     return ["コード", "銘柄名", "市場区分", "時価総額（円）", "局面", "番底", `${label}終値`, "第1底（投げ売り安値）", "第1底乖離率",
             "確認安値", "高値からの下落率", "投げ売り日", "投げ売り時出来高倍率（倍）", "再テスト出来高（投げ売り日比）", "ネックライン乖離率"];
+  }
+
+  if (mode === "distribution") {
+    return ["コード", "銘柄名", "市場区分", "時価総額（円）", `${label}終値`, "前日比", "実体下落率", "出来高倍率（倍）", "売買代金（円）",
+            "直近高値", "高値日", "前日終値の高値乖離率", "直前上昇率"];
   }
 
   if (mode === "heuristics") {
@@ -820,6 +837,24 @@ function buildCsvRow(r, mode, compareDateList = []) {
     ].map(String);
   }
 
+  if (mode === "distribution") {
+    return [
+      r.コード,
+      r.銘柄名,
+      r.市場区分 ?? "",
+      r.時価総額 ?? "",
+      r.終値,
+      formatSignedPercent(r.前日比),
+      formatSignedPercent(-r.実体下落率),
+      r.出来高倍率,
+      r.売買代金,
+      r.直近高値,
+      r.高値日,
+      formatSignedPercent(r.高値からの乖離率),
+      formatSignedPercent(r.直前上昇率)
+    ].map(String);
+  }
+
   if (mode === "heuristics") {
     const cells = [
       r.コード,
@@ -897,6 +932,7 @@ function downloadCsv() {
   if (mode === "symbolSearch") label = makeDateLabel(resolveSymbolSearchDate());
   if (mode === "shortEntry") label = makeDateLabel(shortEntryDateSelect ? shortEntryDateSelect.value : "");
   if (mode === "bottomEntry") label = makeDateLabel(bottomEntryDateSelect ? bottomEntryDateSelect.value : "");
+  if (mode === "distribution") label = makeDateLabel(distributionDateSelect ? distributionDateSelect.value : "");
 
   // compare モードは currentResults（縦持ち）を画面表示と同一の横持ちへ変換してから出力する。
   // currentCompareDateList は showResults() と同じ比較先日付一覧（列構成）を保持している。
@@ -929,6 +965,7 @@ function downloadCsv() {
     symbolSearch: resolveSymbolSearchDate(),
     shortEntry: shortEntryDateSelect ? shortEntryDateSelect.value : "",
     bottomEntry: bottomEntryDateSelect ? bottomEntryDateSelect.value : "",
+    distribution: distributionDateSelect ? distributionDateSelect.value : "",
     compare:    (compareFromDateInput.value && document.getElementById("compareToDateSelect").value)
       ? `${compareFromDateInput.value}-${document.getElementById("compareToDateSelect").value}`
       : "",
@@ -1064,6 +1101,7 @@ function renderExcludeMarketsFieldsets() {
   renderExcludeMarketsFieldset("marginBbConditions");
   renderExcludeMarketsFieldset("shortEntryConditions");
   renderExcludeMarketsFieldset("bottomEntryConditions");
+  renderExcludeMarketsFieldset("distributionConditions");
 }
 
 window.onload = () => {
@@ -1074,6 +1112,7 @@ window.onload = () => {
   loadHeuristicsDates();
   loadShortEntryDates();
   loadBottomEntryDates();
+  loadDistributionDates();
   initFavorites();
 };
 
@@ -1126,6 +1165,8 @@ function initSearchMode() {
   const shortEntryFieldset = document.querySelectorAll("#shortEntryConditions fieldset");
   const bottomEntryInputs = document.querySelectorAll("#bottomEntryConditions select");
   const bottomEntryFieldset = document.querySelectorAll("#bottomEntryConditions fieldset");
+  const distributionInputs = document.querySelectorAll("#distributionConditions select");
+  const distributionFieldset = document.querySelectorAll("#distributionConditions fieldset");
 
   function updateMode() {
     const mode = document.querySelector('input[name="searchMode"]:checked').value;
@@ -1153,6 +1194,8 @@ function initSearchMode() {
     shortEntryFieldset.forEach(i => i.disabled = (mode !== "shortEntry"));
     bottomEntryInputs.forEach(i => i.disabled = (mode !== "bottomEntry"));
     bottomEntryFieldset.forEach(i => i.disabled = (mode !== "bottomEntry"));
+    distributionInputs.forEach(i => i.disabled = (mode !== "distribution"));
+    distributionFieldset.forEach(i => i.disabled = (mode !== "distribution"));
 
     updateCompareSourceInputs();
   }
@@ -1525,6 +1568,45 @@ async function loadBottomEntryDates() {
 
   } catch (e) {
     console.error("bottom_entry 日付取得エラー:", e);
+    select.innerHTML = `<option value="">取得失敗</option>`;
+  } finally {
+    // 必ずオーバーレイを非表示にする（共通仕様）
+    controlsOverlay.classList.add("hidden");
+  }
+}
+
+/* ============================
+   /distribution_dates のロード
+============================ */
+async function loadDistributionDates() {
+  const select = distributionDateSelect;
+  if (!select) return;
+
+  const controlsOverlay = document.getElementById("controlsLoadingOverlay");
+
+  select.innerHTML = `<option>読み込み中...</option>`;
+
+  // サーバ通信前にオーバーレイを表示する（共通仕様）
+  controlsOverlay.classList.remove("hidden");
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/distribution_dates`);
+    const data = await res.json();
+
+    if (!data || data.status !== "ok") {
+      console.error("distribution_dates API error:", {
+        httpStatus: res.status,
+        body: data
+      });
+      select.innerHTML = `<option value="">取得失敗</option>`;
+      return;
+    }
+
+    select.innerHTML = "";
+    data.dates.forEach(d => select.appendChild(makeOption(d)));
+
+  } catch (e) {
+    console.error("distribution 日付取得エラー:", e);
     select.innerHTML = `<option value="">取得失敗</option>`;
   } finally {
     // 必ずオーバーレイを非表示にする（共通仕様）
@@ -2257,6 +2339,28 @@ function updateTableHeader(mode, label = "", compareFromLabel = "", compareDateL
     return;
   }
 
+  // distribution（売り抜け検出）
+  if (mode === "distribution") {
+    const html = renderHeaderRow([
+      col(COLUMNS.code, { fixed: true }),
+      col(COLUMNS.name, { fixed: true }),
+      COLUMNS.marketSegment,
+      COLUMNS.marketCap,
+      col(COLUMNS.distributionClose, { label: `${label}終値` }),   // ヘッダーのみ検索日付ラベルへ差し替え
+      COLUMNS.distributionChange,
+      COLUMNS.distributionBody,
+      COLUMNS.distributionVolume,
+      COLUMNS.distributionTurnover,
+      COLUMNS.distributionHighPrice,
+      COLUMNS.distributionHighDate,
+      COLUMNS.distributionHighGap,
+      COLUMNS.distributionRise,
+    ]);
+    stickyThead.innerHTML = html;
+    bodyThead.innerHTML   = html;
+    return;
+  }
+
   // heuristics
   if (mode === "heuristics") {
     // 固定列のうちコード・銘柄名・時価総額・スコアは他モードと共通の列定義（COLUMNS）を
@@ -2398,6 +2502,7 @@ async function startScreening() {
   const shortEntryStage = document.getElementById("shortEntryStageSelect")?.value ?? "all";
   const targetDateBottomEntry = bottomEntryDateSelect ? bottomEntryDateSelect.value : "";
   const bottomEntryStage = document.getElementById("bottomEntryStageSelect")?.value ?? "all";
+  const targetDateDistribution = distributionDateSelect ? distributionDateSelect.value : "";
 
   if (mode === "ratio" && !targetDateRatio) {
     alert("日付を選択してください。");
@@ -2425,6 +2530,11 @@ async function startScreening() {
   }
 
   if (mode === "bottomEntry" && !targetDateBottomEntry) {
+    alert("日付を選択してください。");
+    return;
+  }
+
+  if (mode === "distribution" && !targetDateDistribution) {
     alert("日付を選択してください。");
     return;
   }
@@ -2506,6 +2616,7 @@ async function startScreening() {
   if (mode === "symbolSearch") label = makeDateLabel(targetDateSymbolSearch);
   if (mode === "shortEntry") label = makeDateLabel(targetDateShortEntry);
   if (mode === "bottomEntry") label = makeDateLabel(targetDateBottomEntry);
+  if (mode === "distribution") label = makeDateLabel(targetDateDistribution);
 
   // compare モード：ヘッダ用日付ラベル・横持ち列展開用の比較先日付一覧を組み立て、
   // 証券コード直接入力時はスコアマップをリセット
@@ -2654,6 +2765,28 @@ async function startScreening() {
       if (excludeMarkets) {
         url.searchParams.set("exclude_markets", excludeMarkets);
       }
+    } else if (mode === "distribution") {
+      url.searchParams.set("mode", "distribution");
+      url.searchParams.set("target_date", targetDateDistribution);
+
+      // 画面のスクリーニング条件（アーカイブの指標値での絞り込み。値は各 select の option value。要素は id で特定する）
+      const distributionConditionIds = {
+        min_market_cap: "distributionMinMarketCapSelect",
+        min_vol_ratio: "distributionMinVolRatioSelect",
+        min_body_drop: "distributionMinBodyDropSelect",
+        max_high_gap: "distributionMaxHighGapSelect",
+        min_rise: "distributionMinRiseSelect",
+      };
+      for (const [param, elementId] of Object.entries(distributionConditionIds)) {
+        const value = document.getElementById(elementId)?.value;
+        if (value) url.searchParams.set(param, value);
+      }
+
+      // 除外市場をパラメータに追加（1件以上チェックされている場合のみ）
+      const excludeMarkets = getExcludeMarkets("distributionConditions");
+      if (excludeMarkets) {
+        url.searchParams.set("exclude_markets", excludeMarkets);
+      }
     } else if (mode === "compare") {
       url.searchParams.set("mode", "compare");
       url.searchParams.set("from_date", fromDate);
@@ -2720,6 +2853,10 @@ async function startScreening() {
       if (mode === "bottomEntry") {
         const entryCount = results.filter(r => r.ステージ === "entry").length;
         countLabel.textContent += `（エントリー：${entryCount}件／監視：${results.length - entryCount}件）`;
+      }
+      // distribution：件数上限による打ち切りを明示する（textContent のみ使用）
+      if (mode === "distribution" && data.truncated) {
+        countLabel.textContent += `（上限${results.length}件で打ち切り）`;
       }
       // symbolSearch：件数上限による打ち切り・該当なしのコードを明示する（textContent のみ使用）
       if (mode === "symbolSearch") {
@@ -2919,6 +3056,30 @@ function showResults(results, mode, compareDateList = currentCompareDateList, tb
         COLUMNS.bottomEntryClimaxVolume,
         COLUMNS.bottomEntryRetestVolume,
         COLUMNS.bottomEntryNecklineGap,
+      ], r);
+    }
+
+    /* ------------------------------
+       distribution モード（売り抜け検出）
+    ------------------------------ */
+    else if (mode === "distribution") {
+      // 売り抜け（下落サイン）の行は下降トレンド色（heuristics・shortEntry と同じ既存クラス）で強調する
+      tr.classList.add("tr-trend-down");
+
+      tr.innerHTML = renderDataCells([
+        col(COLUMNS.code, { fixed: true }),
+        col(COLUMNS.name, { fixed: true }),
+        COLUMNS.marketSegment,
+        COLUMNS.marketCap,
+        COLUMNS.distributionClose,
+        COLUMNS.distributionChange,
+        COLUMNS.distributionBody,
+        COLUMNS.distributionVolume,
+        COLUMNS.distributionTurnover,
+        COLUMNS.distributionHighPrice,
+        COLUMNS.distributionHighDate,
+        COLUMNS.distributionHighGap,
+        COLUMNS.distributionRise,
       ], r);
     }
 

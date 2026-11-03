@@ -290,6 +290,7 @@ body {
 .mode-tabs:has(input[value="marginBb"]:checked) ~ .mode-panels .mode-panel[data-mode="marginBb"],
 .mode-tabs:has(input[value="shortEntry"]:checked) ~ .mode-panels .mode-panel[data-mode="shortEntry"],
 .mode-tabs:has(input[value="bottomEntry"]:checked) ~ .mode-panels .mode-panel[data-mode="bottomEntry"],
+.mode-tabs:has(input[value="distribution"]:checked) ~ .mode-panels .mode-panel[data-mode="distribution"],
 .mode-tabs:has(input[value="symbolSearch"]:checked) ~ .mode-panels .mode-panel[data-mode="symbolSearch"] {
   display: block;
 }
@@ -312,6 +313,7 @@ body {
 #ratioConditions,
 #shortEntryConditions,
 #bottomEntryConditions,
+#distributionConditions,
 #marginBbConditions {
   flex-wrap: wrap;
 }
@@ -319,6 +321,7 @@ body {
 #ratioConditions [data-exclude-markets-slot],
 #shortEntryConditions [data-exclude-markets-slot],
 #bottomEntryConditions [data-exclude-markets-slot],
+#distributionConditions [data-exclude-markets-slot],
 #marginBbConditions [data-exclude-markets-slot] {
   flex: 1 1 100%;
 }

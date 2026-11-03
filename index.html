@@ -175,6 +175,10 @@
           <span>下げ止まり買い</span>
         </label>
         <label class="mode-tab">
+          <input type="radio" name="searchMode" value="distribution">
+          <span>売り抜け検出（日足）</span>
+        </label>
+        <label class="mode-tab">
           <input type="radio" name="searchMode" value="heuristics">
           <span>経験則判定（heuristics）</span>
         </label>
@@ -331,6 +335,61 @@
                 <option value="80">80%以下</option>
                 <option value="50" selected>50%以下</option>
                 <option value="30">30%以下</option>
+              </select>
+            </label>
+            <div data-exclude-markets-slot></div>
+          </div>
+        </div>
+
+        <!-- モード：売り抜け検出（日足。高値圏で出来高を伴う大陰線が出現した日を検出）。
+             1分足ベースの「超大口検出（block）」とは別モード。
+             scripts/distribution.js が生成した日次アーカイブ（data/distribution/）を参照する。
+             favorite 対象外（☆ボタンなし）。詳細は仕様書.md を参照 -->
+        <div class="mode-panel" data-mode="distribution">
+          <div class="mode-conditions" id="distributionConditions">
+            <label>日付
+              <select id="distributionDateSelect" disabled></select>
+            </label>
+            <label>時価総額
+              <select id="distributionMinMarketCapSelect" disabled>
+                <option value="0" selected>指定なし</option>
+                <option value="100000000000">1,000億円以上</option>
+                <option value="500000000000">5,000億円以上</option>
+                <option value="1000000000000">1兆円以上</option>
+                <option value="3000000000000">3兆円以上</option>
+              </select>
+            </label>
+            <label>出来高（直前50日平均比）
+              <select id="distributionMinVolRatioSelect" disabled>
+                <option value="1.5">1.5倍以上</option>
+                <option value="2" selected>2倍以上</option>
+                <option value="3">3倍以上</option>
+                <option value="5">5倍以上</option>
+              </select>
+            </label>
+            <label>実体下落率（始値→終値）
+              <select id="distributionMinBodyDropSelect" disabled>
+                <option value="2">2%以上</option>
+                <option value="3" selected>3%以上</option>
+                <option value="5">5%以上</option>
+                <option value="7">7%以上</option>
+                <option value="10">10%以上</option>
+              </select>
+            </label>
+            <label>高値圏（前日終値が直近高値の）
+              <select id="distributionMaxHighGapSelect" disabled>
+                <option value="5">5%以内</option>
+                <option value="10" selected>10%以内</option>
+                <option value="15">15%以内</option>
+                <option value="20">20%以内</option>
+              </select>
+            </label>
+            <label>直前の上昇率（60日）
+              <select id="distributionMinRiseSelect" disabled>
+                <option value="10">10%以上</option>
+                <option value="20" selected>20%以上</option>
+                <option value="30">30%以上</option>
+                <option value="50">50%以上</option>
               </select>
             </label>
             <div data-exclude-markets-slot></div>
