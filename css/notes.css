@@ -1,0 +1,200 @@
+/* ============================================================
+   pages/notes.html（相場ノート）専用スタイル（2026-11 追加）
+   ・色・フォント・シャドウ・角丸は style.css の :root のトークンを再利用する。
+     新規の色のハードコード値は定義しない（:root へのトークン追加もしない）。
+   ・style.css は変更していない（review.css・quiz.css・info-modal.css と同じ追加ファイル）。
+   ・JS が付ける data-current（絞り込みボタンの選択中。フラグ型）・
+     data-tone（info / caution。値保持型）は CSS 専用フック。
+   ・要素の表示切替は hidden 属性。.notes-entry などには display を指定しない
+     （指定すると hidden 属性が負けるため）。
+   ============================================================ */
+
+.notes-hint {
+  margin: 0 0 12px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+/* ---- 絞り込み：review.css の .review-tabs と同じ「非選択＝フラット」の見た目 ---- */
+.notes-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.notes-filter-btn {
+  padding: 10px 14px;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: var(--radius-input) var(--radius-input) 0 0;
+  margin-bottom: -1px;   /* .notes-filter-bar の border-bottom に重ねる */
+  cursor: pointer;
+  transition: color var(--transition-base), border-color var(--transition-base), background var(--transition-base);
+}
+
+.notes-filter-btn:hover {
+  color: var(--color-text-secondary);
+}
+
+.notes-filter-btn[data-current] {
+  color: var(--color-accent-primary-hover);
+  border-bottom-color: var(--color-accent-primary);
+  background: var(--color-accent-primary-bg);
+  box-shadow: var(--shadow-neumo-inset-tab);
+}
+
+/* ---- ノート（<details> の開閉。JS 不要） ---- */
+.notes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.notes-entry {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-input);
+  background: var(--color-bg-table-row);
+  scroll-margin-top: 8px;   /* #note-xxx で開いたとき、上端にぴったり付かないように */
+}
+
+.notes-entry[open] {
+  box-shadow: var(--shadow-neumo-outset);
+}
+
+.notes-entry-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 14px;
+  cursor: pointer;
+}
+
+.notes-entry-title {
+  font-family: var(--font-serif);
+  font-weight: 700;
+  color: var(--color-accent-primary);
+}
+
+.notes-entry-source {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.notes-entry-body {
+  padding: 4px 14px 14px;
+  font-size: 14px;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+
+.notes-entry-body p,
+.notes-entry-body ul,
+.notes-entry-body ol {
+  margin: 0 0 10px;
+}
+
+/* ---- 表：枠の中だけ横スクロール（ページ全体は横に伸ばさない） ---- */
+.notes-table-wrap {
+  overflow-x: auto;
+  margin-bottom: 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-input);
+}
+
+.notes-table {
+  width: 100%;
+  min-width: 30em;
+  border-collapse: collapse;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.notes-table th,
+.notes-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--color-border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.notes-table thead th {
+  background: var(--color-bg-table-header1);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
+.notes-table tbody th {
+  white-space: nowrap;
+}
+
+.notes-table tbody tr:last-child th,
+.notes-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* ---- 画像 ---- */
+.notes-figure {
+  margin: 0 0 12px;
+}
+
+.notes-figure img {
+  display: block;
+  max-width: 100%;
+  max-height: 70vh;   /* 縦長のスクリーンショットが画面を占領しないように */
+  height: auto;
+  margin: 0 auto;
+  border-radius: var(--radius-input);
+}
+
+.notes-figure figcaption {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+/* ---- 補足・注意（色は上昇/下降行と同じトークン：info＝セージ、caution＝ダスティローズ） ---- */
+.notes-callout {
+  padding: 8px 12px;
+  border-left: 4px solid var(--color-border-input);
+  border-radius: var(--radius-input);
+  font-size: 13px;
+}
+
+.notes-callout[data-tone="info"] {
+  background: var(--color-trend-down-bg);
+  border-left-color: var(--color-trend-down-border);
+}
+
+.notes-callout[data-tone="caution"] {
+  background: var(--color-trend-up-bg);
+  border-left-color: var(--color-trend-up-border);
+}
+
+.notes-entry-link {
+  font-size: 12px;
+  color: var(--color-accent-primary);
+}
+
+/* ---- モバイル：絞り込みは折り返さず横スクロール（review.css のタブと同じ方針） ---- */
+@media (max-width: 600px) {
+  .notes-filter-bar {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .notes-filter-btn {
+    flex-shrink: 0;
+    white-space: nowrap;
+    font-size: 13px;
+  }
+}

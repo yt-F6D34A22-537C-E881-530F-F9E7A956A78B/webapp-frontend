@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>相場ノート ｜ スクリーニング</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <link rel="icon" href="../assets/favicon.ico">
+
+  <!-- 既存アプリと同じデザイントークン（色・フォント・シャドウ等）を再利用する -->
+  <link rel="stylesheet" href="../assets/fonts/fonts.css">
+  <link rel="stylesheet" href="../css/style.css">
+  <!-- 本ページ固有のスタイルのみ、別ファイルへ分離する（style.css自体は変更しない） -->
+  <link rel="stylesheet" href="../css/notes.css">
+
+  <!-- 表示内容は js/notes/notes-data.js の定数。通信は行わない（ES Modules のため file:// では開けない） -->
+  <script type="module" src="../js/notes/notes-main.js"></script>
+</head>
+
+<body>
+  <div class="app-container">
+
+    <header class="app-header">
+      <h1>相場ノート</h1>
+      <nav class="app-header-nav">
+        <a href="../index.html">← スクリーニングへ戻る</a>
+      </nav>
+    </header>
+
+    <!-- ============================
+         ノート一覧
+         ボタン・一覧の中身は notes-render.js が描画する（JS からは id・data-* で特定する）
+    ============================ -->
+    <section class="card notes-card">
+      <h2>ノート</h2>
+      <p id="notesUpdatedEl" class="notes-hint"></p>
+
+      <nav id="notesFilterBar" class="notes-filter-bar" aria-label="テーマで絞り込む"></nav>
+
+      <div id="notesList" class="notes-list"></div>
+      <p id="notesEmptyEl" class="notes-hint" hidden>該当するノートはありません。</p>
+
+      <p class="notes-hint">他の投資家の見解を、自分用に要約・整理したメモです。事実の保証や売買の推奨ではなく、未検証の内容や、発信者どうしで矛盾する見解も含みます。取引前に必ず自分で確認してください。</p>
+    </section>
+
+  </div>
+</body>
+</html>
