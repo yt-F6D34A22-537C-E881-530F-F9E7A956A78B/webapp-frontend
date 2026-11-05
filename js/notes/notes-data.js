@@ -98,23 +98,6 @@ export const NOTES = {
         },
       ],
     },
-    {
-      id: "pts-after-good-news",
-      category: "risk",
-      title: "好材料が出た後のPTSは同じチャート形状になりやすい",
-      source: { name: "エスリバ" },
-      blocks: [
-        { type: "p", text: "好材料の発表後にPTSで動く銘柄は、多くが同じ形のチャートを描く、という指摘。実際の5分足の例と、手描きの概念図を載せる。" },
-        { type: "image", src: "../assets/notes/pts-screenshot.jpg", alt: "好材料後のPTSの5分足チャート例（スマホ画面）", caption: "実例（PTS・5分足）：急騰のあと押し戻され、横ばいに収束している。" },
-        { type: "image", src: "../assets/notes/pts-sketch.png", alt: "PTSの値動きの手描き概念図。急騰して急落し、その後は横ばいになる", caption: "概念図：急騰 → 急落 → 横ばい。" },
-        {
-          type: "callout",
-          tone: "caution",
-          text: "元のメモには「同じ形になる」という一文と画像のみで、この形の読み方・売買への使い方は書かれていない。キャプションは画像から読み取った内容（推測）。意味づけが分かったら追記する。",
-        },
-      ],
-    },
-
     // ------------------------------------------------ チャート・エントリー
     {
       id: "vwap-entry",
@@ -130,6 +113,17 @@ export const NOTES = {
             "出来高が細り、安値・高値を切り上げながら、ローソクの実体が小さくなって値動きの勢いがなくなったらエントリーを検討する。",
           ],
         },
+      ],
+    },
+    {
+      id: "pts-after-good-news",
+      category: "chart",
+      title: "短期急騰の材料が出たときのPTSの反応",
+      source: { name: "エスリバ" },
+      blocks: [
+        { type: "p", text: "短期的に急騰する材料が出たとき、PTSでの反応はだいたい同じ形のチャートになる。実際の5分足のサンプルと、その形を描いた概念図を載せる。" },
+        { type: "image", src: "../assets/notes/pts-screenshot.jpg", alt: "短期急騰の材料が出た銘柄のPTS・5分足チャートのサンプル（スマホ画面）", caption: "サンプル（PTS・5分足）：急騰のあと押し戻され、横ばいに収束している。" },
+        { type: "image", src: "../assets/notes/pts-sketch.png", alt: "PTSの値動きの手描き概念図。急騰して急落し、戻して横ばいになる", caption: "概念図：急騰 → 急落 → 戻して横ばい。" },
       ],
     },
     {
