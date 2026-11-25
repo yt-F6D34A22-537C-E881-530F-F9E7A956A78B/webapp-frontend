@@ -65,6 +65,17 @@ export const THEMES = {
     cloudBull: "rgba(95,169,122,0.22)",   // 旧 rgba(0,200,0,0.35)
     cloudBear: "rgba(169,122,191,0.22)",  // 旧 rgba(200,0,0,0.35)（陽線赤と衝突していた）
 
+    // VWAP（2026-11 追加）
+    vwap: "#0097A7",
+
+    // チャートパターン（2026-11 追加。chart-patterns.js の PATTERN_DEFINITIONS.colorKey が参照）
+    // 方向感で3色に束ねる：下落を示唆（三尊・ダブルトップ・下降三角）/
+    // 上昇を示唆（逆三尊・ダブルボトム・上昇三角）/ 中立（対称三角）。
+    // 日本式ローソク足（陽線=赤・陰線=青）と混同しないよう、赤・青系を避けている
+    patternBearish: "#8B4513",
+    patternBullish: "#1B5E20",
+    patternNeutral: "#37474F",
+
     // 出来高
     volume: "rgba(120,120,120,0.45)",
 
@@ -106,6 +117,12 @@ export const THEMES = {
     chikou: "#9E9E9E",
     cloudBull: "rgba(124,192,150,0.20)",
     cloudBear: "rgba(190,149,210,0.20)",
+
+    vwap: "#4DD0E1",
+
+    patternBearish: "#D9955F",
+    patternBullish: "#66BB6A",
+    patternNeutral: "#CFD8DC",
 
     volume: "rgba(170,170,170,0.40)",
 
@@ -162,6 +179,12 @@ export function getLineStyles() {
     kijun:  S.LargeDashed,    // 基準線
     span:   S.Dotted,         // 先行スパン1 / 2
     chikou: S.SparseDotted,   // 遅行スパン
+
+    vwap:   S.LargeDashed,    // VWAP（実線は MA 専用のため。色で他と区別）
+
+    // チャートパターン（2026-11 追加）。線幅は LINE_WIDTH.pattern（2px）で MA の実線と区別する
+    patternBody:  S.Solid,    // ピボット（肩・谷・頭など）を結ぶ折れ線
+    patternGuide: S.Dashed,   // ネックライン／トレンドライン
   };
 }
 
@@ -170,6 +193,8 @@ export const LINE_WIDTH = {
   bb: 1,
   ichimoku: 1,
   sub: 1,   // RCI / MACD
+  vwap: 1,
+  pattern: 2,   // チャートパターン（ローソク足の背面に描くため、他より太くして視認性を確保）
 };
 
 // --------------------------------------

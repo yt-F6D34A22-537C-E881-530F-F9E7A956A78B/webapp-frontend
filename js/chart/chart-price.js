@@ -1,5 +1,5 @@
 // --------------------------------------
-// chart-price.js（価格ペイン：ローソク足 / 出来高 / MA / BB / 一目均衡表）
+// chart-price.js（価格ペイン：ローソク足 / 出来高 / MA / BB / 一目均衡表 / VWAP / チャートパターン）
 //
 // 2026-09 の可読性改修により、本ファイルの責務は
 // 「価格ペイン（paneIndex 0）に載せるインジケータ群の記述子を提供すること」
@@ -14,7 +14,8 @@
 // （旧実装ではシリーズ変数宣言・apply*Visibility・set* セッター・凡例 HTML・
 //   ツールチップ HTML の5か所を同時に修正する必要があった）。
 // --------------------------------------
-import { calcMA, calcBB } from "./chart-indicators.js";
+import { calcMA, calcVWAP, calcBB } from "./chart-indicators.js";
+import { detectPatterns, PATTERN_DEFINITIONS } from "./chart-patterns.js";
 import { getTheme, LINE_WIDTH, getLineStyles } from "./chart-theme.js";
 
 // --------------------------------------
@@ -660,6 +661,108 @@ export const PRICE_INDICATORS = [
           { key: "chikou", label: "遅行スパン",  color: T.chikou, valueAt: (t) => formatFixed(chikouMap, t) },
         ],
       };
+    },
+  },
+
+  // VWAP（2026-11 追加）。bb → ichimoku の前後関係（雲の重なり順）に影響しないよう末尾に置く。
+  {
+    key: "vwap",
+    label: "VWAP",
+    toggleId: "toggleVWAP",
+    defaultVisible: false,
+    pane: PANE_PRICE,
+
+    // ローリング期間（本数）。足種を問わず本数で指定する
+    period: 20,
+
+    build(chart, candleData) {
+      const T = getTheme();
+      const LS = getLineStyles();
+
+      const data = calcVWAP(candleData, this.period);
+      const series = addLine(chart, T.vwap, data, {
+        lineWidth: LINE_WIDTH.vwap,
+        lineStyle: LS.vwap,
+      });
+
+      const map = makeValueMap(data);
+
+      return {
+        series: [series],
+        primitives: [],
+        legend: [
+          { key: "vwap", label: `VWAP(${this.period})`, color: T.vwap, valueAt: (t) => formatFixed(map, t) },
+        ],
+      };
+    },
+  },
+
+  // チャートパターン（2026-11 追加）。
+  // 検出は chart-patterns.js、本記述子は描画のみを担う。パターンの種類を増やす場合は
+  // chart-patterns.js の PATTERN_DEFINITIONS へ1件足すだけでよい（本記述子は変更不要）。
+  // 「成立しているパターンだけ」を描くため、検出結果が空ならシリーズは0本になる。
+  {
+    key: "pattern",
+    label: "チャートパターン（三尊・ダブル・三角持ち合い）",
+    toggleId: "togglePattern",
+    defaultVisible: false,
+    pane: PANE_PRICE,
+
+    build(chart, candleData) {
+      const T = getTheme();
+      const LS = getLineStyles();
+      const patterns = detectPatterns(candleData);
+      const defByKind = new Map(PATTERN_DEFINITIONS.map(d => [d.kind, d]));
+
+      const series = [];
+      for (const pat of patterns) {
+        const color = T[defByKind.get(pat.kind).colorKey];
+        series.push(
+          addLine(chart, color, pat.body, {
+            lineWidth: LINE_WIDTH.pattern,
+            lineStyle: LS.patternBody,
+            crosshairMarkerVisible: false,
+          })
+        );
+        for (const guide of pat.guides) {
+          series.push(
+            addLine(chart, color, guide, {
+              lineWidth: LINE_WIDTH.pattern,
+              lineStyle: LS.patternGuide,
+              crosshairMarkerVisible: false,
+            })
+          );
+        }
+      }
+
+      // 重なり順：雲・BB外側塗り（zOrder: "bottom" の Primitive）より前面、ローソク足より背面。
+      // シリーズは生成順に重なるため、先に生成済みのローソク足より後ろへ回すには
+      // シリーズ順の先頭へ移す必要がある（LightweightCharts v5 の setSeriesOrder）。
+      // 価格スケールの書式は「最小インデックスのシリーズ」から決まるが、
+      // LineSeries の既定書式はローソク足と同じため影響しない。
+      series.forEach(s => s.setSeriesOrder(0));
+
+      // 凡例：検出された種類の行だけを作る（未検出の種類で HUD を埋めない）。
+      // 値は、そのバーにおけるブレイクされた線（ネックライン／ブレイク辺）の価格。
+      // 成立期間外は "-"。
+      const legend = [];
+      for (const def of PATTERN_DEFINITIONS) {
+        const mine = patterns.filter(p => p.kind === def.kind);
+        if (mine.length === 0) continue;
+
+        const map = makeValueMap(mine.flatMap(p => p.keyGuide));
+        legend.push({
+          key: def.legendKey,
+          label: `${def.label} ${def.guideLabel}`,
+          color: T[def.colorKey],
+          valueAt: (t) => formatFixed(map, t),
+        });
+      }
+      if (legend.length === 0) {
+        legend.push({ key: "patternNone", label: "パターン", color: null, valueAt: () => "検出なし" });
+      }
+
+      return { series, primitives: [], legend };
     },
   },
 ];

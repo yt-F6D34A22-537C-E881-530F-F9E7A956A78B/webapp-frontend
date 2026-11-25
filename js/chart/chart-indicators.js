@@ -1,6 +1,6 @@
 // --------------------------------------
 // chart-indicators.js
-// MA / 一目均衡表 / BB / RCI / MACD 計算モジュール
+// MA / VWAP / 一目均衡表 / BB / RCI / MACD 計算モジュール
 // --------------------------------------
 
 // ------------------------------
@@ -18,6 +18,39 @@ export function calcMA(data, period) {
       sum += data[j].close;
     }
     result.push({ time: data[i].time, value: sum / period });
+  }
+  return result;
+}
+
+// ------------------------------
+// VWAP（出来高加重平均価格）（2026-11 追加）
+// 日足以上では日中 VWAP を作れないため、直近 period 本のローリング方式とする。
+// 典型価格 (高値+安値+終値)/3 を出来高で加重平均する。
+// 窓の入れ替えは加減算で行い、全体で O(n)（毎バー period 本を再集計しない）。
+// 出来高が欠損（null 等）のバーは 0 として扱い、窓内の出来高合計が 0 なら null。
+// ------------------------------
+export function calcVWAP(data, period = 20) {
+  const result = [];
+  let sumPV = 0;
+  let sumV = 0;
+
+  for (let i = 0; i < data.length; i++) {
+    const v = Number.isFinite(data[i].volume) ? data[i].volume : 0;
+    sumPV += ((data[i].high + data[i].low + data[i].close) / 3) * v;
+    sumV  += v;
+
+    if (i >= period) {
+      const o = data[i - period];
+      const ov = Number.isFinite(o.volume) ? o.volume : 0;
+      sumPV -= ((o.high + o.low + o.close) / 3) * ov;
+      sumV  -= ov;
+    }
+
+    if (i < period - 1 || sumV <= 0) {
+      result.push({ time: data[i].time, value: null });
+      continue;
+    }
+    result.push({ time: data[i].time, value: sumPV / sumV });
   }
   return result;
 }
